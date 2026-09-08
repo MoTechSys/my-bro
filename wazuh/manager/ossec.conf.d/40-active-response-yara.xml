@@ -1,0 +1,34 @@
+<!--
+  Manager ossec.conf snippet - Active Response: YARA scan on FIM event (UC-07)
+  Source: S2 pp.46-47 (Linux), p.54 (Windows) ; S5 img29
+  ISSUE-020 fix: rules moved out of /tmp -> /var/ossec/etc/yara/rules/yara_rules.yar
+  (update extra_args accordingly on the agent; keep /tmp path only if you accept losing it on reboot)
+-->
+<ossec_config>
+  <command>
+    <name>yara_linux</name>
+    <executable>yara.sh</executable>
+    <extra_args>-yara_path /usr/local/bin -yara_rules /var/ossec/etc/yara/rules/yara_rules.yar</extra_args>
+    <timeout_allowed>no</timeout_allowed>
+  </command>
+
+  <active-response>
+    <disabled>no</disabled>
+    <command>yara_linux</command>
+    <location>local</location>
+    <rules_id>100300,100301</rules_id>
+  </active-response>
+
+  <command>
+    <name>yara_windows</name>
+    <executable>yara.bat</executable>
+    <timeout_allowed>no</timeout_allowed>
+  </command>
+
+  <active-response>
+    <disabled>no</disabled>
+    <command>yara_windows</command>
+    <location>local</location>
+    <rules_id>100303,100304</rules_id>
+  </active-response>
+</ossec_config>

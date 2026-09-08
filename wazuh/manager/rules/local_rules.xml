@@ -1,0 +1,132 @@
+<!--
+  Wazuh Manager - Custom rules for the SOC graduation project
+  Target:   /var/ossec/etc/rules/local_rules.xml   (Wazuh 4.14.x)
+  Source:   Consolidated from S2 (lab guide pp.15,17,35,44-45,53) and S5 (img10, img27, img31).
+  Fixes:    ISSUE-010 (duplicate IDs removed; one rule per ID, regex covers all monitored dirs)
+            ISSUE-018 (odd path /tmp/home/kali/omar not carried over; verify on host)
+  Apply:    sudo cp local_rules.xml /var/ossec/etc/rules/local_rules.xml
+            sudo /var/ossec/bin/wazuh-analysisd -t    # test rules (or: wazuh-logtest)
+            sudo systemctl restart wazuh-manager
+  ID map:   see docs/02_ARCHITECTURE.md §5
+-->
+
+<!-- ============================================================ -->
+<!-- UC-03  FIM on /home/kali/SOCfile  -> triggers VirusTotal      -->
+<!-- ============================================================ -->
+<group name="syscheck,pci_dss_11.5,nist_800_53_SI.7,">
+  <rule id="100200" level="7">
+    <if_sid>550</if_sid>
+    <field name="file">/home/kali/SOCfile</field>
+    <description>File modified in /home/kali/SOCfile.</description>
+  </rule>
+  <rule id="100201" level="7">
+    <if_sid>554</if_sid>
+    <field name="file">/home/kali/SOCfile</field>
+    <description>File added to /home/kali/SOCfile.</description>
+  </rule>
+</group>
+
+<!-- ============================================================ -->
+<!-- UC-03  VirusTotal Active Response results                     -->
+<!-- ============================================================ -->
+<group name="virustotal,">
+  <rule id="100092" level="12">
+    <if_sid>657</if_sid>
+    <match>Successfully removed threat</match>
+    <description>$(parameters.program) removed threat located at $(parameters.alert.data.virustotal.source.file)</description>
+  </rule>
+  <rule id="100093" level="12">
+    <if_sid>657</if_sid>
+    <match>Error removing threat</match>
+    <description>Error removing threat located at $(parameters.alert.data.virustotal.source.file)</description>
+  </rule>
+</group>
+
+<!-- ============================================================ -->
+<!-- UC-05  auditd + CDB list "suspicious-programs" (red = L12)    -->
+<!-- ============================================================ -->
+<group name="audit,">
+  <rule id="100210" level="12">
+    <if_sid>80792</if_sid>
+    <list field="audit.command" lookup="match_key_value" check_value="red">etc/lists/suspicious-programs</list>
+    <description>Audit: Highly Suspicious Command executed: $(audit.exe)</description>
+    <group>audit_command,</group>
+    <mitre>
+      <id>T1059</id>
+    </mitre>
+  </rule>
+</group>
+
+<!-- ============================================================ -->
+<!-- UC-07  FIM on YARA-scanned dirs (Linux) -> AR yara_linux      -->
+<!--        ONE rule per ID (fixes ISSUE-010). Regex covers both   -->
+<!--        /tmp/yara/malware and /home/kali/abdul.                -->
+<!-- ============================================================ -->
+<group name="syscheck,">
+  <rule id="100300" level="7">
+    <if_sid>550</if_sid>
+    <field name="file" type="pcre2">^/(tmp/yara/malware|home/kali/abdul)/</field>
+    <description>File modified in YARA-monitored directory.</description>
+  </rule>
+  <rule id="100301" level="7">
+    <if_sid>554</if_sid>
+    <field name="file" type="pcre2">^/(tmp/yara/malware|home/kali/abdul)/</field>
+    <description>File added to YARA-monitored directory.</description>
+  </rule>
+</group>
+
+<!-- ============================================================ -->
+<!-- UC-07  FIM on Windows Downloads -> AR yara_windows            -->
+<!--        Replace <USER_NAME> with the real Windows user.        -->
+<!-- ============================================================ -->
+<group name="syscheck,">
+  <rule id="100303" level="7">
+    <if_sid>550</if_sid>
+    <field name="file">C:\\Users\\<USER_NAME>\\Downloads</field>
+    <description>File modified in C:\Users\<USER_NAME>\Downloads directory.</description>
+  </rule>
+  <rule id="100304" level="7">
+    <if_sid>554</if_sid>
+    <field name="file">C:\\Users\\<USER_NAME>\\Downloads</field>
+    <description>File added to C:\Users\<USER_NAME>\Downloads directory.</description>
+  </rule>
+</group>
+
+<!-- ============================================================ -->
+<!-- UC-07  YARA scan results (from active-responses.log)          -->
+<!-- ============================================================ -->
+<group name="yara,">
+  <rule id="108000" level="0">
+    <decoded_as>yara_decoder</decoded_as>
+    <description>Yara grouping rule</description>
+  </rule>
+  <rule id="108001" level="12">
+    <if_sid>108000</if_sid>
+    <match>wazuh-yara: INFO - Scan result: </match>
+    <description>File "$(yara_scanned_file)" is a positive match. Yara rule: $(yara_rule)</description>
+    <mitre>
+      <id>T1204.002</id>
+    </mitre>
+  </rule>
+</group>
+
+<!-- ============================================================ -->
+<!-- UC-08  Process monitoring: netcat listener                    -->
+<!-- ============================================================ -->
+<group name="ossec,">
+  <rule id="100050" level="0">
+    <if_sid>530</if_sid>
+    <match>ossec: output: 'process list'</match>
+    <description>List of running processes.</description>
+    <group>process_monitor,</group>
+  </rule>
+  <rule id="100051" level="7" ignore="900">
+    <if_sid>100050</if_sid>
+    <match>nc -l</match>
+    <description>netcat listening for incoming connections.</description>
+    <group>process_monitor,</group>
+    <mitre>
+      <id>T1571</id>
+    </mitre>
+  </rule>
+</group>

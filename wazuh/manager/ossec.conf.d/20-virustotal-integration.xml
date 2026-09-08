@@ -1,0 +1,16 @@
+<!--
+  Manager ossec.conf snippet - VirusTotal integration (UC-03)
+  Source: S2 pp.15-16 (Linux, rule_id trigger) and p.24 (Windows, group trigger)
+  SECURITY: never commit a real API key. Free VT API = 4 requests/minute.
+  Choose ONE trigger style:
+    - <rule_id>100200,100201</rule_id>  (precise; only SOCfile dir)   <- used in lab
+    - <group>syscheck</group>           (every FIM event; will hit rate-limit quickly)
+-->
+<ossec_config>
+  <integration>
+    <name>virustotal</name>
+    <api_key><YOUR_VIRUS_TOTAL_API_KEY></api_key>
+    <rule_id>100200,100201</rule_id>
+    <alert_format>json</alert_format>
+  </integration>
+</ossec_config>

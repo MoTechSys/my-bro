@@ -1,0 +1,9 @@
+<!-- C:\Program Files (x86)\ossec-agent\ossec.conf  -> inside <syscheck>. Then: Restart-Service -Name wazuh -->
+<ossec_config>
+  <syscheck>
+    <!-- UC-02 FIM (S2 p.10) -->
+    <directories check_all="yes" report_changes="yes" realtime="yes">C:\Users\Lenovo\Desktop\abdul</directories>
+    <!-- UC-03 / UC-07 VirusTotal + YARA dir (S2 pp.19, 52) - replace <USER_NAME> -->
+    <directories realtime="yes">C:\Users\<USER_NAME>\Downloads</directories>
+  </syscheck>
+</ossec_config>

@@ -1,0 +1,17 @@
+# secrets
+*.key
+secrets*
+*.env
+.env*
+# working scratch
+.analysis/
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+__pycache__/
+*.pyc
+# build
+build/
+dist/
+*.spec

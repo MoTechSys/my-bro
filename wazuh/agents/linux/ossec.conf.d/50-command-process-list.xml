@@ -1,0 +1,9 @@
+<!-- UC-08: periodic process list -> rules 100050/100051 -->
+<ossec_config>
+  <localfile>
+    <log_format>full_command</log_format>
+    <alias>process list</alias>
+    <command>ps -e -o pid,uname,command</command>
+    <frequency>30</frequency>
+  </localfile>
+</ossec_config>

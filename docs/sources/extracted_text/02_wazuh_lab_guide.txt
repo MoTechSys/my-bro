@@ -1,0 +1,1404 @@
+
+
+===== PAGE 1 =====
+1.Deploy New Windows Agent On Wazuh and Deploy
+Linux Agent For Wazuh.
+ نقوم بتشغيل الداهwazuh بعد ماقمناء بتنصيب الً
+ بعد فتحه ب كلمه المرور واسم المسدخدم المعينه مث192.168.100.105 ً حق الداه مثip وفتحها من اي متصفح ب ال
+admin: admin
+
+
+===== PAGE 2 =====
+تفتتح واجه الداه كما في الصوره
+Agents management >Summary نقوم ب النتقال الى
+
+
+===== PAGE 3 =====
+
+
+===== PAGE 4 =====
+بعد ذالك سوف ننتقل الى هاذه الواجه
+ وينقلك لصفحه تقوم عبرها بانشاء ربط بين وندوز او لينكس او ماكDeploy new agent وننقر على
+وهنكاك خطات لربط الجهاز اين كان نظامه من الثالثه النواع المثكوره هناك خطوات محدده
+1.. Select the package to download and install on your system:
+ الداهip  السرفر اىip . ثاني ًا نكتب2
+ .1اوًال تحديد نوع نظام التشخيل مثًال الوندوز
+
+
+===== PAGE 5 =====
+Server address: 192.168.100.105
+ .3 واختيار القروب الي قروب ينتمي اذا قسمت واذا ماقسمتwin2 ُثالث ًا نقوم بتسميه المشين او الجهاز الي عنربطه باسم معين مث
+default قروبات اختار
+1Assign an agent name = win2
+Select one or more existing groups= default
+ .4رابع ًا شغل المر الي ظهرهو لك وقوم بتشغيله اما في الباورشل في الوندوز اذا كان الجهاز او النظام وندوز وال الترمنل في
+اللينكس اذاكان الجهاز او النظام لينكس
+واذا كان لينكس سوف تضهر لك مثل هاذا الرابط
+
+
+===== PAGE 6 =====
+2.Enabling File Integrity Monitor on wazuh agent.
+نفعلها سوا على المشين كامله او على ملف محدد
+عند تفعيلها على المشين كامله ممكن نخلي المتداد العند الروت
+وتشغيله يشتي ثالثه اوامر
+ .5 الي نزلتاها من الرابط الولwazuh تشخل ال
+ .6وتذهب لتاشوف ان الربط جاهز
+ اذا كان جهازين وهاكذا الى عده اجهزهActive(2)  اذا كان واحد جهازActive(1) وبعد ظهور الربط في جز ال
+
+
+===== PAGE 7 =====
+واذا كان ملف محدد فسوف نحدد مسار الملف
+مراقبة سالمة الملفات
+) في تدقيق الملفات الحساسة و المتثال لمتطلبات المتثال التنظيمي. يحتوي برنامجFIM( تساعد خاصية مراقبة سالمة الملفات
+. مدمجة تراقب تغييرات نظام الملفات للكشف عن إنشاء الملفات وتعديلها وحذفهاFIM  على وحدةWazuh
+Kali linux  وUbuntu  الكتشاف التغييرات في الدالئل ال ُمراقبة على أجهزةWazuh FIM تستخدم هذه الحالة وحدة
+ بيانات التنبيهات من خالل جلب معلومات حول المستخدم والعملية اللذين أجريا التغييراتWazuh FIM . ُتثري وحدةWindowsو
+. 
+who-data أداة تدقيق باستخدام
+بنية تحتية
+نقطة النهاية
+وصف
+22.04 أوبونتو. بمراقبة دليل على نقطة النهاية هذه الكتشاف إنشاء الملفات وتغييراتها وحذفهاWazuh FIM تقوم وحدة
+11 ويندوز. بمراقبة دليل على نقطة النهاية هذه الكتشاف إنشاء الملفات وتغييراتها وحذفهاWazuh FIM تقوم وحدة
+المالي لينكس. بمراقبة دليل على نقطة النهاية هذه الكتشاف إنشاء الملفات وتغييراتها وحذفهاWazuh FIM تقوم وحدة
+إعدادات
+1 endpoint Ubuntu or kali linux
+. الدليل او على اي ملف محدد تريدهroot/   لمراقبة تغييرات نظام الملفات فيWazuh قم بتنفيذ الخطوات التالية لتكوين وكيل
+ اكتب المسار الي تريدل الي ملفroot/ بدل الجذر
+.الكتلة>directories<  يمكنك أي ًضا ضبط أي مسار من اختيارك في
+kali linux مثًال نقوم ب التطبيق على ملف معين مثًال على
+ .1. أضف الدالئل او المسارات المراد مراقبتهاWazuh  /var/ossec/etc/ossec.conf ع ّدل ملف إعدادات وكيل
+الدليل كامل او لمراقبه مسار ملفroot/   لمراقبةWazuh القسم المخصص. في هذه الحالة، س ُتهيئ>syscheck<  داخل
+. خاصية تدقيق بيانات المستخدم معين . للحصول على معلومات إضافية حول المستخدم والعملية اللذين أجريا التغييرات، ف ّعل
+<directories check_all="yes" report_changes="yes" 
+realtime="yes">/root</directories>
+ .2
+: لتطبيق تغييرات التكوينWazuh أعد تشغيل وكيل
+sudo systemctl restart wazuh-agent
+
+
+===== PAGE 8 =====
+وقوم ب الحفظ المتغيرات
+ .1اوًال نقوم بانشاء ملف جديد ونقوم بنسخ مساره
+مسار الملف المراد مراقبته
+/home/kali/abdul
+ .2
+>syscheck< والبحث عن/var/ossec/etc/ossec.confثاني ًا نقوم الدخول الهاذا المسار
+sudo nano /var/ossec/etc/ossec.conf
+ .3
+syscheck ونكتب هاذا الكود تحت ال
+<directories check_all="yes" report_changes="yes" 
+realtime="yes">/home/kali/abdul</directories>
+ .4
+: لتطبيق تغييرات التكوينWazuh أعد تشغيل وكيل
+sudo systemctl restart wazuh-agent
+
+
+===== PAGE 9 =====
+wazuh و الن انشا ملف او احذف ملف من المجلد المراقب وسوف ترسل الحداث لل
+file integrity monitoring  داخل المشين حقنا داخل قسمwazuh انشائنا ملف نصي و الن نذهب ال
+Events داخل ال
+2 endpoint Windows
+الدليلC:\Users\Administrator\Desktop   لمراقبة تغييرات نظام الملفات فيWazuh اتبع الخطوات التالية لتكوين وكيل
+. سطح المكتب او اي ملف كان
+C:\Program Files (x86)\ossec-agent\ossec.confنفتح هاذا الملف
+C:\Users\Lenovo\Desktop\abdul اوًال ننشاء ملف معين في سطح المكتب
+ بصالحيت المسئول ونكتب هاذا المرpowershell ونفتح ال
+ .1 ال ُمراقبة. أضف الدالئل المراد مراقبتها داخل الكتلة. في هذه الحالة، س ُتهيئWindows ع ّدل ملف التكوين على نقطة نهاية
+تدقيق بيانات  لمراقبة الدليل . للحصول على معلومات إضافية حول المستخدم والعملية اللذين أجريا التغييرات، ف ّعلWazuh
+ المستخدم
+notepad "C:\Program Files (x86)\ossec-agent\ossec.conf" 
+
+
+===== PAGE 10 =====
+>syscheck< ومن ثماء نقوم ب البحث داخل النوته الي انتتحت او النص عن
+ونضيف تحته هذا المر
+.الكتلة>directories<  يمكنك أي ًضا ضبط أي مسار من اختيارك في
+<directories check_all="yes" report_changes="yes" 
+realtime="yes">C:\Users\Lenovo\Desktop\abdul</directories>
+ .2
+: بصالحيات المسؤول لتطبيق التغييراتPowerShell  باستخدامWazuh أعد تشغيل وكيل
+Restart-Service -Name wazuh
+
+
+===== PAGE 11 =====
+بعد اعاده التشغيل انشاء ملف او احذف ملف من المجلد الي بتراقبه
+wazuh وذهب ورشوف
+اختبر اإلعدادات
+عرض التنبيهات بشكل مرئي
+مراقبة سالمة الملفات وأضف عوامل التصفية في . للقيام بذلك، انتقل إلى وحدةWazuh يمكنك عرض بيانات التنبيهات في لوحة تحكم
+:شريط البحث لالستعالم عن التنبيهات
+3.Configure wazuh To Integrate With Virustotal and
+active response deletion.
+VirusTotal الكشف عن البرامج الضارة وإزالتها باستخدام التكامل مع
+.VirusTotal  لالتصال بواجهات برمجة التطبيقات الخارجية وأدوات التنبيه مثل
+التكامل  وحدةWazuh يستخدم
+ لمراقبة التغييرات في مجلد معين، وواجهة برمجةWazuh ) فيFIM( مراقبة سالمة الملفات في هذه الحالة، ستستخدم وحدة
+ لتشغيل برنامج نصي لالستجابة الفورية وإزالةWazuh  لفحص الملفات الموجودة فيه. بعد ذلك، قم بتهيئةVirusTotal تطبيقات
+.Windows وUbuntuوkali linux  على أنها ضارة. وقد اختبرنا هذه الحالة على أنظمةVirusTotal الملفات التي يكتشفها
+ .1
+.ٍ ثوا5 أنشئ مل ًفا نص ًيا في الدليل المراد مراقبته ثم انتظر لمدة
+ .2
+.ٍ ثوا5 أضف المحتوى إلى ملف النص واحفظه. انتظر
+ .3
+.احذف ملف النص من الدليل الذي تتم مراقبته
+ rule.id: is one of 550,553,554 - أوبونتو
+ rule.id: is one of 550,553,554 - ويندوز
+
+
+===== PAGE 12 =====
+.VirusTotal API  علىWazuh  في حالة الستخدام هذه لمصادقةVirusTotal API مفتاح أنت بحاجة إلى
+. في الوثائقVirusTotal تكامل للحصول على مزيد من المعلومات حول هذا التكامل، راجع قسم
+بنية تحتية
+نقطة النهاية
+وصف
+ أوبونتو وكالي
+لينكس
+  بتشغيل برنامجWazuh هذه هي نقطة نهاية نظام لينكس التي تقوم من خاللها بتنزيل ملف ضار. يقوم برنامج
+. على أنه ضارVirusTotal نصي لالستجابة الفورية إلزالة الملف بمجرد أن يصنفه
+11 ويندوز  بتشغيل برنامجWazuh هذه هي نقطة نهاية نظام ويندوز التي تقوم من خاللها بتنزيل ملف ضار. يقوم برنامج
+. على أنه ضارVirusTotal نصي لالستجابة الفورية إلزالة الملف بمجرد أن يصنفه
+## Configuration for the Ubuntu or kali linux endpoint
+.قم بتهيئة بيئتك كما يلي الختبار حالة الستخدام لنقطة نهاية أوبونتو. هذه الخطوات تعمل مع توزيعات لينكس األخرى أي ًضا
+Ubuntu or kali linux endpoint
+. تتضمن هذه الخطواتUbuntu دليل نقطة نهايةroot/   لمراقبة التغييرات شبه اآلنية فيWazuh اتبع الخطوات التالية لضبط
+.أي ًضا تثبيت الحزم الالزمة وإنشاء برنامج الستجابة النشطة الذي يزيل الملفات الضارة
+ .1. تأكدWazuh ``/var/ossec/etc/ossec.conf الخيار في ملف إعدادات وكيل>syscheck<  ابحث عن هذا
+. من مراقبة تغييرات الدليلWazuh FIM . هذا ُيم ّكنno  ضبطه على القيمة المطلوبة>disabled<  من
+sudo nano /var/ossec/etc/ossec.conf  
+ .2الكتلة لضبط دليل ليتم مراقبته في الوقت الفعلي تقري ًبا. في هذه الحالة، أنت تراقب>syscheck<  أضف مدخًال داخل
+ الن الروت في الكثير من العملياتhome/kali/SOCfile/ ًالتالي: ونحن سوف نقوم بمراقبه ملف معين مثroot/  الدليل
+<directories realtime="yes">/home/kali/SOCfile</directories>
+
+
+===== PAGE 13 =====
+. من نص الستجابة النشطJSON أداة تقوم بمعالجة مدخالتjq  . قم بتثبيت3
+sudo apt update
+sudo apt -y install jq
+ .4برنامج الستجابة النشطة إلزالة الملفات الضارةvar/ossec/active-response/bin/remove-threat.sh/  أنشئ
+:من نقطة النهاية
+sudo nano /var/ossec/active-response/bin/remove-threat.sh
+#!/bin/bash
+LOCAL=`dirname $0`;
+cd $LOCAL
+cd ../
+PWD=`pwd`
+read INPUT_JSON
+FILENAME=$(echo $INPUT_JSON | jq -r .parameters.alert.data.virustotal.source.file)
+COMMAND=$(echo $INPUT_JSON | jq -r .command)
+LOG_FILE="${PWD}/../logs/active-responses.log"
+#------------------------ Analyze command -------------------------#
+if [ ${COMMAND} = "add" ]
+then
+ # Send control message to execd
+ printf '{"version":1,"origin":{"name":"remove-threat","module":"active-
+response"},"command":"check_keys", "parameters":{"keys":[]}}\n'
+ read RESPONSE
+ COMMAND2=$(echo $RESPONSE | jq -r .command)
+ if [ ${COMMAND2} != "continue" ]
+ then
+  echo "`date '+%Y/%m/%d %H:%M:%S'` $0: $INPUT_JSON Remove threat active response 
+
+
+===== PAGE 14 =====
+Wazuh server
+ لتلقي تنبيهات بشأن التغييرات في دليل نقطة النهاية وتفعيل التكامل معWazuh Server قم بتنفيذ الخطوات التالية على
+.. كما ُتف ّعل هذه الخطوات برنامج الستجابة الفورية عند اكتشاف أي ملف مشبوهVirusTotal
+aborted" >> ${LOG_FILE}
+  exit 0;
+ fi
+fi
+# Removing file
+rm -f $FILENAME
+if [ $? -eq 0 ]; then
+ echo "`date '+%Y/%m/%d %H:%M:%S'` $0: $INPUT_JSON Successfully removed threat" >> 
+${LOG_FILE}
+else
+ echo "`date '+%Y/%m/%d %H:%M:%S'` $0: $INPUT_JSON Error removing threat" >> 
+${LOG_FILE}
+fi
+exit 0;
+ .5
+:ملكية الملف واألذوناتvar/ossec/active-response/bin/remove-threat.sh/  قم بتغيير
+sudo chmod 750 /var/ossec/active-response/bin/remove-threat.sh
+sudo chown root:wazuh /var/ossec/active-response/bin/remove-threat.sh   
+ .6
+: لتطبيق التغييراتWazuh أعد تشغيل برنامج
+sudo systemctl restart wazuh-agent
+ .1. ُتنبه هذهWazuh الملف الموجود على خادمvar/ossec/etc/rules/local_rules.xml/  أضف القواعد التالية إلى
+: والكن سوف نراقب علىFIM الدليل والتي يتم اكتشافها بواسطة عمليات فحصroot/  القواعد إلى التغييرات التي تطرأ على
+مستواء ملف محدد
+
+
+===== PAGE 15 =====
+sudo nano var/ossec/etc/rules/local_rules.xml/
+<group name="syscheck,pci_dss_11.5,nist_800_53_SI.7,">
+    <!-- Rules for Linux systems -->
+    <rule id="100200" level="7">
+        <if_sid>550</if_sid>
+        <field name="file">/home/kali/SOCfile</field>
+        <description>File modified in /home/kali/SOCfile.</description>
+    </rule>
+    <rule id="100201" level="7">
+        <if_sid>554</if_sid>
+        <field name="file">/home/kali/SOCfile</field>
+        <description>File added to /home/kali/SOCfile.</description>
+    </rule>
+</group>
+ .2
+.VirusTotal  لتفعيل التكامل معWazuh ملف خادمvar/ossec/etc/ossec.conf/  أضف اإلعدادات التالية إلى
+ الخاص بك . يتيح ذلك تشغيل استعالم>
+VirusTotal API key.<YOUR_VIRUS_TOTAL_API_KEY  استبدل
+100201``
+100200 :  عند تفعيل أي من القواعد التاليةVirusTotal
+sudo nano /var/ossec/etc/ossec.conf
+<ossec_config>
+  <integration>
+    <name>virustotal</name>
+    <api_key><YOUR_VIRUS_TOTAL_API_KEY></api_key> <!-- Replace with your VirusTotal 
+API key -->
+    <rule_id>100200,100201</rule_id>
+    <alert_format>json</alert_format>
+  </integration>
+
+
+===== PAGE 16 =====
+</ossec_config>
+-------------------ًمث هاكذا---------------------
+<ossec_config>
+  <integration>
+    <name>virustotal</name>
+    <api_key>1234567890abcdef</api_key>
+    <rule_id>100200,100201</rule_id>
+    <alert_format>json</alert_format>
+  </integration>
+</ossec_config>
+ملحوظة
+ المجانية أربعة طلبات في الدقيقة. إذا كنت تمتلك مفتاح واجهة برمجةVirusTotal ُيحدد معدل طلبات واجهة برمجة تطبيقات
+ المميز، والذي يسمح بعدد أكبر من الستعالمات، فيمكنك إضافة المزيد من القواعد إلى جانب هاتينVirusTotal تطبيقات
+. لمراقبة المزيد من المجلداتWazuh القاعدتين. كما يمكنك أي ًضا تهيئة
+ .3. هذا ُيف ّعل خاصية الستجابة النشطةWazuh ملف خادمvar/ossec/etc/ossec.conf/  أضف الكتل التالية إلى
+: إلى ملف على أنه ضارVirusTotal البرنامج النصي عندما ُيشيرremove-threat.sh  و ُيش ّغل
+sudo nano /var/ossec/etc/ossec.conf
+<ossec_config>
+  <command>
+    <name>remove-threat</name>
+    <executable>remove-threat.sh</executable>
+    <timeout_allowed>no</timeout_allowed>
+  </command>
+  <active-response>
+    <disabled>no</disabled>
+    <command>remove-threat</command>
+    <location>local</location>
+    <rules_id>87105</rules_id>
+
+
+===== PAGE 17 =====
+  </active-response>
+</ossec_config>
+ .4 للتنبيه بشأن نتائجWazuh ملف خادمvar/ossec/etc/rules/local_rules.xml/  أضف القواعد التالية إلى
+:الستجابة النشطة
+sudo nano /var/ossec/etc/rules/local_rules.xml/
+<group name="virustotal,">
+  <rule id="100092" level="12">
+    <if_sid>657</if_sid>
+    <match>Successfully removed threat</match>
+    <description>$(parameters.program) removed threat located at 
+$(parameters.alert.data.virustotal.source.file)</description>
+  </rule>
+  <rule id="100093" level="12">
+    <if_sid>657</if_sid>
+    <match>Error removing threat</match>
+    <description>Error removing threat located at 
+$(parameters.alert.data.virustotal.source.file)</description>
+  </rule>
+</group>
+
+
+===== PAGE 18 =====
+Attack emulation (محاكاة الهجوم)
+اذا لم تنزل الملف فانشاء الملف انت
+wazuhهاذا هو الفنتات الي وصلت لل
+ .5
+: لتطبيق تغييرات التكوينWazuh أعد تشغيل مدير
+sudo systemctl restart wazuh-manager
+ .1
+:Ubuntu or kali linux الدليل الموجود على نقطة نهايةroot/   إلىEICAR قم بتنزيل ملف اختبار
+sudo curl -Lo /root/eicar.com https://secure.eicar.org/eicar.com && sudo ls -lah 
+/root/eicar.com
+sudo curl -Lo /home/kali/SOCfile/eicar.txt https://secure.eicar.org/eicar.com && 
+sudo ls -lah /home/kali/SOCfile/
+printf '%s' 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' 
+> /home/kali/SOCfile/eicar.com
+
+
+===== PAGE 19 =====
+## Visualize the alerts (عرض التنبيهات بشكل مرئي)
+البحث عن التهديدات وأضف عوامل التصفية في . للقيام بذلك، انتقل إلى وحدةWazuh يمكنك عرض بيانات التنبيهات في لوحة تحكم
+.شريط البحث لالستعالم عن التنبيهات
+## Configuration for the Windows endpoint
+### Windows endpoint
+. تتضمن هذه الخطوات أي ًضاDownloads/   لمراقبة التغييرات في الدليل بشكل شبه فوريWazuh اتبع الخطوات التالية لضبط
+.تثبيت الحزم الالزمة وإنشاء برنامج الستجابة الفورية إلزالة الملفات الضارة
+Linux -  rule.id: is one of 553,100092,87105,100201
+ .1 من مراقبةWazuh FIM  . تأكد من ضبطها على . هذا ُيم ّكن وحدةWazuh الكتلة في ملف وكيل>syscheck<  ابحث عن
+C:\Program Files (x86)\ossec-agent\ossec.conf``<disabled>``no .تغييرات الدليل
+ .2
+Wazuh الكتلة لضبط دليل ليتم مراقبته في الوقت الفعلي تقري ًبا. في هذه الحالة، تقوم بضبط>syscheck<  أضف مدخًال داخل
+.المتغير باسم المستخدم المناسب>USER_NAME<  . استبدلC:\Users\<USER_NAME>\Downloads  لمراقبة الدليل
+<directories realtime="yes">C:\Users\<USER_NAME>\Downloads</directories>  
+ .3
+. موقع بايثون الرسمي قم بتنزيل برنامج تثبيت بايثون القابل للتنفيذ من
+ .4
+:قم بتشغيل برنامج تثبيت بايثون بعد تنزيله. تأكد من تحديد المربعات التالية
+Install launcher for all users
+Add Python 3.X to PATH (هذا يضع المترجم في مسار التنفيذ)
+ .5
+:PyInstaller لتثبيتpip   كمسؤول واستخدمهPowerShell بمجرد اكتمال عملية تثبيت بايثون، افتح موجه أوامر
+pip install pyinstaller
+pyinstaller --version
+
+
+===== PAGE 20 =====
+ الخاص ب الستجابة النشطة إلى تطبيق قابل للتنفيذ يمكن تشغيله على نقطةPython  لتحويل نصPyinstaller تستخدم هنا برنامج
+.Windows نهاية
+ .6
+:Windows إلزالة ملف من نقطة نهايةremove-threat.py  أنشئ برنامج نصي لالستجابة النشطة
+تحذير
+.). راجعه وتحقق من صحته للتأكد من أنه يلبي متطلبات التشغيل واألمان في بيئتكPoC( هذا النص البرمجي هو نموذج أولي
+# Copyright (C) 2015-2025, Wazuh Inc.
+# All rights reserved.
+import os
+import sys
+import json
+import datetime
+import stat
+import tempfile
+import pathlib
+if os.name == 'nt':
+    LOG_FILE = "C:\\Program Files (x86)\\ossec-agent\\active-response\\active-
+responses.log"
+else:
+    LOG_FILE = "/var/ossec/logs/active-responses.log"
+ADD_COMMAND = 0
+DELETE_COMMAND = 1
+CONTINUE_COMMAND = 2
+ABORT_COMMAND = 3
+OS_SUCCESS = 0
+OS_INVALID = -1
+class message:
+    def __init__(self):
+        self.alert = ""
+        self.command = 0
+def write_debug_file(ar_name, msg):
+    with open(LOG_FILE, mode="a") as log_file:
+        log_file.write(str(datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')) + 
+" " + ar_name + ": " + msg +"\n")
+
+
+===== PAGE 21 =====
+def setup_and_check_message(argv):
+    input_str = ""
+    for line in sys.stdin:
+        input_str = line
+        break
+    msg_obj = message()
+    try:
+        data = json.loads(input_str)
+    except ValueError:
+        write_debug_file(argv[0], 'Decoding JSON has failed, invalid input format')
+        msg_obj.command = OS_INVALID
+        return msg_obj
+    msg_obj.alert = data
+    command = data.get("command")
+    if command == "add":
+        msg_obj.command = ADD_COMMAND
+    elif command == "delete":
+        msg_obj.command = DELETE_COMMAND
+    else:
+        msg_obj.command = OS_INVALID
+        write_debug_file(argv[0], 'Not valid command: ' + command)
+    return msg_obj
+def send_keys_and_check_message(argv, keys):
+    keys_msg = json.dumps({"version": 1,"origin":{"name": argv[0],"module":"active-
+response"},"command":"check_keys","parameters":{"keys":keys}})
+    write_debug_file(argv[0], keys_msg)
+    print(keys_msg)
+    sys.stdout.flush()
+    input_str = ""
+    while True:
+        line = sys.stdin.readline()
+        if line:
+            input_str = line
+            break
+    try:
+        data = json.loads(input_str)
+    except ValueError:
+
+
+===== PAGE 22 =====
+        write_debug_file(argv[0], 'Decoding JSON has failed, invalid input format')
+        return OS_INVALID
+    action = data.get("command")
+    if action == "continue":
+        return CONTINUE_COMMAND
+    elif action == "abort":
+        return ABORT_COMMAND
+    else:
+        write_debug_file(argv[0], "Invalid value of 'command'")
+        return OS_INVALID
+def secure_delete_file(filepath_str, ar_name):
+    filepath = pathlib.Path(filepath_str)
+    # Reject NTFS alternate data streams
+    if '::' in filepath_str:
+        raise Exception(f"Refusing to delete ADS or NTFS stream: {filepath_str}")
+    # Reject symbolic links and reparse points
+    if os.path.islink(filepath):
+        raise Exception(f"Refusing to delete symbolic link: {filepath}")
+    attrs = os.lstat(filepath).st_file_attributes
+    if attrs & stat.FILE_ATTRIBUTE_REPARSE_POINT:
+        raise Exception(f"Refusing to delete reparse point: {filepath}")
+    resolved_filepath = filepath.resolve()
+    # Ensure it's a regular file
+    if not resolved_filepath.is_file():
+        raise Exception(f"Target is not a regular file: {resolved_filepath}")
+  # Perform deletion
+    os.remove(resolved_filepath)
+def main(argv):
+    write_debug_file(argv[0], "Started")
+    msg = setup_and_check_message(argv)
+    if msg.command < 0:
+        sys.exit(OS_INVALID)
+    if msg.command == ADD_COMMAND:
+        alert = msg.alert["parameters"]["alert"]
+        keys = [alert["rule"]["id"]]
+
+
+===== PAGE 23 =====
+. remove-threat.exe  اإلنشاءpyinstaller  انتبه إلى المسار الذي تم فيه
+        action = send_keys_and_check_message(argv, keys)
+        if action != CONTINUE_COMMAND:
+            if action == ABORT_COMMAND:
+                write_debug_file(argv[0], "Aborted")
+                sys.exit(OS_SUCCESS)
+            else:
+                write_debug_file(argv[0], "Invalid command")
+                sys.exit(OS_INVALID)
+        try:
+            file_path = alert["data"]["virustotal"]["source"]["file"]
+            if os.path.exists(file_path):
+                secure_delete_file(file_path, argv[0])
+                write_debug_file(argv[0], json.dumps(msg.alert) + " Successfully 
+removed threat")
+            else:
+                write_debug_file(argv[0], f"File does not exist: {file_path}")
+        except OSError as error:
+            write_debug_file(argv[0], json.dumps(msg.alert) + "Error removing 
+threat")
+        except Exception as e:
+            write_debug_file(argv[0], f"{json.dumps(msg.alert)}: Error removing 
+threat: {str(e)}")
+    else:
+        write_debug_file(argv[0], "Invalid command")
+    write_debug_file(argv[0], "Ended")
+    sys.exit(OS_SUCCESS)
+if __name__ == "__main__":
+    main(sys.argv)
+ .7إلى تطبيق تنفيذي لنظام ويندوز. ش ّغل أمرremove-threat.py  ح ّو ل سكربت بايثون الخاص ب الستجابة النشطة
+: التالي كمسؤول إلنشاء الملف التنفيذيPowerShell
+pyinstaller -F \path_to_remove-threat.py
+ .8
+C:\Program Files (x86)\ossec-agent\active- .إلى الدليلremove-threat.exe  انقل الملف القابل للتنفيذ
+response\bin
+ .9
+: التالي كمسؤولPowerShell  لتطبيق التغييرات. ش ّغل أمرWazuh أعد تشغيل برنامج
+
+
+===== PAGE 24 =====
+### Wazuh server
+. ُتم ّكن هذه الخطوات أي ًضا من تشغيل برنامج الستجابةVirusTotal  لتكوين تكاملWazuh قم بتنفيذ الخطوات التالية على خادم
+.الفورية عند اكتشاف أي ملف مشبوه
+Restart-Service -Name wazuh
+ .1 لتفعيل التكامل معWazuh الملف الموجود على خادمvar/ossec/etc/ossec.conf/  أضف اإلعدادات التالية إلى
+.  الخاص بك>
+VirusTotal<YOUR_VIRUS_TOTAL_API_KEY بمفتاح واجهة برمجة تطبيقات . استبدلVirusTotal
+FIM .
+syscheck  عند تفعيل أي من القواعد في مجموعةVirusTotal يتيح ذلك تشغيل استعالم
+<ossec_config>
+  <integration>
+    <name>virustotal</name>
+    <api_key><YOUR_VIRUS_TOTAL_API_KEY></api_key> <!-- Replace with your VirusTotal 
+API key -->
+    <group>syscheck</group>
+    <alert_format>json</alert_format>
+  </integration>
+</ossec_config>
+ملحوظة
+ المجانية أربعة طلبات في الدقيقة. إذا كنت تمتلك مفتاح واجهة برمجةVirusTotal ُيحدد معدل طلبات واجهة برمجة تطبيقات
+ المميز، والذي يسمح بتردد استعالمات أعلى، فيمكنك إضافة قواعد أخرى إلى جانب هاتين القاعدتين. كماVirusTotal تطبيقات
+. C:\Users\<USER_NAME>\Downloads   لمراقبة المزيد من المجلداتWazuh يمكنك تهيئة
+ .2. هذا ُيف ّعل خاصية الستجابة النشطةWazuh ملف خادمvar/ossec/etc/ossec.conf/  أضف الكتل التالية إلى
+: نتائج إيجابية للتهديداتVirusTotal الملف التنفيذي عندما ُيظهر استعالمremove-threat.exe  و ُيش ّغل
+<ossec_config>
+  <command>
+    <name>remove-threat</name>
+    <executable>remove-threat.exe</executable>
+    <timeout_allowed>no</timeout_allowed>
+  </command>
+  <active-response>
+    <disabled>no</disabled>
+    <command>remove-threat</command>
+    <location>local</location>
+    <rules_id>87105</rules_id>
+
+
+===== PAGE 25 =====
+## Attack emulation (محاكاة الهجوم)
+. وإصدار تنبيه. باإلضافة إلى ذلك، يقوم برنامج الستجابة النشط بإزالة الملف تلقائ ًياVirusTotal يؤدي هذا إلى استعالم من موقع
+  </active-response>
+</ossec_config> 
+ .3 للتنبيه بشأن نتائجWazuh ملف خادمvar/ossec/etc/rules/local_rules.xml/  أضف القواعد التالية إلى
+.الستجابة النشطة
+<group name="virustotal,">
+  <rule id="100092" level="12">
+      <if_sid>657</if_sid>
+      <match>Successfully removed threat</match>
+      <description>$(parameters.program) removed threat located at 
+$(parameters.alert.data.virustotal.source.file)</description>
+  </rule>
+  <rule id="100093" level="12">
+    <if_sid>657</if_sid>
+    <match>Error removing threat</match>
+    <description>Error removing threat located at 
+$(parameters.alert.data.virustotal.source.file)</description>
+  </rule>
+</group>
+ .4
+: لتطبيق تغييرات التكوينWazuh أعد تشغيل مدير
+sudo systemctl restart wazuh-manager
+ .1 مؤق ًتا في أمانMicrosoft Defender اتبع الخطوات التالية إليقاف تشغيل الحماية من الفيروسات في الوقت الفعلي لبرنامج
+:Windows
+ .1
+Windows Security .ابدأ واكتب للبحث عن هذا التطبيق انقر على قائمة
+ .2إعدادات الحماية من الحماية من الفيروسات والتهديدات ، وضمن  من النتائج، وانتقل إلىWindows تطبيق أمان حدد
+. إدارة اإلعدادات  حدد،الفيروسات والتهديدات
+ .3
+. الوقت الفعلي الحماية في قم بإيقاف تشغيل
+ .2الدليل الموجود على نقطة نهايةC:\Users\<USER_NAME>\Downloads   إلىEICAR اختبار قم بتنزيل ملف
+.Windows
+Invoke-WebRequest -Uri https://secure.eicar.org/eicar.com.txt -OutFile eicar.txt
+cp .\eicar.txt C:\Users\<USER_NAME>\Downloads
+
+
+===== PAGE 26 =====
+Visualize the alerts (عرض التنبيهات بشكل مرئي)
+البحث عن التهديدات وأضف عوامل التصفية في . للقيام بذلك، انتقل إلى وحدةWazuh يمكنك عرض بيانات التنبيهات في لوحة تحكم
+.شريط البحث لالستعالم عن التنبيهات
+4 Integrate Wazuh With Suricata IDS.# Network IDS
+integration
+Network IDS integration
+) لتعزيز اكتشاف التهديدات من خالل مراقبة وتحليل حركة مرورNIDS(  مع نظام كشف التسلل القائم على الشبكةWazuh يتكامل
+.الشبكة
+ أن توفر رؤى إضافية حول أمان شبكتك من خاللSuricata . يمكن لـWazuh  معSuricata في هذه الحالة، نوضح كيفية دمج
+.قدراتها على فحص حركة مرور الشبكة
+Infrastructure
+rule.id: is one of 554,100092,553,87105 - ويندوز
+دليل إثبات المفهوم
+تكامل نظام كشف التسلل الشبكي
+
+
+===== PAGE 27 =====
+ نقطة
+النهاية
+وصف
+kali 
+linux
+  بمراقبةWazuh  عليها. في هذه الحالة، يقوم برنامجSuricata هذه هي نقطة النهاية التي تقوم بتثبيت برنامج
+.وتحليل حركة مرور الشبكة التي يتم إنشاؤها على نقطة النهاية هذه
+Configuration
+. او علىWazuh  وإرسال السجالت التي تم إنشاؤها إلى خادمUbuntu  على نقطة نهايةSuricata اتبع الخطوات التالية لتكوين
+kali linux
+في السطار الجديد تكتب هاذا
+ .1، وقد6.0.8  لقد اختبرنا هذه العملية باستخدام اإلصدارkali linux  او علىUbuntu  على جهازSuricata قم بتثبيت برنامج
+.تستغرق بعض الوقت
+sudo add-apt-repository ppa:oisf/suricata-stable
+sudo apt-get update
+sudo apt-get install suricata -y
+ .2
+:Emerging Threats Suricata قم بتنزيل واستخراج مجموعة قواعد
+cd /tmp/ && curl -LO https://rules.emergingthreats.net/open/suricata-
+6.0.8/emerging.rules.tar.gz
+sudo tar -xvzf emerging.rules.tar.gz && sudo mkdir /etc/suricata/rules && sudo mv 
+rules/*.rules /etc/suricata/rules/
+sudo find /etc/suricata/rules -name "*.rules" -exec chmod 777 {} \;  
+cd /tmp/ && \
+curl -LO https://rules.emergingthreats.net/open/suricata-
+8.0.6/emerging.rules.tar.gz && \
+tar -xvzf emerging.rules.tar.gz && \
+sudo mkdir -p /var/lib/suricata/rules && \
+sudo mv rules/*.rules /var/lib/suricata/rules/ && \
+sudo chmod 644 /var/lib/suricata/rules/*.rules
+
+
+===== PAGE 28 =====
+او هاذا المر لتنزيل القواعد
+sudo suricata-update
+sudo suricata -T -c /etc/suricata/suricata.yaml
+ .3
+:الملف وقم بتعيين المتغيرات التاليةetc/suricata/suricata.yaml/   فيSuricata قم بتعديل إعدادات
+sudo nano /etc/suricata/suricata.yaml 
+# سوركاتا ال عليه شغلت الي الكالي او البنتو حق بي اي ال حط 
+HOME_NET: "<UBUNTU_IP>"
+EXTERNAL_NET: "any"
+default-rule-path: /etc/suricata/rules
+rule-files:
+- "*.rules"
+# Global stats configuration
+stats:
+enabled: yes
+# Linux high speed capture support
+af-packet:
+  - interface: eth0
+
+
+===== PAGE 29 =====
+ حق الجهاز ونراقبهIP هانا ضع ايبي الشبكه وهو عيراقب الشبكه كامل والكننا سوف نضع
+rules  الي عنعطيها يطبق ايrules تفعيل الداه تقبل
+التاكد من حالت الداه لتفعيلهعا
+التاكد من منفذ الشبكه
+interfaceيمثل هذا واجهة الشبكة التي ترغب في مراقبتها. استبدل القيمة باسم واجهة نقطة نهاية أوبونتو. على سبيل
+المثال،  enp0s3 .
+ifconfig 
+Output
+​
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST> mtu 1500
+inet 10.0.2.15 netmask 255.255.255.0 broadcast 10.0.2.255
+inet6 fe80::9ba2:9de3:57ad:64e5 prefixlen 64 scopeid 0x20
+ether 08:00:27:14:65:bd txqueuelen 1000 (Ethernet)
+RX packets 6704315 bytes 1268472541 (1.1 GiB)
+RX errors 0 dropped 0 overruns 0 frame 0
+TX packets 4590192 bytes 569730548 (543.3 MiB)
+TX errors 0 dropped 0 overruns 0 carrier 0 collisions 0
+
+
+===== PAGE 30 =====
+وتاكت ان الداه شغاله
+Attack emulation
+ .4
+:Suricata أعد تشغيل خدمة
+sudo systemctl restart suricata  
+sudo systemctl status suricata
+ .5 بقراءة ملفWazuh . سيسمح هذا لوكيلWazuh ملف وكيل/var/ossec/etc/ossec.conf  أضف التكوين التالي إلى
+:Suricata سجالت
+sudo nano /var/ossec/etc/ossec.conf
+<ossec_config>
+  <localfile>
+    <log_format>json</log_format>
+    <location>/var/log/suricata/eve.json</location>
+  </localfile>
+</ossec_config>
+ .6
+: لتطبيق التغييراتWazuh أعد تشغيل برنامج
+   sudo systemctl restart wazuh-agent   
+
+
+===== PAGE 31 =====
+ وإنشاء تنبيهات ذات صلةWazuh لوحة معلوماتvar/log/suricata/eve.json/   تلقائ ًيا بتحليل البيانات منWazuh يقوم
+.عليها
+:Wazuh  من خادمUbuntu  الخاص بنقطة نهايةIP ) بعنوانping( قم بإجراء اختبار اتصال
+Visualize the alerts
+البحث عن التهديدات وأضف عوامل التصفية في . للقيام بذلك، انتقل إلى وحدةWazuh يمكنك عرض بيانات التنبيهات في لوحة تحكم
+.شريط البحث لالستعالم عن التنبيهات
+Troubleshooting
+var/log/suricata/suricata.log/  - الموقع : جذع شجرة سوريكاتا
+الحل : لحل هذه المشكلة، تحقق من اسم واجهة الشبكة الخاصة بك وقم بتكوينها وف ًقا لذلك
+. etc/suricata/suricata.yaml/  الملفاتetc/sysconfig/suricata/  في
+ping -c 20 "<UBUNTU_IP>"
+ping -c 20 192.168.100.102
+rule.groups:suricata
+: سجل األخطاء
+16/9/2022 -- 12:32:16 - <Notice> - all 2 packet processing threads, 4 management 
+threads initialized, engine started.
+16/9/2022 -- 12:32:16 - <Error> - [ERRCODE: SC_ERR_AFP_CREATE(190)] - Unable to 
+find iface eth0: No such device
+16/9/2022 -- 12:32:16 - <Error> - [ERRCODE: SC_ERR_AFP_CREATE(190)] - Couldn't init 
+AF_PACKET socket, fatal error
+16/9/2022 -- 12:32:16 - <Error> - [ERRCODE: SC_ERR_FATAL(171)] - thread W#01-eth0 
+failed
+
+
+===== PAGE 32 =====
+# 5 Monitoring execution of malicious commands
+Auditd هي أداة تدقيق أصلية ألنظمة لينكس. ُتستخدم لتسجيل اإلجراءات والتغييرات في نقطة نهاية لينكس.
+ لتسجيل جميع األوامر التي ينفذها مستخدم معين. يشمل ذلك األوامر التيUbuntu  على جهازAuditd في هذه الحالة، تقوم بتهيئة
+ مخصصة للتنبيه بشأن األوامرWazuh وضع المستخدم الجذر أو بعد تغييره إليه. كما تقوم بتهيئة قاعدةsudo  ينفذها المستخدم في
+.المشبوهة
+. للحصول على صورة أشمل عن طرق الستفادة منه""مراقبة استدعاءات النظام ُينصح بقراءة قسم
+## Infrastructure
+نقطة النهاية
+وصف
+ أوبونتو
+22.04
+  لمراقبة تنفيذ األوامر الضارة. ثم، استخدم خاصية البحث في قائمةAuditd في هذه النقطة الطرفية، يمكنك تهيئة
+. إلنشاء قائمة باألوامر الضارة المحتملة التي يمكن تشغيلها عليهاWazuh CDB
+## Configuration
+Ubuntu or Kali linux endpoint
+ وإنشاء قواعد التدقيق الالزمة لالستعالم عن جميع األوامر التي يتم تشغيلها بواسطة مستخدمAuditd قم بتنفيذ الخطوات التالية لتثبيت
+.ذي امتيازات
+  
+دليل إثبات المفهوم
+مراقبة تنفيذ األوامر الخبيثة
+ .1
+: وتشغيله وتمكينه إذا لم يكن موجو ًدا على نقطة النهايةAuditd قم بتثبيت برنامج
+sudo apt -y install auditd
+sudo systemctl start auditd
+sudo systemctl enable auditd
+ .2
+:الملفetc/audit/audit.rules/  بصفتك المستخدم الجذر، قم بتنفيذ األوامر التالية إلضافة قواعد التدقيق إلى
+echo "-a exit,always -F auid=1000 -F egid!=994 -F auid!=-1 -F arch=b32 -S execve -k 
+audit-wazuh-c" >> /etc/audit/audit.rules
+
+
+===== PAGE 33 =====
+Wazuh server
+. للبرامج الضارة وقواعد للكشف عن تنفيذ البرامج الموجودة في القائمةCDB قم بتنفيذ الخطوات التالية إلنشاء قائمة
+echo "-a exit,always -F auid=1000 -F egid!=994 -F auid!=-1 -F arch=b64 -S execve -k 
+audit-wazuh-c" >> /etc/audit/audit.rules  
+ .3
+:أعد تحميل القواعد وتأكد من تطبيقها
+`
+sudo auditctl -R /etc/audit/audit.rules
+sudo auditctl -l
+Output™
+-a always,exit -F arch=b32 -S execve -F auid=1000 -F egid!=994 -F auid!=-1 -F key=audit-
+wazuh-c
+-a always,exit -F arch=b64 -S execve -F auid=1000 -F egid!=994 -F auid!=-1 -F key=audit-
+wazuh-c
+ .4 بقراءة ملفWazuh . يسمح هذا لوكيلWazuh ملف وكيلvar/ossec/etc/ossec.conf/  أضف التكوين التالي إلى
+:auditd سجالت
+<localfile>
+  <log_format>audit</log_format>
+  <location>/var/log/audit/audit.log</location>
+</localfile> 
+ .5
+:Wazuh أعد تشغيل وكيل
+sudo systemctl restart wazuh-agent  
+ .1
+. var/ossec/etc/lists/audit-keys/  أل ِق نظرة على أزواج المفاتيح والقيم في ملف البحث
+audit-wazuh-w:write
+audit-wazuh-r:read
+audit-wazuh-a:attribute
+audit-wazuh-x:execute
+audit-wazuh-c:command  
+
+
+===== PAGE 34 =====
+. هذه على مفاتيح وقيم مفصولة بنقطتين رأسيتينCDB تحتوي قائمة
+ملحوظة
+ثنائية. ُتج ّمعkey:value  إما نصية أوkey   في ملفات نصية، والتي يجب أن تكونCDB  الحتفاظ بقوائمWazuh ُيتيح لك
+،. يجب إنشاء هذه القوائم كملفاتWazuh هذه القوائم في تنسيق ثنائي خاص لتسهيل عمليات البحث عالية األداء في قواعد
+ هذهCDB ، ثم تجميعها. بعد ذلك، ُيمكن إنشاء قواعد للبحث عن الحقول ال ُمف ّككة في قوائمWazuh وإضافتها إلى إعدادات
+، var/ossec/etc/lists/audit-keys/  كجزء من معايير المطابقة. على سبيل المثال، باإلضافة إلى الملف النصي
+ لعمليات البحث الفعليةWazuh ملف ثنائي يستخدمهvar/ossec/etc/lists/audit-keys.cdb/  يوجد أي ًضا
+ .2وامأل محتواها بما يلي:او هيه القائمه الي عنحطCDB  /var/ossec/etc/lists/suspicious-programs أنشئ قائمة
+. الوامر فيها
+#====== YELLOW (Recon) ======
+whoami:yellow
+#====== ORANGE (Network/Monitoring) ====== 
+tcpdump:orange 
+#====== RED (High Privilege / Remote / Transfer) ====== 
+sudo:red 
+nc:red
+ncat:yellow
+nc:red
+tcpdump:orange 
+ .3
+:Wazuh  /var/ossec/etc/ossec.conf قسم ملف خادم>ruleset<  أضف القائمة إلى
+<list>etc/lists/suspicious-programs</list> 
+
+
+===== PAGE 35 =====
+Attack emulation
+ .4أنشئ قاعدة ذات خطورة عالية لتفعيلها عند تشغيل برنامج "أحمر". أضف هذه القاعدة الجديدة
+.Wazuh الملف الموجود على خادم/var/ossec/etc/rules/local_rules.xmlإلى
+<group name="audit">
+  <rule id="100210" level="12">
+      <if_sid>80792</if_sid>
+  <list field="audit.command" lookup="match_key_value" 
+check_value="red">etc/lists/suspicious-programs</list>
+    <description>Audit: Highly Suspicious Command executed: $(audit.exe)
+</description>
+      <group>audit_command,</group>
+  </rule>
+</group>
+ .5
+:Wazuh أعد تشغيل مدير
+sudo systemctl restart wazuh-manager
+ .1
+:red "  netcat  " ، قم بتثبيت وتشغيل برنامجUbuntu على جهاز
+
+
+===== PAGE 36 =====
+Visualize the alerts
+البحث عن التهديدات وأضف عوامل التصفية في . للقيام بذلك، انتقل إلى وحدةWazuh يمكنك عرض بيانات التنبيهات في لوحة تحكم
+.شريط البحث لالستعالم عن التنبيهات
+الكشف عن العمليات الخفية
+nc تم المر عرف ان الجهاز شغل اداه او امر ال
+6 configuring wazuh Shellshock attack detection and Sql
+Injection Attack.
+sudo apt -y install netcat
+nc -v
+data.audit.command:nc
+
+
+===== PAGE 37 =====
+Detecting a Shellshock attack
+ من خالل تحليل سجالت خادم الويب ال ُمج ّمعة من نقطة نهاية ُمراقبة. في هذهShellshock  اكتشاف هجومWazuh يستطيع برنامج
+.Shellshock  ومحاكاة هجومUbuntu  على نقطة نهايةApache الحالة، تقوم بتثبيت خادم ويب
+Infrastructure
+نقطة النهاية
+وصف
+22.04 أوبونتو.Apache 2.4.54 نقطة نهاية الضحية التي تشغل خادم ويب
+RHEL 9.0
+. خبيث إلى خادم الويب الخاص بالضحيةHTTP تقوم نقطة نهاية المهاجم هذه بإرسال طلب
+Configuration
+Ubuntu endpoint
+.Wazuh  ومراقبة سجالته باستخدام وكيلApache قم بتنفيذ الخطوات التالية لتثبيت خادم ويب
+ .1
+:Apache قم بتحديث الحزم المحلية وتثبيت خادم الويب
+sudo apt update
+sudo apt install apache2  
+ .2إذا كان جدار الحماية ُمف ّعًال، فقم بتعديله للسماح بالوصول الخارجي إلى منافذ الويب. تخ َّط هذه الخطوة إذا كان جدار الحماية
+.ًُمع ّط
+sudo ufw app list
+sudo ufw allow 'Apache'
+sudo ufw status
+
+
+===== PAGE 38 =====
+Attack emulation
+ .3
+: قيد التشغيلApache تأكد من أن خادم الويب
+sudo systemctl status apache2  
+ .4. سيؤدي ذلك إلى ضبط وكيلWazuh ملف تكوين وكيلvar/ossec/etc/ossec.conf  أضف األسطر التالية إلى
+: الخاص بكApache  لمراقبة سجالت الوصول لخادمWazuh
+<localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/apache2/access.log</location>
+</localfile>
+ .5
+: لتطبيق تغييرات التكوينWazuh أعد تشغيل وكيل
+sudo systemctl restart wazuh-agent
+ .1
+: ونفذ األمر التالي من نقطة نهاية المهاجمUbuntu  الخاص بنظامIP عنوان>WEBSERVER_IP_ADDRESS<  استبدل
+sudo curl -H "User-Agent: () { :; }; /bin/cat /etc/passwd" <WEBSERVER_IP_ADDRESS>  
+
+
+===== PAGE 39 =====
+Visualize the alerts
+البحث عن التهديدات وأضف عوامل التصفية في . للقيام بذلك، انتقل إلى وحدةWazuh يمكنك عرض بيانات التنبيهات في لوحة تحكم
+.شريط البحث لالستعالم عن التنبيهات
+Integrate Wazuh. Siem With YARA.
+Detecting malware using YARA integrationYARA
+YARA . لفحص الملفات المضافة أو المعدلة على نقطة النهاية بح ًثا عن البرامج الضارةWazuh  معYARA يمكنك استخدام تكامل
+.أداة الكتشاف وتصنيف آثار البرامج الضارة
+.Windows  وLinux  الكتشاف البرامج الضارة على نقاط نهايةWazuh  معYARA في حالة الستخدام هذه، نوضح كيفية تكوين
+. في الوثائق"YARA  معWazuh "كيفية دمج ، راجع قسمWazuh لمعرفة المزيد حول هذا التكامل مع
+Infrastructure
+نقطة النهاية
+وصف
+  / ريد هات22.04 أوبونتو
+9.0 لينكس
+  بفحص الملفات الجديدة أو المعدلة كلما أطلقت وحدةYARA تقوم وحدة الستجابة النشطة
+. تنبي ًهاWazuh FIM
+sudo curl -H "User-Agent: () { :; }; /bin/cat /etc/passwd" 192.168.100.102 
+rule.description:Shellshock attack detected
+rule.description:*CVE-   لمراقبة حركة مرور نقاط النهاية، فيمكنك أي ًضا الستعالمSuricata إذا كنت تستخدم برنامج
+ . ذات الصلةSuricata عن تنبيهات*2014-6271
+Shellshock attack detected وهاكذا ظهر معانا
+
+
+===== PAGE 40 =====
+نقطة النهاية
+وصف
+11 ويندوز  بفحص الملفات الجديدة أو المعدلة كلما أطلقت وحدةYARA تقوم وحدة الستجابة النشطة
+. تنبي ًهاWazuh FIM
+Configuration for Linux
+Linux endpoint
+.FIM ، وتكوين وحدات الستجابة النشطة ووحداتYARA قم بتنفيذ الخطوات التالية لتثبيت
+RHEL
+ .1
+:YARA قم بتنزيل وتجميع وتثبيت برنامج
+أوبونتو
+لتوزيعه البنتو او الكالي لينكس
+sudo apt update
+sudo apt install -y make gcc autoconf libtool libssl-dev pkg-config jq
+sudo curl -LO https://github.com/VirusTotal/yara/archive/v4.5.5.tar.gz
+sudo tar -xvzf v4.5.5.tar.gz -C /usr/local/bin/ && rm -f v4.5.5.tar.gz
+cd /usr/local/bin/yara-4.5.5/
+sudo ./bootstrap.sh && sudo ./configure && sudo make && sudo make install && sudo 
+make check
+sudo yum makecache
+sudo yum install epel-release
+sudo yum update
+sudo yum install -y make automake gcc autoconf libtool openssl-devel pkg-config jq
+sudo curl -LO https://github.com/VirusTotal/yara/archive/v4.5.5.tar.gz
+sudo tar -xvzf v4.5.5.tar.gz -C /usr/local/bin/ && rm -f v4.5.5.tar.gz
+cd /usr/local/bin/yara-4.5.5/
+sudo ./bootstrap.sh && sudo ./configure && sudo make && sudo make install && sudo 
+make check  
+ .2
+: يعمل بشكل صحيحYARA اختبر أن برنامج
+
+
+===== PAGE 41 =====
+:إذا ظهرت رسالة الخطأ التالية
+المكتبة الموجودة عاد ًة في المسار المحدد . لحل هذهlibyara  هذا يعني أن برنامج التحميل ال يعثر على
+etc/ld.so.conf/ .المسار إلى ملف إعدادات برنامج التحميلusr/local/lib/  أضفusr/local/lib/  ،المشكلة
+.قم بالعودة إلى المستخدم السابق
+yara
+Output
+​
+Output
+yara: wrong number of arguments
+Usage: yara [OPTION]... [NAMESPACE:]RULES_FILE... FILE | DIR | PID
+Try --help for more options
+/usr/local/bin/yara: error while loading shared libraries: libyara.so.9: cannot 
+open shared object file: No such file or directory. 
+sudo su
+echo "/usr/local/lib" >> /etc/ld.so.conf
+ldconfig 
+ .3
+:YARA قم بتنزيل قواعد الكشف الخاصة بـ
+sudo mkdir -p /tmp/yara/rules
+sudo curl 'https://valhalla.nextron-systems.com/api/v1/get' \
+-H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' \
+-H 'Accept-Language: en-US,en;q=0.5' \
+--compressed \
+-H 'Referer: https://valhalla.nextron-systems.com/' \
+-H 'Content-Type: application/x-www-form-urlencoded' \
+-H 'DNT: 1' -H 'Connection: keep-alive' -H 'Upgrade-Insecure-Requests: 1' \
+--data 
+'demo=demo&apikey=1111111111111111111111111111111111111111111111111111111111111111&
+
+
+===== PAGE 42 =====
+format=text' \
+-o /tmp/yara/rules/yara_rules.yar
+ .4الدليل. هذا ضروري لعمليات فحص/var/ossec/active-response/bin/  برنام ًجا نص ًيا فيyara.sh  أنشئ
+:Wazuh-YARA الستجابة النشطة لبرنامج
+sudo nano /var/ossec/active-response/bin/yara.sh
+#!/bin/bash
+# Wazuh - Yara active response
+# Copyright (C) 2015-2022, Wazuh Inc.
+#
+# This program is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public
+# License (version 2) as published by the FSF - Free Software
+# Foundation.
+#------------------------- Gather parameters -------------------------#
+# Extra arguments
+read INPUT_JSON
+YARA_PATH=$(echo $INPUT_JSON | jq -r .parameters.extra_args[1])
+YARA_RULES=$(echo $INPUT_JSON | jq -r .parameters.extra_args[3])
+FILENAME=$(echo $INPUT_JSON | jq -r .parameters.alert.syscheck.path)
+# Set LOG_FILE path
+LOG_FILE="logs/active-responses.log"
+size=0
+actual_size=$(stat -c %s ${FILENAME})
+while [ ${size} -ne ${actual_size} ]; do
+    sleep 1
+    size=${actual_size}
+
+
+===== PAGE 43 =====
+    actual_size=$(stat -c %s ${FILENAME})
+done
+#----------------------- Analyze parameters -----------------------#
+if [[ ! $YARA_PATH ]] || [[ ! $YARA_RULES ]]
+then
+    echo "wazuh-yara: ERROR - Yara active response error. Yara path and rules 
+parameters are mandatory." >> ${LOG_FILE}
+    exit 1
+fi
+#------------------------- Main workflow --------------------------#
+# Execute Yara scan on the specified filename
+yara_output="$("${YARA_PATH}"/yara -w -r "$YARA_RULES" "$FILENAME")"
+if [[ $yara_output != "" ]]
+then
+    # Iterate every detected rule and append it to the LOG_FILE
+    while read -r line; do
+        echo "wazuh-yara: INFO - Scan result: $line" >> ${LOG_FILE}
+    done <<< "$yara_output"
+fi
+exit 0;
+ .5
+: 0750  ]اسم المالك] وصالحيات الملف إلى [اسم الصالحياتroot:wazuh  [ مالك الملف إلىyara.sh  قم بتغيير
+sudo chown root:wazuh /var/ossec/active-response/bin/yara.sh
+sudo chmod 750 /var/ossec/active-response/bin/yara.sh
+ .6قسم ملف تكوين وكيل>syscheck<  أضف ما يلي داخل
+:الدليلtmp/yara/malware/  لمراقبةWazuh  /var/ossec/etc/ossec.conf
+مثًال نجرب على الملف المسار المذكور او على مسار اخر
+<directories realtime="yes">/tmp/yara/malware</directories>
+<directories realtime="yes">/home/kali/abdul</directories>
+
+
+===== PAGE 44 =====
+Wazuh server
+ لتلقي تنبيهات عند تغيير الملفات في الدليل ال ُمراقب على نقطة النهاية. تتضمن هذه الخطواتWazuh اتبع الخطوات التالية لضبط
+.أي ًضا إعداد برنامج نصي لالستجابة الفورية ليتم تشغيله عند اكتشاف أي ملف مشبوه
+ .7
+: لتطبيق تغييرات التكوينWazuh أعد تشغيل وكيل
+sudo systemctl restart wazuh-agent  
+ .1 فيFIM الملف. تكشف هذه القواعد عن أحداثvar/ossec/etc/rules/local_rules.xml/  أضف القواعد التالية إلى
+. لبرامج ضارة. يمكنك تعديل القواعد للكشف عن األحداث من أدلة أخرىYARA الدليل ال ُمراقب، كما ُتن ّبه عند اكتشاف تكامل
+sudo nano /var/ossec/etc/rules/local_rules.xml
+<group name="syscheck,">
+  <rule id="100300" level="7">
+    <if_sid>550</if_sid>
+    <field name="file">/tmp/yara/malware/</field>
+    <description>File modified in /tmp/yara/malware/ directory.</description>
+  </rule>
+  <rule id="100301" level="7">
+    <if_sid>554</if_sid>
+    <field name="file">/tmp/yara/malware/</field>
+    <description>File added to /tmp/yara/malware/ directory.</description>
+  </rule>
+</group>
+<group name="yara,">
+  <rule id="108000" level="0">
+    <decoded_as>yara_decoder</decoded_as>
+    <description>Yara grouping rule</description>
+  </rule>
+  <rule id="108001" level="12">
+
+
+===== PAGE 45 =====
+    <if_sid>108000</if_sid>
+    <match>wazuh-yara: INFO - Scan result: </match>
+    <description>File "$(yara_scanned_file)" is a positive match. Yara rule: 
+$(yara_rule)</description>
+  </rule>
+</group> 
+<group name="syscheck,">
+  <rule id="100300" level="7">
+    <if_sid>550</if_sid>
+    <field name="file">/home/kali/abdul</field>
+    <description>File modified in /home/kali/abdul directory.</description>
+  </rule>
+  <rule id="100301" level="7">
+    <if_sid>554</if_sid>
+    <field name="file">/home/kali/abdul</field>
+    <description>File added to /home/kali/abdul directory.</description>
+  </rule>
+</group>
+<group name="yara,">
+  <rule id="108000" level="0">
+    <decoded_as>yara_decoder</decoded_as>
+    <description>Yara grouping rule</description>
+  </rule>
+  <rule id="108001" level="12">
+    <if_sid>108000</if_sid>
+    <match>wazuh-yara: INFO - Scan result: </match>
+    <description>File "$(yara_scanned_file)" is a positive match. Yara rule: 
+$(yara_rule)</description>
+  </rule>
+</group> 
+ .2. هذاWazuh ملف خادمvar/ossec/etc/decoders/local_decoder.xml/  أضف برامج فك التشفير التالية إلى
+:YARA يسمح باستخراج المعلومات من نتائج فحص
+<decoder name="yara_decoder">
+  <prematch>wazuh-yara:</prematch>
+</decoder>
+<decoder name="yara_decoder1">
+  <parent>yara_decoder</parent>
+  <regex>wazuh-yara: (\S+) - Scan result: (\S+) (\S+)</regex>
+
+
+===== PAGE 46 =====
+  <order>log_type, yara_rule, yara_scanned_file</order>
+</decoder> 
+ .3. هذا ُيهيئ وحدة الستجابة النشطةWazuh ملف تكوين خادمvar/ossec/etc/ossec.conf/  أضف التكوين التالي إلى
+:100301 و100300 ل ُتف ّعل بعد تنفيذ القاعدتين
+<ossec_config>
+  <command>
+    <name>yara_linux</name>
+    <executable>yara.sh</executable>
+    <extra_args>-yara_path /usr/local/bin -yara_rules 
+/tmp/yara/rules/yara_rules.yar</extra_args>
+    <timeout_allowed>no</timeout_allowed>
+  </command>
+  <active-response>
+    <disabled>no</disabled>
+    <command>yara_linux</command>
+    <location>local</location>
+
+
+===== PAGE 47 =====
+Attack emulation
+    <rules_id>100300,100301</rules_id>
+  </active-response>
+</ossec_config> 
+ .4
+: لتطبيق تغييرات التكوينWazuh أعد تشغيل مدير
+sudo systemctl restart wazuh-manager   
+ .1
+: tmp/yara/malware/  أنشئ المجلد
+sudo mkdir /tmp/yara/malware  
+ .2على نقطة النهاية الخاضعة للمراقبةtmp/yara/malware/malware_downloader.sh/  قم بإنشاء البرنامج النصي
+:لتنزيل عينات البرامج الضارة
+sudo nano /tmp/yara/malware/malware_downloader.sh
+#!/bin/bash
+# Wazuh - Malware Downloader for test purposes
+# Copyright (C) 2015-2022, Wazuh Inc.
+#
+# This program is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public
+# License (version 2) as published by the FSF - Free Software
+# Foundation.
+function fetch_sample(){
+  curl -s -XGET "$1" -o "$2"
+}
+echo "WARNING: Downloading Malware samples, please use this script with  caution."
+read -p "  Do you want to continue? (y/n)" -n 1 -r ANSWER
+echo
+if [[ $ANSWER =~ ^
+$ ]]
+then
+    echo
+    # Mirai
+[Yy]
+
+
+===== PAGE 48 =====
+    echo "# Mirai: https://en.wikipedia.org/wiki/Mirai_(malware)"
+    echo "Downloading malware sample..."
+    fetch_sample "https://raw.githubusercontent.com/wazuh/wazuh-
+documentation/refs/heads/4.14/resources/samples/mirai" "/tmp/yara/malware/mirai" && 
+echo "Done!" || echo "Error while downloading."
+    echo
+    # Xbash
+    echo "# Xbash: https://unit42.paloaltonetworks.com/unit42-xbash-combines-
+botnet-ransomware-coinmining-worm-targets-linux-windows/"
+    echo "Downloading malware sample..."
+    fetch_sample "https://raw.githubusercontent.com/wazuh/wazuh-
+documentation/refs/heads/4.14/resources/samples/xbash" "/tmp/yara/malware/xbash" && 
+echo "Done!" || echo "Error while downloading."
+    echo
+    # VPNFilter
+    echo "# VPNFilter: https://news.sophos.com/en-us/2018/05/24/vpnfilter-botnet-a-
+sophoslabs-analysis/"
+    echo "Downloading malware sample..."
+    fetch_sample "https://raw.githubusercontent.com/wazuh/wazuh-
+documentation/refs/heads/4.14/resources/samples/vpn_filter" 
+"/tmp/yara/malware/vpn_filter" && echo "Done!" || echo "Error while downloading."
+    echo
+    # Webshell
+    echo "# WebShell: https://github.com/SecWiki/WebShell-
+2/blob/master/Php/Worse%20Linux%20Shell.php"
+    echo "Downloading malware sample..."
+    fetch_sample "https://raw.githubusercontent.com/wazuh/wazuh-
+documentation/refs/heads/4.14/resources/samples/webshell" 
+"/tmp/yara/malware/webshell" && echo "Done!" || echo "Error while downloading."
+    echo
+fi 
+
+
+===== PAGE 49 =====
+Visualize the alerts
+البحث عن التهديدات وأضف عوامل التصفية في . للقيام بذلك، انتقل إلى وحدةWazuh يمكنك عرض بيانات التنبيهات في لوحة تحكم
+.شريط البحث لالستعالم عن التنبيهات
+Configuration for Windows
+Windows endpoint
+ .3
+:الدليلtmp/yara/malware/  البرنامج النصي لتنزيل عينات البرامج الضارة إلىmalware_downloader.sh  قم بتشغيل
+sudo bash /tmp/yara/malware/malware_downloader.sh  
+rule.groups:yara
+
+
+===== PAGE 50 =====
+)Configure Python and YARA ( قم بتهيئة بايثون ويارا
+.YARA  وتنزيل قواعدYARA  وPython قم بتنفيذ الخطوات التالية لتثبيت
+ .1
+. موقع بايثون الرسمي قم بتنزيل برنامج تثبيت بايثون القابل للتنفيذ من
+ .2
+:قم بتشغيل برنامج تثبيت بايثون بعد تنزيله، وتأكد من تحديد المربعات التالية
+Install launcher for all users
+Add Python 3.X to PATH       `التنفيذ مسار في المفسر يضع وهذا. `
+ .3
+.  القابلة إلعادة التوزيع++Visual C حزمة قم بتنزيل وتثبيت أحدث
+ .4
+:YARA  بصالحيات المسؤول لتنزيل واستخراجPowerShell افتح برنامج
+mkdir 'C:\Program Files (x86)\ossec-agent\active-response\bin\yara\'
+cp .\v4.5.5-win64\yara64.exe 'C:\Program Files (x86)\ossec-agent\active-
+response\bin\yara\'
+ .5
+C:\Program Files (x86)\ossec-agent\active- : القابل للتنفيذ إليهYARA أنشئ مجل ًدا باسم وانسخ ملف
+\response\bin\yara
+C:\Program Files (x86)\ossec-agent\active-response\bin\yara\
+mkdir 'C:\Program Files (x86)\ossec-agent\active-response\bin\yara\'
+cp .\v4.5.5-win64\yara64.exe 'C:\Program Files (x86)\ossec-agent\active-
+response\bin\yara\' 
+ .6
+:الوحدة النمطيةvalhallaAPI  قم بتثبيت
+pip install valhallaAPI  
+ .7
+: download_yara_rules.py  انسخ النص البرمجي التالي واحفظه باسم
+from valhallaAPI.valhalla import ValhallaAPI
+v = 
+ValhallaAPI(api_key="11111111111111111111111111111111111111111111111111111111111111
+11")
+response = v.get_rules_text()
+
+
+===== PAGE 51 =====
+Configure Active Response and FIM
+. وبرنامج نصي لالستجابة النشطة للكشف عن الملفات الضارة على نقطة النهايةWazuh FIM قم بتنفيذ الخطوات التالية لتكوين
+with open('yara_rules.yar', 'w') as fh:
+    fh.write(response)   
+ .8
+C:\Program Files (x86)\ossec-agent\active- :قم بتشغيل األوامر التالية لتنزيل القواعد ووضعها في الدليل
+\response\bin\yara\rules
+python.exe download_yara_rules.py
+mkdir 'C:\Program Files (x86)\ossec-agent\active-response\bin\yara\rules\'
+cp yara_rules.yar 'C:\Program Files (x86)\ossec-agent\active-
+response\bin\yara\rules\' 
+ .1
+Wazuh- البرنامج النصي في الدليل. هذا ضروري لعمليات فحص الستجابة النشطة لبرنامجyara.bat  أنشئ
+\YARA:C:\Program Files (x86)\ossec-agent\active-response\bin
+C:\Program Files (x86)\ossec-agent\active-response\bin\
+@echo off
+setlocal enableDelayedExpansion
+reg Query "HKLM\Hardware\Description\System\CentralProcessor\0" | find /i "x86" > 
+NUL && SET OS=32BIT || SET OS=64BIT
+if %OS%==32BIT (
+    SET log_file_path="%programfiles%\ossec-agent\active-response\active-
+responses.log"
+)
+if %OS%==64BIT (
+    SET log_file_path="%programfiles(x86)%\ossec-agent\active-response\active-
+responses.log"
+)
+set input=
+for /f "delims=" %%a in ('PowerShell -command "$logInput = Read-Host; Write-Output 
+$logInput"') do (
+    set input=%%a
+)
+
+
+===== PAGE 52 =====
+Wazuh server
+. يتيح ذلك التنبيه عند حدوث تغييرات في الدليل ال ُمراقب لنقطة النهاية، وتكوين برنامجWazuh قم بتنفيذ الخطوات التالية على خادم
+.نصي لالستجابة الفورية ليتم تشغيله عند اكتشاف أي ملف مشبوه
+set json_file_path="C:\Program Files (x86)\ossec-agent\active-response\stdin.txt"
+set syscheck_file_path=
+echo %input% > %json_file_path%
+for /F "tokens=* USEBACKQ" %%F in (`Powershell -Nop -C "(Get-Content 'C:\Program 
+Files (x86)\ossec-agent\active-response\stdin.txt'|ConvertFrom-
+Json).parameters.alert.syscheck.path"`) do (
+set syscheck_file_path=%%F
+)
+del /f %json_file_path%
+set yara_exe_path="C:\Program Files (x86)\ossec-agent\active-
+response\bin\yara\yara64.exe"
+set yara_rules_path="C:\Program Files (x86)\ossec-agent\active-
+response\bin\yara\rules\yara_rules.yar"
+echo %syscheck_file_path% >> %log_file_path%
+for /f "delims=" %%a in ('powershell -command "& \"%yara_exe_path%\" 
+\"%yara_rules_path%\" \"%syscheck_file_path%\""') do (
+    echo wazuh-yara: INFO - Scan result: %%a >> %log_file_path%
+)
+exit /b  
+ .2القسم المخصص في ملف تكوين وكيل>syscheck<  دليل المراقبة ضمنC:\Users\<USER_NAME>\Downloads  أضف
+C:\Program Files (x86)\ossec- . . استبدل اسم المستخدم الخاص بنقطة النهايةWazuh
+>agent\ossec.conf``<USER_NAME
+<directories realtime="yes">C:\Users\<USER_NAME>\Downloads</directories> 
+ .3
+: لتطبيق تغييرات التكوينWazuh أعد تشغيل وكيل
+Restart-Service -Name wazuh  
+ .1. هذاWazuh ملف خادمvar/ossec/etc/decoders/local_decoder.xml/  أضف برامج فك التشفير التالية إلى
+:YARA يسمح باستخراج المعلومات من نتائج فحص
+
+
+===== PAGE 53 =====
+<decoder name="yara_decoder">
+    <prematch>wazuh-yara:</prematch>
+</decoder>
+<decoder name="yara_decoder1">
+    <parent>yara_decoder</parent>
+    <regex>wazuh-yara: (\S+) - Scan result: (\S+) (\S+)</regex>
+    <order>log_type, yara_rule, yara_scanned_file</order>
+</decoder>   
+ .2. تكشف هذه القواعدWazuh ملف خادمvar/ossec/etc/rules/local_rules.xml/  أضف القواعد التالية إلى
+باسم>USER_NAME<  . استبدلYARA  في الدليل ال ُمراقب، كما ُتن ّبه عند اكتشاف برامج ضارة بواسطة تكاملFIM أحداث
+.مستخدم نقطة النهاية
+<group name="syscheck,">
+  <rule id="100303" level="7">
+    <if_sid>550</if_sid>
+    <field name="file">C:\\Users\\<USER_NAME>\\Downloads</field>
+    <description>File modified in C:\Users\<USER_NAME>\Downloads directory.
+</description>
+  </rule>
+  <rule id="100304" level="7">
+    <if_sid>554</if_sid>
+    <field name="file">C:\\Users\\<USER_NAME>\\Downloads</field>
+    <description>File added to C:\Users\<USER_NAME>\Downloads  directory.
+</description>
+  </rule>
+</group>
+<group name="yara,">
+  <rule id="108000" level="0">
+    <decoded_as>yara_decoder</decoded_as>
+    <description>Yara grouping rule</description>
+  </rule>
+  <rule id="108001" level="12">
+    <if_sid>108000</if_sid>
+    <match>wazuh-yara: INFO - Scan result: </match>
+    <description>File "$(yara_scanned_file)" is a positive match. Yara rule: 
+$(yara_rule)</description>
+  </rule>
+</group>   
+ .3
+:Wazuh ملف خادمvar/ossec/etc/ossec.conf/  أضف التكوين التالي إلى
+
+
+===== PAGE 54 =====
+Attack emulation
+:قم بتنزيل عينة من البرامج الضارة على نقطة نهاية ويندوز الخاضعة للمراقبة
+<ossec_config>
+  <command>
+    <name>yara_windows</name>
+    <executable>yara.bat</executable>
+    <timeout_allowed>no</timeout_allowed>
+  </command>
+  <active-response>
+    <disabled>no</disabled>
+    <command>yara_windows</command>
+    <location>local</location>
+    <rules_id>100303,100304</rules_id>
+  </active-response>
+</ossec_config> 
+ .4
+: لتطبيق تغييرات التكوينWazuh أعد تشغيل مدير
+sudo systemctl restart wazuh-manager 
+ملحوظة
+ لمكافحة البرمجيات الخبيثة كما هو موضح أدناه. نوصي بإجراءEICAR ألغراض الختبار، نقوم بتنزيل ملف اختبار برنامج
+.)، وليس في بيئة إنتاجيةSandbox( الختبار في بيئة معزولة
+ .1
+.قم بإيقاف تشغيل برنامج الحماية من الفيروسات والتهديدات من مايكروسوفت
+ .2
+: المضغوطEICAR قم بتنزيل ملف
+Invoke-WebRequest -Uri https://secure.eicar.org/eicar_com.zip -OutFile eicar.zip
+ .3
+:فك ضغط الملف
+Expand-Archive .\eicar.zip
+ .4
+.اسم المستخدم الخاص بنقطة النهاية>USER_NAME<   إلى الدليل ال ُمراقب. استبدلEICAR انسخ ملف
+cp .\eicar\eicar.com C:\Users\<USER_NAME>\Downloads
+
+
+===== PAGE 55 =====
+Visualize the alerts
+البحث عن التهديدات وأضف عوامل التصفية في . للقيام بذلك، انتقل إلى وحدةWazuh يمكنك عرض بيانات التنبيهات في لوحة تحكم
+.شريط البحث لالستعالم عن التنبيهات
+اكتشاف الثغرات األمنية
+rule.groups:yara

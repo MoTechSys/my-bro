@@ -1,0 +1,9 @@
+# Wazuh CDB list - UC-05
+# Target: /var/ossec/etc/lists/suspicious-programs   (key:value, one per line, no duplicates)
+# Source: S2 p.34 (deduplicated - the original had nc and tcpdump twice) ; S5 img08
+# yellow = recon, orange = network monitoring, red = high privilege / remote / transfer
+whoami:yellow
+ncat:yellow
+tcpdump:orange
+sudo:red
+nc:red

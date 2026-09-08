@@ -1,0 +1,11 @@
+<!--
+  Manager ossec.conf snippet - add <list> inside the existing <ruleset> block.
+  Source: S2 p.34 ; S5 img09, p35_0
+  NOTE: do NOT paste this whole file; only add the highlighted line to the existing <ruleset>.
+-->
+<ossec_config>
+  <ruleset>
+    <!-- ... existing decoder_dir / rule_dir / lists ... -->
+    <list>etc/lists/suspicious-programs</list>
+  </ruleset>
+</ossec_config>
