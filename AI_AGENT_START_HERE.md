@@ -26,6 +26,7 @@
 | 1 | `AI_AGENT_START_HERE.md` | (هذا الملف) البروتوكول |
 | 1b | `COLLABORATION_PROTOCOL.md` | **إلزامي** — يعمل أكثر من وكيل AI على المستودع (Claude + Astra): الفروع، الحجز، الملكية |
 | 1c | `docs/TASKBOARD.md` + `docs/SESSIONS_LOG.md` | المهام المتاحة/المحجوزة + آخر ما فعله الوكلاء الآخرون |
+| 1d | `docs/AGENT_CAPABILITIES_AND_ALLOCATION.md` | **من يعمل على ماذا ولماذا** + قاعدة Zero-Skip + هندسة السياق الإلزامية |
 | 2 | `docs/05_PROJECT_INTENT_UNIFIED_VISION.md` | **النية الموحَّدة — المرجع الأعلى**؛ عند أي تعارض هذه هي الحاكمة |
 | 3 | `docs/00_PROJECT_STATE.md` | **الحالة الحالية بالضبط** — ما تم، ما المتبقي، آخر تحديث |
 | 4 | `docs/03_ROADMAP.md` | الخطة الكاملة بالمراحل ومعايير القبول |
@@ -124,6 +125,7 @@ bash scripts/validate/validate_all.sh
 │   ├── 04_ISSUES_LOG.md        ← الأخطاء والتعارضات
 │   ├── 05_PROJECT_INTENT_UNIFIED_VISION.md ← النية الموحَّدة (المرجع الأعلى)
 │   ├── TASKBOARD.md            ← لوحة المهام المشتركة (احجز قبل أن تلمس)
+│   ├── AGENT_CAPABILITIES_AND_ALLOCATION.md ← توزيع القوة + Zero-Skip + هندسة السياق
 │   ├── SESSIONS_LOG.md         ← سجل الجلسات (append-only)
 │   ├── DECISIONS.md            ← ADRs
 │   ├── lab/                    ← runbooks لكل حالة استخدام (UC-01..UC-08)
