@@ -6,15 +6,26 @@
 ---
 
 ## 1. المبدأ الحاكم
-**`main` هي الحقيقة الوحيدة. لا أحد يكتب على `main` مباشرة. كل وكيل يعمل على فرعه الخاص ويدمج عبر PR.**
+**`main` هي الحقيقة الوحيدة. لا أحد يكتب على `main` مباشرة. كل تغيير يمر عبر PR صغير يُدمج فوراً.**
 
-| الوكيل | الفرع الخاص | معرّفه في السجلات |
-|--------|-------------|-------------------|
-| Claude (Anthropic) | `agent/claude` | `[CLAUDE]` |
-| GPT-6 Astra (OpenAI) | `agent/astra` | `[ASTRA]` |
-| أي وكيل جديد | `agent/<name>` | `[<NAME>]` |
+### 1.1 الفروع — نموذج "الفرع المشترك المتزامن" (v2)
+بيئة تشغيل Genspark تفرض على **كل** الوكلاء اسم الفرع `genspark_ai_developer`. لذلك **لا نميّز الوكلاء باسم الفرع** بل بـ:
 
-> الفرع القديم `genspark_ai_developer` = فرع Claude التاريخي؛ يُعامَل كـ `agent/claude`.
+| آلية التمييز | القاعدة |
+|--------------|---------|
+| **بادئة الـ commit** | كل commit يبدأ بـ `[CLAUDE]` أو `[ASTRA]` ثم `type(scope): …` — مثال: `[ASTRA] claim: T-10` |
+| **الحجز في TASKBOARD** | من يحجز المهمة يملك ملفاتها؛ لا أحد يلمس ملفاً غير محجوز له |
+| **PR صغير + دمج فوري** | لا يبقى عمل على الفرع المشترك أكثر من جلسة واحدة؛ الدمج يُعيد الجميع إلى `main` |
+
+**قاعدة الفرع المشترك `genspark_ai_developer`:**
+1. قبل أي عمل: `git fetch origin && git checkout genspark_ai_developer && git reset --hard origin/main` — **الفرع يُعاد ضبطه على main في بداية كل جلسة** (لا يُحمل عملاً قديماً).
+2. إذا وجدت على `origin/genspark_ai_developer` commits ليست في `main` **وبادئتها ليست لك** → لا تعمل عليها: `git checkout -b genspark_ai_developer-<me>-tmp origin/main` واشتغل هناك، وافتح PR منه، وسجّل في `SESSIONS_LOG` `@<OTHER>: فرعك المشترك فيه عمل غير مدموج`.
+3. عند الـ push: `git push --force-with-lease origin genspark_ai_developer` (يفشل بأمان إذا كتب الآخر أثناء عملك → اعمل `fetch` و`rebase` وأعد).
+4. **ممنوع `push -f` بلا `--force-with-lease`** على الفرع المشترك.
+
+الفروع `agent/claude` و`agent/astra` موجودة على GitHub كخيار **اختياري** لمن تسمح بيئته — نفس القواعد تنطبق.
+
+> `[CLAUDE]` = Claude (Anthropic) · `[ASTRA]` = GPT-6 Astra (OpenAI) · أي وكيل جديد `[<NAME>]`.
 
 ---
 
@@ -22,12 +33,13 @@
 
 ```
 ┌─ START ─────────────────────────────────────────────────────────────────┐
-│ 1. git fetch origin && git checkout agent/<me> && git rebase origin/main │
+│ 1. git fetch origin && git checkout genspark_ai_developer                 │
+│    && git reset --hard origin/main   (أو فرع tmp إن وُجد عمل غير مدموج للآخر)│
 │ 2. اقرأ بالترتيب: AI_AGENT_START_HERE.md → docs/05_… → docs/00_… →      │
 │    docs/TASKBOARD.md → docs/SESSIONS_LOG.md (آخر 3 جلسات)              │
 │ 3. اختر مهمة من TASKBOARD حالتها 🟢 FREE وضمن نطاق ملكيتك (§3)         │
 │ 4. احجزها: غيّر حالتها إلى 🔒 [ME] + التاريخ → commit + push فوراً      │
-│    ("claim: T-xx by [ME]") → افتح PR صغير وادمجه فوراً (حجز = دمج سريع) │
+│    ("[ME] claim: T-xx") → push --force-with-lease → PR → ادمجه فوراً    │
 ├─ WORK ──────────────────────────────────────────────────────────────────┤
 │ 5. اشتغل فقط داخل ملفات المهمة. commit صغير بعد كل خطوة منطقية.        │
 │ 6. قبل أي commit يلمس wazuh/ : bash scripts/validate/validate_all.sh    │
@@ -37,7 +49,8 @@
 │           SESSIONS_LOG.md (سطر واحد: من، متى، ماذا، ماذا بعد)             │
 │           00_PROJECT_STATE.md (إذا تغيّرت الحالة العامة)                  │
 │           04_ISSUES_LOG.md (إذا اكتشفت/أغلقت خطأً)                        │
-│ 9. git rebase origin/main → حل التعارضات (لصالح main) → push -f          │
+│ 9. git rebase origin/main → حل التعارضات (لصالح main)                     │
+│    → git push --force-with-lease origin genspark_ai_developer             │
 │ 10. افتح/حدّث PR إلى main → ادمجه (--merge) → شارك الرابط مع المستخدم   │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -70,7 +83,7 @@
 2. **Rule IDs:** حسب `AI_AGENT_START_HERE.md §2.2` — تحقق بـ `scripts/validate/check_rule_ids.py`.
 3. **الحقيقة الحاكمة:** `docs/05_PROJECT_INTENT_UNIFIED_VISION.md` — لا تُعِد Zeek/Kibana/AI كمنفَّذ.
 4. **اللغة:** عربية فصحى للتوثيق الأكاديمي + المصطلح الإنجليزي بين قوسين؛ إنجليزي للكود والـ commits.
-5. **Commits:** `type(scope): description` — types: `docs|feat|fix|refactor|test|chore|claim`.
+5. **Commits:** `[AGENT] type(scope): description` — types: `docs|feat|fix|refactor|test|chore|claim`. البادئة `[CLAUDE]`/`[ASTRA]` **إلزامية**.
 6. **لا أسرار:** لا API keys؛ استخدم `<YOUR_..._KEY>`.
 7. **لا ملفات ثنائية جديدة كبيرة** (>5MB) إلا في `docs/sources/` أو `docs/lab/evidence/` بموافقة المستخدم.
 

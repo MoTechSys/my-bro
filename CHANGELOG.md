@@ -45,3 +45,9 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 - `docs/prompts/ASTRA_ONBOARDING_PROMPT.md` — برومبت تهيئة Astra.
 ### Changed
 - `AI_AGENT_START_HERE.md` — إضافة 1b/1c في ترتيب القراءة، فروع `agent/<me>`.
+
+## [0.3.1] — 2026-09-09
+### Fixed
+- ISSUE-033: نموذج الفروع v2 — فرع مشترك `genspark_ai_developer` + بادئة `[AGENT]` + `--force-with-lease` (البيئة تفرض اسم الفرع على كل الوكلاء).
+### Added
+- ISSUE-032 (حدود الإثبات) وتصحيح T-10 — من مراجعة Astra.
