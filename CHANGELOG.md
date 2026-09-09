@@ -59,3 +59,11 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 ### Validation and handoff
 - نجحت فحوص IDs وBash/Python وXML بعد تحييد placeholders وCDB وروابط الخطة؛ لا تشغيل Wazuh/Windows/YARA أو قياس أداء في المعمل.
 - T-10 مكتملة توثيقياً؛ ISSUE-019 مفتوح. T-11 يحتاج سجل المحاولات وأدلة المصدر مع alerts.json، وT-15 مطلوب قبل اختبار الحذف الآلي. لا تغيير في ملفات `wazuh/` أو مهام Claude.
+
+## [0.4.0] — 2026-09-09
+### Added
+- `docs/thesis/ch2_literature_review.md` — الفصل الثاني كاملاً (T-20، CLAUDE): SOC، SIEM، Wazuh، NIDS (Suricata vs Zeek)، FIM، YARA/VirusTotal، Active Response، MITRE ATT&CK، الهجمات المُحاكاة، مقارنة الحلول، الدراسات السابقة، الفجوة البحثية؛ 15 مرجعاً IEEE مُتحقَّقاً.
+- `tests/TEST_PLAN.md` — خطة الاختبار المُقاس (T-10، ASTRA) — PR #6.
+### Fixed
+- ISSUE-035: إعادة ترقيم بند CI إلى ISSUE-038.
+- ISSUE-037: تصحيح دلالة `ignore="900"` في runbook UC-08 (كبت القاعدة لا العملية).
