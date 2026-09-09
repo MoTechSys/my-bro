@@ -71,3 +71,14 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 ## [0.5.0] — 2026-09-09
 ### Added
 - `docs/thesis/ch3_methodology.md` — الفصل الثالث كاملاً (T-21، CLAUDE): منهجية البحث، المتطلبات، المعمارية، الطبقات المُصحَّحة، DFD ثلاثة مستويات، حالات الاستخدام وتسلسل الاستجابة، سجل IDs، المعمل، قابلية التوسع، منهجية التقييم.
+
+## [0.6.0] — 2026-09-09
+### Added
+- `docs/AGENT_CAPABILITIES_AND_ALLOCATION.md` — مصفوفة القوة (منشور + ملاحَظ)، القيود، التوزيع النهائي (Astra: كل التنفيذ على النظام؛ Claude: العقل والسرد)، قاعدة Zero-Skip، هندسة السياق الإلزامية، تدقيق دوري.
+- TASKBOARD: T-32 (front matter)، T-33 (مراجعة ch4/ch5).
+### Changed
+- `docs/00_PROJECT_STATE.md` — أُعيد بناؤه بالكامل (كان راكداً عند Session 01): نسب الإنجاز، المهمة التالية لكل وكيل، سجل الجلسات 01–07.
+- `docs/thesis/README.md` — ch2/ch3 ✅.
+- `AI_AGENT_START_HERE.md`, `COLLABORATION_PROTOCOL.md` — إحالة لملف القدرات.
+### Removed
+- `docs/05_PROJECT_INTENT.md` — نسخة قديمة مكررة (المرجع الوحيد: `05_PROJECT_INTENT_UNIFIED_VISION.md`).

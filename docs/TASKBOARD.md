@@ -21,5 +21,7 @@
 | T-24 | توحيد الفصل 1 مع الواقع (ISSUE-001/002/003/015): تعديل جدول 1.1 | CLAUDE | 🟢 FREE | `docs/thesis/ch1_introduction.md` (نسخة مُصحَّحة من S4) | — |
 | T-25 | تجميع DOCX نهائي بقالب الجامعة (بعد Q6) | ASTRA | ⛔ BLOCKED (Q6 القالب) | `docs/thesis/build/` | — |
 | T-30 | Demo Script للجنة (10–15 دقيقة، 4 هجمات حية، خطة بديلة) | CLAUDE | 🟢 FREE | `docs/DEMO_SCRIPT.md` | — |
-| T-31 | تصميم UC-12 أجهزة الشبكة عبر Syslog (decoder + قواعد 100400+ + MikroTik CHR/pfSense VM) | CLAUDE | 🟢 FREE | `extension/UC-12_network_syslog_design.md`, `wazuh/manager/rules/local_rules_network.xml` | تنفيذه يعتمد Q5 |
+| T-31 | UC-12 أجهزة الشبكة عبر Syslog — **تصميم** (CLAUDE) ثم **تنفيذ** decoders/قواعد 100400+ (ASTRA) | CLAUDE→ASTRA | 🟢 FREE | `extension/UC-12_network_syslog_design.md`, `wazuh/manager/rules/local_rules_network.xml` | تنفيذه يعتمد Q5 |
+| T-32 | الملخص التنفيذي + المقدمة العامة + الخاتمة الأدبية للرسالة | CLAUDE | 🟢 FREE | `docs/thesis/front_matter.md` | بعد ch4/ch5 |
+| T-33 | مراجعة لغوية/منطقية للفصلَين 4 و5 بعد كتابة Astra | CLAUDE | ⛔ BLOCKED (T-22/T-23) | تعليقات في ISSUES | — |
 | T-40 | نقل CI: `.github/workflows-pending/validate.yml` → `.github/workflows/` (يحتاج صلاحية workflows — المستخدم يدوياً) | USER | ⛔ BLOCKED (توكن) | — | — |
