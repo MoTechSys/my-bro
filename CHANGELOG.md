@@ -29,3 +29,10 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 - ISSUE-021 duplicate `HOME_NET` in suricata.yaml.
 - ISSUE-030 unquoted `$FILENAME` in `remove-threat.sh`.
 - Deduplicated `suspicious-programs` CDB list.
+
+## [0.2.0] — 2026-09-09
+### Added
+- `docs/05_PROJECT_INTENT_UNIFIED_VISION.md` — تشخيص "أربعة مشاريع في رأس واحد"، النية الموحَّدة، العنوان المعتمد، النموذج الذهني الستّي، الإضافة العلمية، مصفوفة MoSCoW، محاور التعميق، قرارات افتراضية بدل Q1–Q4/Q6/Q7، أجوبة اللجنة.
+### Changed
+- `AI_AGENT_START_HERE.md` — الوثيقة 05 أصبحت المرجع الأعلى (ترتيب القراءة #2).
+- `docs/00_PROJECT_STATE.md` — المهمة التالية.
