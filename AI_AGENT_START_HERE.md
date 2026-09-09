@@ -65,11 +65,11 @@
 قبل إضافة أي قاعدة: شغّل `python3 scripts/validate/check_rule_ids.py`.
 
 ### 2.3 سير عمل Git (إلزامي بعد كل تعديل)
-كل وكيل على فرعه: Claude → `agent/claude` (أو `genspark_ai_developer` التاريخي)، Astra → `agent/astra`. التفاصيل في `COLLABORATION_PROTOCOL.md`.
+الفرع المشترك `genspark_ai_developer` يُعاد ضبطه على `origin/main` في بداية كل جلسة؛ التمييز بين الوكلاء بـ **بادئة الـ commit** `[CLAUDE]`/`[ASTRA]` وبالحجز في TASKBOARD. التفاصيل في `COLLABORATION_PROTOCOL.md §1.1`.
 ```bash
-git add -A && git commit -m "type(scope): description"
+git add -A && git commit -m "[ME] type(scope): description"
 git fetch origin main && git rebase origin/main   # حل التعارضات لصالح remote
-git push -f origin agent/<me>
+git push --force-with-lease origin genspark_ai_developer
 # ثم حدّث/أنشئ الـ PR إلى main وشارك الرابط
 ```
 أنواع الـ commit: `docs`, `feat`, `fix`, `refactor`, `test`, `chore`.

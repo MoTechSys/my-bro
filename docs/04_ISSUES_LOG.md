@@ -36,6 +36,8 @@
 | ISSUE-028 | 🟠 | S4 | الفصل 2 (الإطار النظري/الدراسات السابقة) والفصلان 4 و5 **غائبون**؛ الفصل 3 فيه §3.6 فقط | خطة الكتابة في `docs/thesis/README.md` | OPEN |
 | ISSUE-029 | 🟡 | S4 (ملف DOCX) | الملف الأصلي **معطوب** (CRC في image1.png) | أُصلح؛ النسخة في `docs/sources/originals/04_..._REPAIRED.docx`؛ يجب على الفريق إعادة الحفظ من Word | FIXED-IN-REPO |
 | ISSUE-030 | 🟡 | S2 ص13–14 `remove-threat.sh` | السكربت الرسمي يستخدم `FILENAME=$(echo $INPUT_JSON | jq -r .parameters.alert.data.virustotal.source.file)` ثم `rm -f $FILENAME` بدون اقتباس — يفشل مع المسارات التي فيها فراغات | `rm -f "$FILENAME"` | FIXED-IN-REPO |
+| ISSUE-033 | 🟡 | `COLLABORATION_PROTOCOL.md` v1 | بيئة Genspark تفرض اسم الفرع `genspark_ai_developer` على كل الوكلاء → نموذج `agent/<name>` غير قابل للتطبيق (رصده Astra) | v2: فرع مشترك يُعاد ضبطه على main كل جلسة + بادئة commit `[AGENT]` + `--force-with-lease` | FIXED-IN-REPO |
+| ISSUE-032 | 🟡 | `docs/02_ARCHITECTURE.md`, runbooks | **حدود الإثبات (تصحيح Astra):** وجود إعداد مكتوب أو لقطة قديمة لا يُثبت أن المكوّن يعمل **الآن**؛ كل ✅ في المستودع يعني "نُفِّذ وظهر مرة" لا "يعمل حالياً". قبل المناقشة يلزم **جولة تحقق حيّة** لكل UC بلقطات جديدة مؤرَّخة | إضافة عمود "آخر تحقق حي" في `docs/lab/README.md`؛ يُملأ من P1.8 | OPEN |
 | ISSUE-031 | 🟡 | S2 ص32–33 | قاعدة auditd بـ `-F egid!=994` — GID 994 خاص بتوزيعة توثيق Wazuh (Ubuntu)؛ على Kali قد يختلف GID لمستخدم wazuh | التحقق بـ `getent group wazuh`؛ أو حذف الشرط | NEEDS-LAB |
 | ISSUE-032 | 🟡 | GitHub | توكن الوكيل بلا صلاحية `workflows` → ملف CI في `.github/workflows-pending/` | عضو الفريق ينقله إلى `.github/workflows/` | NEEDS-USER |
 
