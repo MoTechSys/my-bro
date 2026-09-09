@@ -1,7 +1,30 @@
 #!/bin/bash
-# UC-03: drop an EICAR test file into the VirusTotal-monitored dir (harmless AV test string).
-# Source: S2 p.18.  Expected: rule 87105 (VT positive) -> AR remove-threat -> rule 100092 in dashboard.
-DIR="${1:-/home/kali/SOCfile}"
-mkdir -p "$DIR"
-printf '%s' 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' > "$DIR/eicar.com"
-echo "EICAR written to $DIR/eicar.com — check dashboard: rule.id: is one of 553,100092,87105,100201"
+# Purpose: exclusive EICAR fixture creation; owner [ASTRA]; updated 2026-09-09.
+# Status: local syntax reviewed; lab pending. Source: UC-03 / T-15.
+set -euo pipefail
+export PATH=/usr/bin:/bin
+[[ ${1:-} == --lab && $# == 2 ]] || { echo 'Usage: eicar_test.sh --lab EXISTING_MONITORED_DIRECTORY' >&2; exit 2; }
+python3 - "$2" <<'PY'
+import os, sys
+path = sys.argv[1]
+root = '/home/kali/SOCfile'
+if path != root and not path.startswith(root + '/'):
+    raise SystemExit('Directory must be the approved SOCfile root or a child')
+parts = path.split('/')[1:]
+if any(p in ('', '.', '..') or any(ord(c) < 32 for c in p) for p in parts):
+    raise SystemExit('Non-canonical directory')
+fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY)
+try:
+    for part in parts:
+        nxt = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+        os.close(fd)
+        fd = nxt
+    out = os.open('eicar.com', os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=fd)
+    try:
+        os.write(out, br'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*')
+    finally:
+        os.close(out)
+finally:
+    os.close(fd)
+print('EICAR fixture created without overwrite; verify VT/AR evidence independently.')
+PY

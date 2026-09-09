@@ -1,32 +1,24 @@
 <!--
-  Manager ossec.conf snippet - Active Response: delete file flagged by VirusTotal (UC-03)
-  Source: S2 pp.16-17 (Linux executable remove-threat.sh) and p.24 (Windows remove-threat.exe)
-  Rule 87105 = "VirusTotal: Alert - <file> - N engines detected this file" (built-in).
-  Define ONE <command> per OS; the AR block can reference either. Location "local" = run on the agent.
+  Purpose: one local dispatch to an OS-native implementation. Owner: [ASTRA].
+  Updated: 2026-09-09. Status: deployment/native Wazuh verification pending.
+  Source: Wazuh 4.14 command executable (any file name) and AR location=local.
+  Linux: install remove-threat.sh AS remove-threat.exe (a shebang script),
+         with soc_ar.py beside it; root:wazuh 0750.
+  Windows: install the native PyInstaller remove-threat.exe, NOT the Linux file.
+  The shared basename is a deployment contract, not OS auto-detection.
+  Remove BOTH old AR blocks before merging this single block. Keep local:
+  defined-agent is a destination selector, NOT a filter for the alert's OS.
+  Review SECURITY_REVIEW.md before enabling deletion in an isolated lab.
 -->
 <ossec_config>
   <command>
     <name>remove-threat</name>
-    <executable>remove-threat.sh</executable>
-    <timeout_allowed>no</timeout_allowed>
-  </command>
-
-  <command>
-    <name>remove-threat-windows</name>
     <executable>remove-threat.exe</executable>
     <timeout_allowed>no</timeout_allowed>
   </command>
-
   <active-response>
     <disabled>no</disabled>
     <command>remove-threat</command>
-    <location>local</location>
-    <rules_id>87105</rules_id>
-  </active-response>
-
-  <active-response>
-    <disabled>no</disabled>
-    <command>remove-threat-windows</command>
     <location>local</location>
     <rules_id>87105</rules_id>
   </active-response>
