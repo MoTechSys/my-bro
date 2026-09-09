@@ -97,3 +97,7 @@ ISSUE-040: تحديث الواجهات وR1/R3 في T-16 = FIXED-IN-REPO للت�
 ISSUE-044: FIXED-IN-REPO في #22: مصادر Anthropic/OpenAI أولية، تصحيح Fable $10/$50 وAstra Terminal-Bench 57.9؛ منع مقارنة OSWorld غير المتكافئة ونقل نتائج بلا حواجز إلى قدرات الإنتاج؛ حذف ترتيب قوة غير مثبت من وثيقة القدرات الحالية مع بقاء التاريخ في Git. ليس اختباراً مستقلاً للنموذجين.
 
 ISSUE-046 يبقى OPEN: قرئت نصوص S1–S5 وch3 والصوتيات مع فحص صور مختارة؛ الفصول 1–2 والمراجع وبقية الصور لم يكتمل تدقيقها. ISSUE-005 لا يغلق بالتخمين من أسماء الوكلاء والتواريخ.
+| ISSUE-050 | متوسطة | `wazuh/agents/linux/ossec.conf.d` localfile لـaccess.log: UC-06 يستخدم `log_format syslog`؛ Wazuh PoC لـSQLi (UC-09) يتطلّب `apache`. قد لا تُطلَق 31103 تحت syslog | OPEN — T-12: توحيد على `apache` وإعادة اختبار 31168 (MASTER_PLAN_v3 §9) | CLAUDE 2026-09-09 |
+| ISSUE-051 | متوسطة | `soc_ar.py:180` keys=[agent,file,md5] → execd قد يرفض (`abort`) محاولات UC-03 المتكررة بنفس المسار خلال timeout؛ يهدّد n=30 | OPEN — أسماء ملفات فريدة لكل محاولة في `eicar_test.sh`؛ اختبار PILOT أولاً | CLAUDE 2026-09-09 |
+| ISSUE-052 | عالية للقياس | دقّة `alert.timestamp` في `alerts.json` (ثانية أم ms) غير مُتحقَّقة؛ تحدّد دقّة t2 وكل مقاييس MTTD | OPEN — أول فحص في G2؛ إن كانت بالثانية تُعدَّل §5.4 | CLAUDE 2026-09-09 |
+| ISSUE-053 | منخفضة | UC-08 `ignore=900` → n=30 يستغرق 7.75 ساعة؛ يجب أن يدعم `trial_runner.sh` جدولة متداخلة | OPEN — T-11 | CLAUDE 2026-09-09 |
