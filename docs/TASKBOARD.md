@@ -28,3 +28,5 @@
 | T-33 | مراجعة لغوية/منطقية للفصلَين 4 و5 | ASTRA (كان CLAUDE) — أو الفريق البشري | ⛔ BLOCKED (T-22/T-23) | تعليقات في ISSUES | — |
 | T-40 | نقل CI: `.github/workflows-pending/validate.yml` → `.github/workflows/` (يحتاج صلاحية workflows — المستخدم يدوياً) | USER | ⛔ BLOCKED (توكن) | — | — |
 | T-16 | تدقيق الاستلام وتوحيد التخطيط والتوثيق وواجهات runbooks/demo | ASTRA | IN-PROGRESS [ASTRA] 2026-09-09 — حجز بتوجيه المستخدم | docs/، README، البروتوكول، tests/README | PR #19 مدموج: الخطة والواجهات وR1/R3؛ المتبقي: المصادر الأصلية والفصول/FR-NFR والافتراضات وفق TAKEOVER_AUDIT |
+
+| T-17 | دراسة نية صاحب المشروع من الأصول والصوتيات وبحث رسمي للنماذج ومخطط مقترح | ASTRA | IN-PROGRESS [ASTRA] 2026-09-09 — حجز بتوجيه المستخدم الجديد | docs/INTENT_STUDY_AND_BLUEPRINT.md، allocation، سجل تغطية | يسبق استكمال التنفيذ؛ لا تغيير نطاق دون حسم قرارات الهواتف/واجهة مستقلة/AI |
