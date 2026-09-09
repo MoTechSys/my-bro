@@ -67,3 +67,7 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 ### Fixed
 - ISSUE-035: إعادة ترقيم بند CI إلى ISSUE-038.
 - ISSUE-037: تصحيح دلالة `ignore="900"` في runbook UC-08 (كبت القاعدة لا العملية).
+
+## [0.5.0] — 2026-09-09
+### Added
+- `docs/thesis/ch3_methodology.md` — الفصل الثالث كاملاً (T-21، CLAUDE): منهجية البحث، المتطلبات، المعمارية، الطبقات المُصحَّحة، DFD ثلاثة مستويات، حالات الاستخدام وتسلسل الاستجابة، سجل IDs، المعمل، قابلية التوسع، منهجية التقييم.

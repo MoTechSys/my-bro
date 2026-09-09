@@ -15,7 +15,7 @@
 | T-14 | **UC-10 Telegram notification** عند level ≥ 12 | ASTRA | 🟢 FREE | `docs/lab/UC-10_telegram.md`, `wazuh/manager/integrations/custom-telegram.py`, `…/60-integration-telegram.xml` | لا توكن حقيقي في الريبو ؛ يُغلق ISSUE-016 |
 | T-15 | مراجعة أمنية لكل سكربتات `wazuh/agents/**/active-response` و`scripts/**` (quoting, injection, perms) — **أولوية عالية** بعد ISSUE-036 | ASTRA | 🟢 FREE (موصى به كمهمة Astra التالية) | تقرير في `tests/SECURITY_REVIEW.md` + fixes | — |
 | T-20 | **الفصل 2** — الإطار النظري والدراسات السابقة (SOC/SIEM/IDS/FIM/AR/MITRE + مقارنة Wazuh/Splunk/ELK/OSSEC + ≥10 مراجع IEEE) | CLAUDE | ✅ DONE (v1 مسودة كاملة، 3,100 كلمة، 15 مرجعاً مُتحقَّقاً) | `docs/thesis/ch2_literature_review.md` | تحتاج مراجعة الفريق + مرجع محلي إن وُجد |
-| T-21 | **الفصل 3** — إكمال §3.1–3.5 + إعادة صياغة §3.6 وفق النموذج الستّي (بلا Zeek/Kibana) + مخططات DFD L1/L2 (Mermaid) | CLAUDE | 🔒 [CLAUDE] 2026-09-09 | `docs/thesis/ch3_methodology.md` | يعتمد `docs/05` |
+| T-21 | **الفصل 3** — إكمال §3.1–3.5 + إعادة صياغة §3.6 وفق النموذج الستّي (بلا Zeek/Kibana) + مخططات DFD L1/L2 (Mermaid) | CLAUDE | ✅ DONE (v1: 11 قسماً، 6 مخططات Mermaid، 6 جداول) | `docs/thesis/ch3_methodology.md` | يعتمد `docs/05`؛ الأشكال تُصدَّر PNG في T-25 |
 | T-22 | **الفصل 4** — التنفيذ: كل UC على الخط الستّي، من S5 + runbooks + لقطات | ASTRA | 🟢 FREE | `docs/thesis/ch4_implementation.md` | يعتمد UC-01..08 |
 | T-23 | **الفصل 5** — النتائج (جدول T-11) + الخاتمة + Future Work (AI, TheHive, Zeek, network devices, phones) | ASTRA | ⛔ BLOCKED (يعتمد T-11 نتائج فعلية) | `docs/thesis/ch5_results_conclusion.md` | — |
 | T-24 | توحيد الفصل 1 مع الواقع (ISSUE-001/002/003/015): تعديل جدول 1.1 | CLAUDE | 🟢 FREE | `docs/thesis/ch1_introduction.md` (نسخة مُصحَّحة من S4) | — |
