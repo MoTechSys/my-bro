@@ -88,3 +88,16 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 - `docs/thesis/ch1_introduction.md` — الفصل 1 v2 (T-24، CLAUDE): نص S4 حرفياً + 9 تصحيحات موثَّقة (§1.8): OVA بدل Ubuntu، Win10 بدل Win11، Wazuh Indexer/Dashboard بدل ELK، حذف Zeek، إضافة Suricata/auditd/YARA/VirusTotal/Apache بالإصدارات، هدف الاستجابة الآلية، نطاق أدق، Out-of-Scope للأعمال المستقبلية.
 ### Changed
 - ISSUE-001/002/003/015/027 → FIXED-IN-REPO على مستوى الرسالة.
+
+## [0.8.0-rc.1] — 2026-09-09 — [ASTRA] T-15 / PR #14 (pending review)
+### Added
+- `tests/SECURITY_REVIEW.md`: inventory of every AR/lab/validation script, deployment contract, residual race/ACL risks and native acceptance gates.
+- Linux/Windows guarded response engines and 19 synthetic security regression tests in `tests/test_security.py`.
+### Changed
+- One local AR dispatch to an OS-native `remove-threat.exe`; Linux installs the shebang wrapper under that basename with `soc_ar.py`, Windows builds the native executable.
+- Lab scripts require explicit opt-in; network targets are constrained, downloads checksum-gated, policy/rules backed up, and builds run unprivileged.
+### Fixed
+- Deletion outside add, missing path/hash checks, unbounded protocol waits, Windows JSON shell interpolation/shared stdin file, validator predictable temporary files, and truncated YARA paths.
+### Validation / remaining work
+- 19 local tests and `validate_all.sh` pass. No live Wazuh, Windows, YARA, installer or malware download tests performed.
+- T-15 remains IN-PROGRESS and ISSUE-036 is not closed. Independent Claude review is required before merging PR #14; native/ACL/race gates remain documented. T-11 has not started.

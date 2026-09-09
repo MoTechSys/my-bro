@@ -12,7 +12,7 @@
 | الوكلاء النشطون | **`[ASTRA]` (GPT-6 Astra) فقط** — CLAUDE سلّم كل مهامه |
 | الفرع المشترك | `genspark_ai_developer` — يُعاد ضبطه على `main` بداية كل جلسة (`COLLABORATION_PROTOCOL.md §1.1`) |
 | صحة المستودع | `bash scripts/validate/validate_all.sh` → ALL CHECKS PASSED |
-| PRs مفتوحة | #14 (T-15، موافَق — يدمجه ASTRA) + PR التسليم هذا |
+| PRs مفتوحة | #14 (مراجعة مستقلة مسجلة في #17 المدموج؛ الاختبارات الأصلية معلقة) |
 
 ---
 

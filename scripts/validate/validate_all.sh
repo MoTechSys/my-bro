@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Run every repository check. Must print ALL CHECKS PASSED before committing changes under wazuh/.
 set -uo pipefail
-cd "$(dirname "$0")/../.."
+shopt -s globstar nullglob
+cd "$(dirname "$0")/../.." || exit 1
 fail=0
 
 echo "== 1. Wazuh rules / decoders / secrets =="
@@ -10,23 +11,30 @@ python3 scripts/validate/check_rule_ids.py || fail=1
 echo; echo "== 2. ossec.conf snippets well-formed =="
 for f in wazuh/manager/ossec.conf.d/*.xml wazuh/agents/*/ossec.conf.d/*.xml; do
   # Placeholders like <USER_NAME> and <YOUR_VIRUS_TOTAL_API_KEY> are intentional; neutralise for xmllint
-  if sed -e 's/<USER_NAME>/USER_NAME/g' -e 's/<YOUR_VIRUS_TOTAL_API_KEY>/YOUR_VIRUS_TOTAL_API_KEY/g' "$f" | xmllint --noout - 2>/tmp/xmlerr; then
+  if sed -e 's/<USER_NAME>/USER_NAME/g' -e 's/<YOUR_VIRUS_TOTAL_API_KEY>/YOUR_VIRUS_TOTAL_API_KEY/g' "$f" | xmllint --noout -; then
     echo "ok   $f"
   else
-    echo "FAIL $f"; cat /tmp/xmlerr; fail=1
+    echo "FAIL $f"; fail=1
   fi
 done
 
 echo; echo "== 3. Shell scripts syntax =="
-for f in wazuh/agents/linux/active-response/*.sh scripts/**/*.sh scripts/*/*.sh; do
+for f in wazuh/agents/linux/active-response/*.sh scripts/**/*.sh; do
   [ -f "$f" ] || continue
   if bash -n "$f"; then echo "ok   $f"; else echo "FAIL $f"; fail=1; fi
 done
 
 echo; echo "== 4. Python syntax =="
-for f in $(git ls-files '*.py' 2>/dev/null || find . -name '*.py' -not -path './.analysis/*'); do
-  if python3 -m py_compile "$f" 2>/tmp/pyerr; then echo "ok   $f"; else echo "FAIL $f"; cat /tmp/pyerr; fail=1; fi
-done
+# Parse in memory: no predictable /tmp files, pycache, or splitting filenames.
+if ! python3 - <<'PY'
+import ast
+from pathlib import Path
+for directory in ('scripts', 'tests', 'wazuh'):
+    for path in sorted(Path(directory).rglob('*.py')):
+        ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+        print('ok  ', path)
+PY
+then fail=1; fi
 
 echo; echo "== 5. CDB lists format (key:value, no dup keys) =="
 for f in wazuh/manager/lists/*; do

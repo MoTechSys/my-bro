@@ -1,34 +1,11 @@
 #!/bin/bash
-# Wazuh Active Response - remove file flagged by VirusTotal (UC-03)
-# Target: /var/ossec/active-response/bin/remove-threat.sh   (chown root:wazuh ; chmod 750)
-# Source: S2 pp.13-14 (Wazuh official PoC). Fix ISSUE-030: quoted "$FILENAME".
-LOCAL=$(dirname "$0")
-cd "$LOCAL" || exit 1
-cd ../ || exit 1
-PWD=$(pwd)
-
-read -r INPUT_JSON
-FILENAME=$(echo "$INPUT_JSON" | jq -r .parameters.alert.data.virustotal.source.file)
-COMMAND=$(echo "$INPUT_JSON" | jq -r .command)
-LOG_FILE="${PWD}/../logs/active-responses.log"
-
-#------------------------ Analyze command -------------------------#
-if [ "${COMMAND}" = "add" ]; then
-  # Send control message to execd
-  printf '{"version":1,"origin":{"name":"remove-threat","module":"active-response"},"command":"check_keys", "parameters":{"keys":[]}}\n'
-  read -r RESPONSE
-  COMMAND2=$(echo "$RESPONSE" | jq -r .command)
-  if [ "${COMMAND2}" != "continue" ]; then
-    echo "$(date '+%Y/%m/%d %H:%M:%S') $0: $INPUT_JSON Remove threat active response aborted" >> "${LOG_FILE}"
-    exit 0
-  fi
-fi
-
-# Removing file
-rm -f "$FILENAME"
-if [ $? -eq 0 ]; then
-  echo "$(date '+%Y/%m/%d %H:%M:%S') $0: $INPUT_JSON Successfully removed threat" >> "${LOG_FILE}"
-else
-  echo "$(date '+%Y/%m/%d %H:%M:%S') $0: $INPUT_JSON Error removing threat" >> "${LOG_FILE}"
-fi
-exit 0
+# Purpose: guarded Linux VT response; owner [ASTRA]; updated 2026-09-09.
+# Status: local regression tests; live lab/peer review pending (T-15).
+# Source: Wazuh 4.14 custom AR protocol, ISSUE-036.
+# Deploy as /var/ossec/active-response/bin/remove-threat.exe (Linux shebang)
+# AND deploy soc_ar.py beside it, both root:wazuh 0750.
+# Only soc_ar.main('remove') on command=add may unlink an approved file.
+set -euo pipefail
+export PATH=/usr/bin:/bin
+HERE=$(cd -- "$(dirname -- "$0")" && pwd -P)
+exec /usr/bin/python3 -I "$HERE/soc_ar.py" remove
