@@ -24,6 +24,8 @@
 | # | الملف | لماذا |
 |---|-------|-------|
 | 1 | `AI_AGENT_START_HERE.md` | (هذا الملف) البروتوكول |
+| 1b | `COLLABORATION_PROTOCOL.md` | **إلزامي** — يعمل أكثر من وكيل AI على المستودع (Claude + Astra): الفروع، الحجز، الملكية |
+| 1c | `docs/TASKBOARD.md` + `docs/SESSIONS_LOG.md` | المهام المتاحة/المحجوزة + آخر ما فعله الوكلاء الآخرون |
 | 2 | `docs/05_PROJECT_INTENT_UNIFIED_VISION.md` | **النية الموحَّدة — المرجع الأعلى**؛ عند أي تعارض هذه هي الحاكمة |
 | 3 | `docs/00_PROJECT_STATE.md` | **الحالة الحالية بالضبط** — ما تم، ما المتبقي، آخر تحديث |
 | 4 | `docs/03_ROADMAP.md` | الخطة الكاملة بالمراحل ومعايير القبول |
@@ -63,10 +65,11 @@
 قبل إضافة أي قاعدة: شغّل `python3 scripts/validate/check_rule_ids.py`.
 
 ### 2.3 سير عمل Git (إلزامي بعد كل تعديل)
+كل وكيل على فرعه: Claude → `agent/claude` (أو `genspark_ai_developer` التاريخي)، Astra → `agent/astra`. التفاصيل في `COLLABORATION_PROTOCOL.md`.
 ```bash
 git add -A && git commit -m "type(scope): description"
 git fetch origin main && git rebase origin/main   # حل التعارضات لصالح remote
-git push -f origin genspark_ai_developer
+git push -f origin agent/<me>
 # ثم حدّث/أنشئ الـ PR إلى main وشارك الرابط
 ```
 أنواع الـ commit: `docs`, `feat`, `fix`, `refactor`, `test`, `chore`.
@@ -110,6 +113,7 @@ bash scripts/validate/validate_all.sh
 ```
 .
 ├── AI_AGENT_START_HERE.md      ← أنت هنا
+├── COLLABORATION_PROTOCOL.md   ← تعاون وكلاء متعددين (Claude + Astra)
 ├── README.md                   ← نظرة عامة عامة للبشر
 ├── CHANGELOG.md
 ├── docs/
@@ -119,6 +123,8 @@ bash scripts/validate/validate_all.sh
 │   ├── 03_ROADMAP.md           ← الخطة والمراحل
 │   ├── 04_ISSUES_LOG.md        ← الأخطاء والتعارضات
 │   ├── 05_PROJECT_INTENT_UNIFIED_VISION.md ← النية الموحَّدة (المرجع الأعلى)
+│   ├── TASKBOARD.md            ← لوحة المهام المشتركة (احجز قبل أن تلمس)
+│   ├── SESSIONS_LOG.md         ← سجل الجلسات (append-only)
 │   ├── DECISIONS.md            ← ADRs
 │   ├── lab/                    ← runbooks لكل حالة استخدام (UC-01..UC-08)
 │   ├── thesis/                 ← هيكل الرسالة وحالة كل فصل

@@ -36,3 +36,12 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 ### Changed
 - `AI_AGENT_START_HERE.md` — الوثيقة 05 أصبحت المرجع الأعلى (ترتيب القراءة #2).
 - `docs/00_PROJECT_STATE.md` — المهمة التالية.
+
+## [0.3.0] — 2026-09-09
+### Added
+- `COLLABORATION_PROTOCOL.md` — بروتوكول تعاون وكلاء متعددين (Claude + GPT-6 Astra): فروع `agent/<name>`، دورة الجلسة، خريطة الملكية، حل التعارضات.
+- `docs/TASKBOARD.md` — لوحة مهام مشتركة بالحجز (T-01…T-40).
+- `docs/SESSIONS_LOG.md` — سجل جلسات append-only مع رسائل بين الوكلاء.
+- `docs/prompts/ASTRA_ONBOARDING_PROMPT.md` — برومبت تهيئة Astra.
+### Changed
+- `AI_AGENT_START_HERE.md` — إضافة 1b/1c في ترتيب القراءة، فروع `agent/<me>`.
