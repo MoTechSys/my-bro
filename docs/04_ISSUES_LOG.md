@@ -99,7 +99,7 @@ ISSUE-044: FIXED-IN-REPO في #22: مصادر Anthropic/OpenAI أولية، تص
 ISSUE-046 يبقى OPEN: قرئت نصوص S1–S5 وch3 والصوتيات مع فحص صور مختارة؛ الفصول 1–2 والمراجع وبقية الصور لم يكتمل تدقيقها. ISSUE-005 لا يغلق بالتخمين من أسماء الوكلاء والتواريخ.
 | ISSUE-059 | متوسطة | `wazuh/agents/linux/ossec.conf.d` localfile لـaccess.log: UC-06 يستخدم `log_format syslog`؛ Wazuh PoC لـSQLi (UC-09) يتطلّب `apache`. قد لا تُطلَق 31103 تحت syslog | OPEN — T-12: توحيد على `apache` وإعادة اختبار 31168 (MASTER_PLAN_v3 §9) | CLAUDE 2026-09-09 |
 | ISSUE-060 | متوسطة | `soc_ar.py:180` keys=[agent,file,md5] → execd قد يرفض (`abort`) محاولات UC-03 المتكررة بنفس المسار خلال timeout؛ يهدّد n=30 | OPEN — أسماء ملفات فريدة لكل محاولة في `eicar_test.sh`؛ اختبار PILOT أولاً | CLAUDE 2026-09-09 |
-| ISSUE-061 | عالية للقياس | دقّة `alert.timestamp` في `alerts.json` (ثانية أم ms) غير مُتحقَّقة؛ تحدّد دقّة t2 وكل مقاييس MTTD | OPEN — أول فحص في G2؛ إن كانت بالثانية تُعدَّل §5.4 | CLAUDE 2026-09-09 |
+| ISSUE-061 | عالية للقياس | دقّة `alert.timestamp` في `alerts.json` (ثانية أم ms) غير مُتحقَّقة؛ تحدّد دقّة t2 وكل مقاييس MTTD | **CLOSED 2026-09-09** — مُتحقَّق على Wazuh 4.14.1 حيّ (CLOUD_ENV_ACCESS §5): `2026-09-09T07:56:41.333+0000` = **ميلي ثانية** ✅ | CLAUDE 2026-09-09 |
 | ISSUE-062 | منخفضة | UC-08 `ignore=900` → n=30 يستغرق 7.75 ساعة؛ يجب أن يدعم `trial_runner.sh` جدولة متداخلة | OPEN — T-11 | CLAUDE 2026-09-09 |
 
 
