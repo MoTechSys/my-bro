@@ -7,6 +7,8 @@
 
 > ☁️ **2026-09-09 08:05 UTC — بيئة تنفيذ حيّة متاحة:** Wazuh 4.14.1 كامل (manager/indexer/dashboard) + وكيل `kali1` **active** على Azure VM عبر Docker. **G2 بدأت فعلياً.** كل بيانات الاتصال والحالة والخطوة التالية في `docs/lab/CLOUD_ENV_ACCESS.md`. حدود: لا VMs (Windows/MikroTik تحتاج WireGuard للمعمل المحلي).
 
+> 🧠 الذاكرة الكاملة للاستئناف: `CONTEXT_RESUME.md` (جذر المستودع).
+
 | البند | القيمة |
 |---|---|
 | آخر تحديث | 2026-09-09 — مرشح T-11 v3.1/PR #24؛ لا PILOT معملية |

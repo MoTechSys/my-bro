@@ -1,5 +1,7 @@
 # SOC Graduation Project — Open-Source Security Operations Center with Wazuh SIEM
 
+> 🧠 **للوكلاء/المطوّرين الجدد:** ابدأ بـ [`CONTEXT_RESUME.md`](CONTEXT_RESUME.md) — ذاكرة المشروع الكاملة في ملف واحد.
+
 > **مشروع تخرّج:** تصميم وتنفيذ مركز عمليات أمنية (SOC) يعتمد على أدوات مفتوحة المصدر — Wazuh 4.14.7 + Suricata 8.0.6 + YARA + VirusTotal + auditd — في معمل افتراضي يراقب Windows 10 وKali Linux.
 
 > CI: see `.github/workflows-pending/README.md` to enable the validation workflow.
