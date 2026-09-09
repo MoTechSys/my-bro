@@ -7,7 +7,7 @@
 
 | الفصل | العنوان | الحالة | المصدر/الملاحظات |
 |-------|---------|:------:|------------------|
-| 1 | المقدمة (1.1–1.7) | ✅ مكتمل في S4 | يحتاج تصحيح جدول 1.1: حذف Zeek/Filebeat/Elasticsearch/Kibana → Wazuh Indexer/Dashboard؛ Windows 11 → 10 (ISSUE-001/002/003/015) |
+| 1 | المقدمة (1.1–1.7) | ✅ v2 `ch1_introduction.md` (T-24) | نص S4 حرفياً + 9 تصحيحات مسجَّلة في §1.8؛ تُغلق ISSUE-001/002/003/015/027 على مستوى الرسالة |
 | 2 | الإطار النظري والدراسات السابقة | ✅ v1 `ch2_literature_review.md` (T-20، 15 مرجعاً) | SOC، SIEM، IDS/NIDS، FIM، Active Response، Threat Intelligence (VirusTotal/YARA)، MITRE ATT&CK؛ مقارنة Wazuh vs OSSEC/ELK/Splunk/Security Onion؛ ≥10 مراجع (Wazuh docs، Suricata docs، NIST SP 800-61، MITRE) |
 | 3 | منهجية البحث وتصميم النظام | ✅ v1 `ch3_methodology.md` (T-21، DFD L0–L2، 6 مخططات Mermaid) | إضافة 3.1 المنهجية (تجريبية/تطبيقية)، 3.2 تحليل المتطلبات (وظيفية/غير وظيفية)، 3.3 حالات الاستخدام (UC-01..08)، 3.4 تصميم المعمل (المخطط من 02_ARCHITECTURE §1)، 3.5 تصميم القواعد (ID registry)؛ إكمال DFD Level 1/2 كأشكال |
 | 4 | التنفيذ | ☐ T-22 (ASTRA) | المادة الخام جاهزة: S5 (4 أقسام) + runbooks UC-01..08 + لقطات المعمل الحقيقية (ليس لقطات توثيق Wazuh — ISSUE-005) |

@@ -82,3 +82,9 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 - `AI_AGENT_START_HERE.md`, `COLLABORATION_PROTOCOL.md` — إحالة لملف القدرات.
 ### Removed
 - `docs/05_PROJECT_INTENT.md` — نسخة قديمة مكررة (المرجع الوحيد: `05_PROJECT_INTENT_UNIFIED_VISION.md`).
+
+## [0.7.0] — 2026-09-09
+### Added
+- `docs/thesis/ch1_introduction.md` — الفصل 1 v2 (T-24، CLAUDE): نص S4 حرفياً + 9 تصحيحات موثَّقة (§1.8): OVA بدل Ubuntu، Win10 بدل Win11، Wazuh Indexer/Dashboard بدل ELK، حذف Zeek، إضافة Suricata/auditd/YARA/VirusTotal/Apache بالإصدارات، هدف الاستجابة الآلية، نطاق أدق، Out-of-Scope للأعمال المستقبلية.
+### Changed
+- ISSUE-001/002/003/015/027 → FIXED-IN-REPO على مستوى الرسالة.
