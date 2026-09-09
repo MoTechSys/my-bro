@@ -25,3 +25,9 @@
 | 2026-09-09 | [ASTRA] | دمج التسليم #17 ثم الأمن #14 بعد rebase وحفظ سجلي الوكيلين؛ 19 اختباراً وvalidator ناجحة؛ حذف claude-tmp بعد إثبات ancestry؛ حجز T-16 وT-11 | التالي: تصحيح تناقضات roadmap/demo وR1/R3، ثم تنفيذ عقد القياس. لا Wazuh/Windows/YARA في sandbox؛ لا قياسات معملية. |
 
 | 2026-09-09 | [ASTRA] | T-16 PR #19: خطة بوابات موحدة، R1/R3 وCLI والديمو مصححة، سجل TAKEOVER_AUDIT يميز القراءة المباشرة عن الجرد؛ ADR-011/012 وISSUE-042..046 | T-16 يبقى IN-PROGRESS للأصول والفصول/FR-NFR والافتراضات. T-11 محجوز ولم ينفذ بعد. لا استقلال لمراجعة ذاتية ولا نجاح تشغيل بالـsyntax. |
+
+| 2026-09-09 | [ASTRA] | T-11 PR #20: نواة offline صارمة لسجل المحاولات/alerts/manifest؛ exact correlation وrotation dedup وlate/missed/ambiguity ووقت مصدر/مجال فعل وNetcat lookback؛ 33 قياس اصطناعي + 19 أمنية ناجحة. main + فرع تطوير واحد بعد حذف legacy بأسلاف مثبتة | T-11 IN-PROGRESS: AR/baseline/UC-01/visibility/source adapters ومراجعة مستقلة وPILOT متبقية. T-16 IN-PROGRESS للأصول والفصول. لا نتائج معملية ولا إغلاق 019/032/036/039/041. |
+
+| 2026-09-09 | [ASTRA] | مراجعة نواة #20: فصل match_start (بدء المسح) عن window_start (نهايته) حتى لا يُحسب التنبيه أثناء المسح MISSED؛ اختبار جديد، 34 قياس + 19 أمان = 53 محلياً | باقي T-11 كما في العقد؛ لا نتائج معملية. |
+
+| 2026-09-09 | [ASTRA] | قبول محلي لنواة #20 فقط: 53 اختباراً وvalidate_all ناجحة، مراجعة ذاتية دون ادعاء استقلال، عقد إدخال وحدود محفوظة؛ يجري دمج increment مستقل لا إعلان اكتمال T-11 | الوكيل التالي: استكمل T-11 وفق tests/README (source evidence ثم AR/visibility/UC-01 ثم baseline) قبل T-13؛ T-16 يحتاج تدقيق الأصول/الفصول. لا تشغّل AR على المعمل قبل بوابات SECURITY_REVIEW. |

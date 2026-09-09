@@ -108,3 +108,12 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 - Replaced unsafe session reset advice with ancestry-aware single-development-branch workflow.
 - Reconciled roadmap, source/evidence gates, demo CLI/timing/rule IDs and Linux/helper/Windows deployment notes (R1/R3).
 - Added takeover coverage ledger and execution plan; retained native/lab blockers and original source archive.
+
+## [0.9.0-rc.1] — 2026-09-09 — T-11 detection core (incomplete task)
+### Added
+- Offline `scripts/measure/mttd.py`: strict JSONL/run manifest, exact correlation, rotation deduplication, explicit misses/late/excluded/ambiguous trials, source/action timing, separate integration latency, bounded resources and input hashes.
+- 33 synthetic measurement regressions; 52 total local tests including security. Contract in tests/README.md.
+### Pending
+- Source evidence adapters, multi-stage AR/visibility/UC-01 metrics, baseline adjudication/FP-hour, independent review and lab acceptance. T-11 remains IN-PROGRESS, not a final measurement product.
+
+- Core follow-up: separate scan match_start from deadline anchor to count alerts during the scan. Latest local total: 34 measurement + 19 security = 53 tests.
