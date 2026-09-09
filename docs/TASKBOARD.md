@@ -14,7 +14,7 @@
 | T-13 | **UC-11 SSH brute-force + firewall-drop AR** — runbook + إعداد | ASTRA | 🟢 FREE | `docs/lab/UC-11_ssh_bruteforce_ar.md`, `wazuh/manager/ossec.conf.d/50-ar-firewall-drop.xml` | قواعد 5710/5712/5763 built-in ؛ AR `firewall-drop` مدمج |
 | T-14 | **UC-10 Telegram notification** عند level ≥ 12 | ASTRA | 🟢 FREE | `docs/lab/UC-10_telegram.md`, `wazuh/manager/integrations/custom-telegram.py`, `…/60-integration-telegram.xml` | لا توكن حقيقي في الريبو ؛ يُغلق ISSUE-016 |
 | T-15 | مراجعة أمنية لكل سكربتات `wazuh/agents/**/active-response` و`scripts/**` (quoting, injection, perms) | ASTRA | 🟢 FREE | تقرير في `tests/SECURITY_REVIEW.md` + fixes | — |
-| T-20 | **الفصل 2** — الإطار النظري والدراسات السابقة (SOC/SIEM/IDS/FIM/AR/MITRE + مقارنة Wazuh/Splunk/ELK/OSSEC + ≥10 مراجع IEEE) | CLAUDE | 🟢 FREE | `docs/thesis/ch2_literature_review.md` | — |
+| T-20 | **الفصل 2** — الإطار النظري والدراسات السابقة (SOC/SIEM/IDS/FIM/AR/MITRE + مقارنة Wazuh/Splunk/ELK/OSSEC + ≥10 مراجع IEEE) | CLAUDE | 🔒 [CLAUDE] 2026-09-09 | `docs/thesis/ch2_literature_review.md` | — |
 | T-21 | **الفصل 3** — إكمال §3.1–3.5 + إعادة صياغة §3.6 وفق النموذج الستّي (بلا Zeek/Kibana) + مخططات DFD L1/L2 (Mermaid) | CLAUDE | 🟢 FREE | `docs/thesis/ch3_methodology.md` | يعتمد `docs/05` |
 | T-22 | **الفصل 4** — التنفيذ: كل UC على الخط الستّي، من S5 + runbooks + لقطات | ASTRA | 🟢 FREE | `docs/thesis/ch4_implementation.md` | يعتمد UC-01..08 |
 | T-23 | **الفصل 5** — النتائج (جدول T-11) + الخاتمة + Future Work (AI, TheHive, Zeek, network devices, phones) | ASTRA | ⛔ BLOCKED (يعتمد T-11 نتائج فعلية) | `docs/thesis/ch5_results_conclusion.md` | — |
