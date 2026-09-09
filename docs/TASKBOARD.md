@@ -1,5 +1,7 @@
 # 📋 TASKBOARD — لوحة المهام المشتركة (Claude + Astra)
 
+> ⚠️ **2026-09-09 — تسليم كامل:** CLAUDE أنهى كل مهامه وسلّم المشروع بالكامل إلى **ASTRA** (اقرأ `docs/HANDOFF_CLAUDE_TO_ASTRA.md`). كل مهمة "CLAUDE" أدناه أصبحت مملوكة لـ ASTRA.
+
 > **الحالات:** 🟢 FREE (متاح للحجز) | 🔒 [AGENT] yyyy-mm-dd (محجوز) | ◐ IN-PROGRESS (مع "المتبقي") | ✅ DONE (مع commit) | ⛔ BLOCKED (مع السبب)
 > **قاعدة:** احجز قبل أن تلمس. حدّث قبل أن تُغلق الجلسة. سطر واحد لكل مهمة. التفاصيل في `03_ROADMAP.md`.
 
@@ -20,8 +22,8 @@
 | T-23 | **الفصل 5** — النتائج (جدول T-11) + الخاتمة + Future Work (AI, TheHive, Zeek, network devices, phones) | ASTRA | ⛔ BLOCKED (يعتمد T-11 نتائج فعلية) | `docs/thesis/ch5_results_conclusion.md` | — |
 | T-24 | توحيد الفصل 1 مع الواقع (ISSUE-001/002/003/015): تعديل جدول 1.1 | CLAUDE | ✅ DONE (v2: نص S4 حرفياً + 9 تصحيحات موثَّقة في §1.8) | `docs/thesis/ch1_introduction.md` | تصحيح #1 (OVA) قابل للنقض بجواب Q1 |
 | T-25 | تجميع DOCX نهائي بقالب الجامعة (بعد Q6) | ASTRA | ⛔ BLOCKED (Q6 القالب) | `docs/thesis/build/` | — |
-| T-30 | Demo Script للجنة (10–15 دقيقة، 4 هجمات حية، خطة بديلة) | CLAUDE | 🔒 CLAUDE (قيد العمل — 2026-09-09) | `docs/DEMO_SCRIPT.md` | — |
-| T-31 | UC-12 أجهزة الشبكة عبر Syslog — **تصميم** (CLAUDE) ثم **تنفيذ** decoders/قواعد 100400+ (ASTRA) | CLAUDE→ASTRA | 🟢 FREE | `extension/UC-12_network_syslog_design.md`, `wazuh/manager/rules/local_rules_network.xml` | تنفيذه يعتمد Q5 |
-| T-32 | الملخص التنفيذي + المقدمة العامة + الخاتمة الأدبية للرسالة | CLAUDE | 🟢 FREE | `docs/thesis/front_matter.md` | بعد ch4/ch5 |
-| T-33 | مراجعة لغوية/منطقية للفصلَين 4 و5 بعد كتابة Astra | CLAUDE | ⛔ BLOCKED (T-22/T-23) | تعليقات في ISSUES | — |
+| T-30 | Demo Script للجنة (10–15 دقيقة، 4 هجمات حية، خطة بديلة) | CLAUDE | ✅ DONE [CLAUDE] 2026-09-09 (v1: §0–§9، 4 هجمات مرجَّعة بمعرّفات القواعد، خطة B، Q&A، checklist) | `docs/DEMO_SCRIPT.md` | **توثيقي؛ يحتاج dry-run بشري ×2 + أرقام Δt من T-11 (ASTRA يعبّئ §6)** |
+| T-31 | UC-12 أجهزة الشبكة عبر Syslog — **تصميم + تنفيذ** decoders/قواعد 100400+ | ASTRA (كان CLAUDE→ASTRA) | 🟢 FREE | `extension/UC-12_network_syslog_design.md`, `wazuh/manager/rules/local_rules_network.xml` | تنفيذه يعتمد Q5 |
+| T-32 | الملخص التنفيذي + المقدمة العامة + الخاتمة الأدبية للرسالة | ASTRA (كان CLAUDE) | 🟢 FREE | `docs/thesis/front_matter.md` | بعد ch4/ch5 |
+| T-33 | مراجعة لغوية/منطقية للفصلَين 4 و5 | ASTRA (كان CLAUDE) — أو الفريق البشري | ⛔ BLOCKED (T-22/T-23) | تعليقات في ISSUES | — |
 | T-40 | نقل CI: `.github/workflows-pending/validate.yml` → `.github/workflows/` (يحتاج صلاحية workflows — المستخدم يدوياً) | USER | ⛔ BLOCKED (توكن) | — | — |
