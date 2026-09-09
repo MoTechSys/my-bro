@@ -20,7 +20,7 @@
 | أكتب فصلاً من الرسالة | [`docs/thesis/README.md`](docs/thesis/README.md) |
 | أفهم رؤية التوسعة (أجهزة الشبكة/الهواتف) | [`extension/VISION_AND_FEASIBILITY.md`](extension/VISION_AND_FEASIBILITY.md) |
 
-## 🧪 حالات الاستخدام المُنفَّذة
+## حالات الاستخدام الموثقة تاريخياً — تحتاج إعادة تحقق حي
 
 | UC | الوصف | قاعدة/مستوى التنبيه |
 |----|-------|---------------------|
@@ -32,6 +32,9 @@
 | 06 | كشف Shellshock عبر Apache logs | 31168 (L15) + MITRE T1068/T1190 |
 | 07 | YARA scan on file change (Active Response) | 108001 (L12) |
 | 08 | مراقبة العمليات — Netcat listener | 100051 (L7) |
+
+## خطة الاستكمال والتدقيق
+[الخطة الموحدة](docs/03_ROADMAP.md) · [سجل تغطية التدقيق](docs/TAKEOVER_AUDIT.md). لا تمثل اللقطات القديمة اعتماداً للكود الحالي؛ Windows AR والقياسات الفعلية معلقة.
 
 ## ✅ التحقق
 ```bash

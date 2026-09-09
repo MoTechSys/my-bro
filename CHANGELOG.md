@@ -101,3 +101,10 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 ### Validation / remaining work
 - 19 local tests and `validate_all.sh` pass. No live Wazuh, Windows, YARA, installer or malware download tests performed.
 - T-15 remains IN-PROGRESS and ISSUE-036 is not closed. Independent Claude review is required before merging PR #14; native/ACL/race gates remain documented. T-11 has not started.
+
+## [0.8.1] — 2026-09-09 — ASTRA takeover consistency
+### Changed
+- Merged #17 handoff then #14 security after rebase and 19 passing tests; preserved both author histories.
+- Replaced unsafe session reset advice with ancestry-aware single-development-branch workflow.
+- Reconciled roadmap, source/evidence gates, demo CLI/timing/rule IDs and Linux/helper/Windows deployment notes (R1/R3).
+- Added takeover coverage ledger and execution plan; retained native/lab blockers and original source archive.

@@ -10,7 +10,7 @@
 
 ## الوكيل (kali1)
 ```bash
-bash scripts/lab/install_auditd_kali.sh       # يثبّت auditd ويحمّل wazuh/auditd/wazuh.rules
+bash scripts/lab/install_auditd_kali.sh --lab       # يثبّت auditd ويحمّل wazuh/auditd/wazuh.rules
 ```
 القواعد (S2 ص32–33، S5 img02):
 ```
@@ -29,7 +29,7 @@ bash scripts/lab/install_auditd_kali.sh       # يثبّت auditd ويحمّل w
 
 ## المحاكاة
 ```bash
-bash scripts/attack-emulation/netcat_tests.sh    # nc -h → 100210 ; whoami → yellow (لا تنبيه مخصص)
+bash scripts/attack-emulation/netcat_tests.sh --lab    # nc -h → 100210 ; whoami → yellow (لا تنبيه مخصص)
 ```
 
 ## النتيجة الفعلية

@@ -1,6 +1,6 @@
 # سيناريو العرض أمام لجنة المناقشة (Demo Script) — T-30
 
-> **الحالة:** v1 — مكتوب من واقع الملفات الفعلية في المستودع (runbooks `docs/lab/UC-01..08`، قواعد `wazuh/manager/rules/local_rules.xml`، سكربتات `scripts/attack-emulation/`). **لم يُنفَّذ حياً بعد** (ISSUE-032 — حدود الإثبات). قبل يوم المناقشة يلزم **تجربة كاملة (dry-run) مرتين على الأقل** وتعبئة جدول §9.
+> **الحالة:** v1 — مكتوب من واقع الملفات الفعلية في المستودع (runbooks `docs/lab/UC-01..08`، قواعد `wazuh/manager/rules/local_rules.xml`، سكربتات `scripts/attack-emulation/`). **مصحح توثيقياً بعد #14؛ لم يُنفَّذ حياً بعد** (ISSUE-032 — حدود الإثبات). قبل يوم المناقشة يلزم **تجربة كاملة (dry-run) مرتين على الأقل** وتعبئة جدول §9.
 >
 > **المدة المستهدفة:** 12 دقيقة عرض حي + 3 دقائق احتياط = **15 دقيقة**.
 > **المالك:** الفريق البشري (المقدّم + مشغّل الأجهزة). **المراجع:** CLAUDE (تصميم)، ASTRA (تحقق تشغيلي بعد T-15/T-11).
@@ -20,7 +20,7 @@
 
 | # | الجهاز | IP | الدور | فحص الجاهزية (✅ قبل البدء) |
 |---|---|---|---|---|
-| 1 | `wazuh-server` (OVA 4.14) | 192.168.100.105 | Manager + Indexer + Dashboard | `https://192.168.100.105` يفتح؛ **Agents Summary: 2 active** (يعالج ISSUE-026) |
+| 1 | `wazuh-server` (نوع الخادم وإصداره يحتاجان تحققاً؛ OVA افتراض) | 192.168.100.105 | Manager + Indexer + Dashboard | `https://192.168.100.105` يفتح؛ **Agents Summary: 2 active** (يعالج ISSUE-026) |
 | 2 | `kali1` (Kali 2025.4) | 192.168.100.108 | ضحية Linux + Suricata + auditd + YARA + Apache | `sudo systemctl is-active wazuh-agent suricata auditd apache2` → 4× `active` |
 | 3 | `win1` (Windows 10 Education 19045) | 192.168.100.106 | ضحية Windows (FIM على Downloads) | خدمة `Wazuh` running؛ `active` في اللوحة |
 | 4 | جهاز المهاجم | أي جهاز على 192.168.100.0/24 (يمكن أن يكون `kali1` نفسه للهجمات المحلية) | إطلاق الهجمات | `nmap`, `curl`, `nc` متوفرة |
@@ -44,7 +44,7 @@
 | 05:00 | 2:30 | **هجمة 2 — Shellshock على Apache** (UC-06) | نفس التوزيع | يسار: curl؛ يمين: DEMO-2 + تبويب MITRE |
 | 07:30 | 2:30 | **هجمة 3 — أمر مشبوه + Netcat listener** (UC-05 + UC-08) | نفس التوزيع | يسار: nc؛ يمين: DEMO-3 |
 | 10:00 | 2:00 | **هجمة 4 — ملف خبيث → VirusTotal → حذف آلي** (UC-03) | نفس التوزيع | يسار: eicar + `ls`؛ يمين: DEMO-4 |
-| 12:00 | 1:00 | **الخاتمة**: ما أُثبت (6 مراحل) + القياسات (ch4) + التوسّع المستقبلي | المقدّم | شريحة أخيرة |
+| 12:00 | 1:00 | **الخاتمة**: ما أُثبت (6 مراحل) + القياسات (ch5) + التوسّع المستقبلي | المقدّم | شريحة أخيرة |
 | 13:00 | 2:00 | **احتياط** لتأخّر تنبيه أو سؤال مباشر | — | — |
 
 ---
@@ -59,11 +59,11 @@
 
 **ما ننفّذه (من جهاز المهاجم):**
 ```bash
-bash scripts/attack-emulation/nmap_scan.sh 192.168.100.108
-# بديل يدوي: nmap -sS -Pn 192.168.100.108
+sudo bash scripts/attack-emulation/nmap_scan.sh --lab 192.168.100.108
+# لا بديل يتجاوز opt-in أو تفويض الهدف؛ نفذ من جهاز آخر يرى Suricata مروره.
 ```
 
-**ما يجب أن يظهر (خلال 5–20 ث):**
+**ما نبحث عنه (المدة تُقاس في dry-run؛ ليست نتيجة معروفة):**
 - Threat Hunting بفلتر **DEMO-1** = `rule.groups:suricata`
 - تنبيه `rule.id: 86601` — *Suricata: Alert - NMAP SYN Scan Detected* على الوكيل `kali1` (مُثبَت سابقاً: S5 img18).
 - اضغط على الحدث → أظهر `data.src_ip` (المهاجم) و`data.alert.signature`.
@@ -71,7 +71,7 @@ bash scripts/attack-emulation/nmap_scan.sh 192.168.100.108
 **إن لم يظهر:**
 1. `sudo tail -f /var/log/suricata/eve.json | grep -i alert` على kali1 — إن فارغ: Suricata لا يرى الواجهة (`Unable to find iface` — تحقق من اسم الواجهة في `suricata.yaml`، UC-04 الأخطاء المعروفة).
 2. إن eve.json يمتلئ واللوحة صامتة: `<localfile>` لـ eve.json في ossec.conf؛ أعد تشغيل `wazuh-agent`.
-3. **بديل سريع:** `ping -c 20 192.168.100.108` (ET Open يملك قواعد ICMP) → أي تنبيه `rule.groups:suricata` يكفي لإثبات المسار.
+3. لا تستبدل تجربة المسح بأي تنبيه Suricata أو ping؛ احتفظ بفشل السيناريو ثم انتقل إلى خطة B.
 4. **خطة B:** لقطة `p30_0.png` (Suricata active) + S5 img18 من `docs/sources/` — قل صراحةً "لقطة من التجربة المسجّلة".
 
 ### 3.2 هجمة 2 — Shellshock (CVE-2014-6271) على Apache → قاعدة Wazuh + MITRE (UC-06)
@@ -81,11 +81,10 @@ bash scripts/attack-emulation/nmap_scan.sh 192.168.100.108
 
 **ما نُنفّذ (المشغّل — من جهاز المهاجم):**
 ```bash
-bash scripts/attack-emulation/shellshock_test.sh http://192.168.100.108/
-# أو يدوياً:
-curl -s -H "User-Agent: () { :; }; echo; /bin/cat /etc/passwd" http://192.168.100.108/ -o /dev/null
+bash scripts/attack-emulation/shellshock_test.sh --lab 192.168.100.108
+# هدف مصرح ثابت غير CGI؛ السكربت يستخدم echo marker لا قراءة ملفات النظام.
 ```
-**ما يجب أن يظهر (خلال 2–10 ث):**
+**ما نبحث عنه (بلا زمن مفترض؛ هذه محاكاة نمط سجل لا استغلال ناجح):**
 - فلتر **DEMO-2** = `rule.id:31168`
 - تنبيه **`31168` — Shellshock attack detected — Level 15** على `kali1` (مُثبَت سابقاً: S5 img19).
 - انتقل إلى تبويب **MITRE ATT&CK → Framework** وأظهر `T1190 Exploit Public-Facing Application` مُضاءً — هذه لحظة "ربط الكشف بالإطار".
@@ -97,47 +96,45 @@ curl -s -H "User-Agent: () { :; }; echo; /bin/cat /etc/passwd" http://192.168.10
 
 ### 3.3 هجمة 3 — أمر مشبوه (auditd + CDB) + Netcat listener (UC-05 + UC-08)
 
-**ما نقوله (20 ث):** "المرحلة الثالثة: سلوك المستخدم على الجهاز نفسه. كل أمر يُنفَّذ يُسجَّل عبر auditd، ويُقارَن بقائمة CDB مصنَّفة (أصفر/برتقالي/أحمر). تشغيل `nc` كمستمع يُطلق تنبيهَين مستقلَّين: واحد من auditd (أمر أحمر) وآخر من مراقبة العمليات الدورية."
+**ما نقوله (20 ث):** "المرحلة الثالثة: سلوك المستخدم على الجهاز نفسه. الأوامر التي توافق سياسة auditd المنشورة تُسجَّل، ويُقارَن بقائمة CDB مصنَّفة (أصفر/برتقالي/أحمر). تشغيل `nc` كمستمع يُطلق تنبيهَين مستقلَّين: واحد من auditd (أمر أحمر) وآخر من مراقبة العمليات الدورية."
 
 **ما نُنفّذ (المشغّل — على kali1 كمستخدم kali، UID 1000):**
 ```bash
-bash scripts/attack-emulation/netcat_tests.sh
-# أو يدوياً:
-nc -l -p 8000 &      # اتركه يعمل 60 ث ثم اقتله
-sleep 65; kill %1
+bash scripts/attack-emulation/netcat_tests.sh --lab
+# لا مستمع على جميع الواجهات؛ السكربت ينظف الطفل الذي أنشأه فقط.
 ```
 **ما يجب أن يظهر:**
 - فلتر **DEMO-3** = `rule.id:(100210 OR 100051)`
-- **`100210`** (L12) — Audit: أمر مصنَّف *red* في CDB (`audit.command: nc`) — خلال 2–5 ث (UC-05؛ S5 img12).
-- **`100051`** (L7) — *netcat listening for incoming connections* — خلال ≤60 ث (تردّد `<command>` لمراقبة العمليات = 60 ث؛ UC-08). **قُل ذلك للجنة مسبقاً** حتى لا يبدو تأخيراً.
+- **`100210`** (L12) — Audit: أمر مصنَّف *red* في CDB (`audit.command: nc`) — بعد التحقق من شروط AUID/CDB دون وعد زمني (UC-05؛ S5 img12).
+- **`100051`** (L7) — *netcat listening for incoming connections* — بلا حد أداء مثبت (تردّد `<command>` = 30 ث؛ UC-08، والكبت 900 ث). **قُل ذلك للجنة مسبقاً** حتى لا يبدو تأخيراً.
 - اضغط على 100210 → أظهر `data.audit.exe`, `data.audit.auid=1000`, `data.audit.key: audit-wazuh-c`.
 
 **إن لم يظهر:**
-1. `sudo ausearch -k audit-wazuh-c | tail` على kali1 — إن فارغ: قواعد auditd لم تُحمَّل (`sudo auditctl -l`؛ أعد `bash scripts/lab/install_auditd_kali.sh`).
+1. `sudo ausearch -k audit-wazuh-c | tail` على kali1 — إن فارغ: قواعد auditd لم تُحمَّل (`sudo auditctl -l`؛ أعد `bash scripts/lab/install_auditd_kali.sh --lab`).
 2. إن auditd يسجّل واللوحة صامتة: `<localfile>` لـ `/var/log/audit/audit.log` بـ `log_format audit`.
-3. 100051 فقط غائب: انتظر دورة 60 ث ثانية؛ تأكد أن `nc -l` ما زال يعمل (`pgrep -a nc`).
+3. 100051 فقط غائب: تحقق من مرور 930 ثانية منذ أحدث 100051 قبل تجربة مستقلة؛ تأكد أن `nc -l` ما زال يعمل (`pgrep -a nc`).
 4. **خطة B:** S5 img12 + لقطات UC-08.
 
 ### 3.4 هجمة 4 — ملف خبيث → FIM → VirusTotal → حذف آلي (UC-02 + UC-03)
 
-**ما نقوله (20 ث):** "الأخيرة هي سلسلة الاستجابة الكاملة: ملف جديد في مجلد مراقب → Wazuh يستعلم VirusTotal بالـ hash → إن كان خبيثاً يأمر الوكيل بحذفه **دون تدخل بشري**، ويؤكّد الحذف بتنبيه. سنستخدم ملف EICAR القياسي — غير ضار لكن كل المحرّكات تُصنّفه خبيثاً."
+**ما نقوله (20 ث):** "الأخيرة هي سلسلة الاستجابة الكاملة: ملف جديد في مجلد مراقب → Wazuh يستعلم VirusTotal بالـ hash → إن كان خبيثاً يأمر الوكيل بحذفه **دون تدخل بشري**، ويؤكّد الحذف بتنبيه. سنستخدم ملف EICAR القياسي — غير ضار وله توقيع اختبار معروف؛ لا نفترض إجماع المحركات."
 
 **ما نُنفّذ (المشغّل — على kali1):**
 ```bash
 ls -l /home/kali/SOCfile/                       # فارغ
-bash scripts/attack-emulation/eicar_test.sh /home/kali/SOCfile
+bash scripts/attack-emulation/eicar_test.sh --lab /home/kali/SOCfile
 sleep 15; ls -l /home/kali/SOCfile/             # يجب أن يكون الملف قد اختفى
 ```
-**ما يجب أن يظهر (تسلسل خلال 5–20 ث):**
-- فلتر **DEMO-4** = `rule.id:(554 OR 100200 OR 87105 OR 657 OR 100092)`
-- `100200` — FIM: ملف أُضيف في `/home/kali/SOCfile` (L7)
+**ما نبحث عنه (الأزمنة من القياس فقط):**
+- فلتر **DEMO-4** = `rule.id:(554 OR 100200 OR 100201 OR 87105 OR 657 OR 100092 OR 100093)`
+- `100201` — FIM: ملف أُضيف في `/home/kali/SOCfile` (L7)
 - `87105` — VirusTotal: **Alert - X engines detected this file** (L12)
 - `657` — Active response: `remove-threat` executed
 - `100092` — **Successfully removed threat** (L12)
 - ثم `ls` على اليسار يُظهر المجلد فارغاً — **هذه هي اللقطة الختامية**. (مُثبَت سابقاً: p18_1 added → deleted.)
 
 **إن لم يظهر:**
-1. 100200 غائب: `syscheck realtime` غير مفعَّل على المجلد؛ أعد تشغيل الوكيل.
+1. 100201 غائب للإضافة أو 100200 للتعديل: `syscheck realtime` غير مفعَّل على المجلد؛ أعد تشغيل الوكيل.
 2. 87105 غائب: تحقق من `/var/ossec/logs/integrations.log` على المدير — مفتاح VT منتهٍ/حصة 4 طلبات/دقيقة مُستهلَكة (**لا تُجرِ الهجمة 4 أكثر من مرة كل دقيقة**). لا إنترنت على المدير = فشل حتمي؛ اختبر قبل الموعد.
 3. 87105 موجود و100092 غائب: راجع `/var/ossec/logs/active-responses.log` على kali1؛ الأذونات `root:wazuh 0750` على `remove-threat.exe` و`soc_ar.py` (عقد النشر في `wazuh/manager/ossec.conf.d/30-active-response-remove-threat.xml` بعد T-15). ابحث عن `100093` (فشل الحذف) واقرأ السبب.
 4. **خطة B:** p18_1.png + p17_0.png.
@@ -155,7 +152,7 @@ sleep 15; ls -l /home/kali/SOCfile/             # يجب أن يكون المل�
 | كشف | 86601، 31168، 100210/100051، 87105 |
 | تنبيه | Threat Hunting + مستويات 7–15 |
 | استجابة | حذف آلي 100092 (هجمة 4) |
-| تقييم | تبويب MITRE ATT&CK + جدول القياسات (ch4 — بعد T-11) |
+| تقييم | تبويب MITRE ATT&CK + جدول القياسات (ch5 — بعد T-11) |
 
 اختم بجملة الرؤية: "المنصّة نفسها قابلة للتوسّع إلى أجهزة الشبكة عبر Syslog (UC-12) والتنبيه الفوري عبر Telegram (UC-10) — وهي في خارطة الطريق."
 
@@ -163,7 +160,7 @@ sleep 15; ls -l /home/kali/SOCfile/             # يجب أن يكون المل�
 
 ## 5. قواعد أمان يوم العرض
 - المعمل **معزول** (192.168.100.0/24)؛ لا تربط الأجهزة الضحية بشبكة الجامعة العامة.
-- Windows Defender realtime **معطَّل** على win1 فقط إن كانت هجمة Windows ضمن الخطة (S2 ص25)؛ خلاف ذلك أبقِه.
+- لا تعطل Windows Defender افتراضياً. أي حجر منه يُسجل INTERFERED ولا ينسب إلى Wazuh؛ Windows AR لم يعتمد أصلياً.
 - لا تُنزَّل عينات خبيثة حقيقية — EICAR فقط.
 - مفتاح VirusTotal لا يظهر على الشاشة (`p17_0` مطموس؛ لا تفتح ossec.conf المدير أمام اللجنة).
 
@@ -171,7 +168,7 @@ sleep 15; ls -l /home/kali/SOCfile/             # يجب أن يكون المل�
 | السؤال | الجواب (مع المرجع) |
 |---|---|
 | لماذا Wazuh وليس Splunk/ELK؟ | مفتوح المصدر، XDR+SIEM موحَّد، AR مدمج، بلا تكلفة ترخيص — مقارنة ch2 §2.6 |
-| ما زمن الكشف؟ | يُقاس بأداة T-11 (`scripts/measure/mttd.py`) — عرض جدول ch4 إن أُنجز؛ وإلا: "المُشاهَد اليوم 2–20 ث؛ القياس المنهجي قيد التنفيذ" (**لا تُخترَع أرقام**) |
+| ما زمن الكشف؟ | يُقاس بأداة T-11 (`scripts/measure/mttd.py`) — عرض جدول ch5 إن أُنجز؛ وإلا: "لا توجد قياسات منهجية معتمدة بعد؛ لا نقدم تقديراً رقمياً" (**لا تُخترَع أرقام**) |
 | هل الحذف الآلي خطير؟ | نعم بلا ضوابط؛ لذلك: قائمة مسارات مسموحة، تحقق hash قبل الحذف، رفض الروابط، `command=delete` لا يحذف (T-15، `tests/SECURITY_REVIEW.md`) |
 | ماذا عن الإنذارات الكاذبة؟ | مقياس FP ضمن `tests/TEST_PLAN.md`؛ ساعة baseline بلا هجمات |
 | كيف يتوسّع؟ | UC-09..12 في `extension/` وخارطة الطريق `docs/03_ROADMAP.md` P3 |
@@ -201,4 +198,4 @@ sleep 15; ls -l /home/kali/SOCfile/             # يجب أن يكون المل�
 | 2 | | 4 eicar | | | |
 
 ---
-*T-30 — CLAUDE — 2026-09-09. كل معرّف قاعدة أعلاه مأخوذ من `wazuh/manager/rules/local_rules.xml` أو runbook الـUC المذكور؛ لا ادعاء غير مرجَّع.*
+*T-30 — CLAUDE — 2026-09-09. تصحيح ASTRA بعد التسليم: القواعد الأبناء قد تحل محل الآباء، ولا يُشترط ظهور 657 كسطر مستقل؛ اختفاء الملف وحده ليس إثبات AR دون السجل المرتبط. كل معرّف قاعدة أعلاه مأخوذ من `wazuh/manager/rules/local_rules.xml` أو runbook الـUC المذكور؛ لا ادعاء غير مرجَّع.*
