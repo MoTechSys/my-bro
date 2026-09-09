@@ -18,7 +18,7 @@
 | T-21 | **الفصل 3** — إكمال §3.1–3.5 + إعادة صياغة §3.6 وفق النموذج الستّي (بلا Zeek/Kibana) + مخططات DFD L1/L2 (Mermaid) | CLAUDE | ✅ DONE (v1: 11 قسماً، 6 مخططات Mermaid، 6 جداول) | `docs/thesis/ch3_methodology.md` | يعتمد `docs/05`؛ الأشكال تُصدَّر PNG في T-25 |
 | T-22 | **الفصل 4** — التنفيذ: كل UC على الخط الستّي، من S5 + runbooks + لقطات | ASTRA | 🟢 FREE | `docs/thesis/ch4_implementation.md` | يعتمد UC-01..08 |
 | T-23 | **الفصل 5** — النتائج (جدول T-11) + الخاتمة + Future Work (AI, TheHive, Zeek, network devices, phones) | ASTRA | ⛔ BLOCKED (يعتمد T-11 نتائج فعلية) | `docs/thesis/ch5_results_conclusion.md` | — |
-| T-24 | توحيد الفصل 1 مع الواقع (ISSUE-001/002/003/015): تعديل جدول 1.1 | CLAUDE | 🟢 FREE | `docs/thesis/ch1_introduction.md` (نسخة مُصحَّحة من S4) | — |
+| T-24 | توحيد الفصل 1 مع الواقع (ISSUE-001/002/003/015): تعديل جدول 1.1 | CLAUDE | 🔒 [CLAUDE] 2026-09-09 | `docs/thesis/ch1_introduction.md` (نسخة مُصحَّحة من S4) | — |
 | T-25 | تجميع DOCX نهائي بقالب الجامعة (بعد Q6) | ASTRA | ⛔ BLOCKED (Q6 القالب) | `docs/thesis/build/` | — |
 | T-30 | Demo Script للجنة (10–15 دقيقة، 4 هجمات حية، خطة بديلة) | CLAUDE | 🟢 FREE | `docs/DEMO_SCRIPT.md` | — |
 | T-31 | UC-12 أجهزة الشبكة عبر Syslog — **تصميم** (CLAUDE) ثم **تنفيذ** decoders/قواعد 100400+ (ASTRA) | CLAUDE→ASTRA | 🟢 FREE | `extension/UC-12_network_syslog_design.md`, `wazuh/manager/rules/local_rules_network.xml` | تنفيذه يعتمد Q5 |
