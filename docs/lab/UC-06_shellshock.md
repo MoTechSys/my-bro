@@ -20,4 +20,15 @@ sudo systemctl status apache2                          # active (img15)
 ```bash
 bash scripts/attack-emulation/shellshock_test.sh 192.168.100.108
 ```
-استجابة Apache الافتراضية ("It works") **طبيعية** — الخادم غير مصاب فعلياً (لا CGI)، لكن الطلب
+استجابة Apache الافتراضية ("It works") **طبيعية** — الخادم غير مصاب فعلياً (لا CGI)، لكن الطلب يُسجَّل في access.log وهذا كل ما يحتاجه Wazuh للكشف.
+
+## النتيجة الفعلية
+- S5 `img17`: أمر curl بالحمولة إلى `192.168.0.186` وإرجاع صفحة Apache الافتراضية.
+- S5 `img19`: **rule 31168 — Shellshock attack detected — Level 15** على `kali1` مع MITRE T1068/T1190 (2026-08-30)، إضافة إلى `rule 506 Wazuh agent stopped` (T1562.001).
+
+## الأخطاء المعروفة
+- ISSUE-004: IP الهدف في S5 (`192.168.0.186`) من شبكة مختلفة عن المعمل الحالي.
+- ISSUE-007: عنوان القسم في S2 يذكر "SQL Injection" بلا محتوى → مقترح UC-09 (قواعد 31103/31104 بنفس الإعداد).
+
+## استعلام اللوحة
+Threat Hunting → `rule.description:Shellshock attack detected` أو `rule.id:31168`; MITRE ATT&CK → T1190.
