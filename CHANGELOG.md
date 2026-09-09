@@ -117,3 +117,13 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 - Source evidence adapters, multi-stage AR/visibility/UC-01 metrics, baseline adjudication/FP-hour, independent review and lab acceptance. T-11 remains IN-PROGRESS, not a final measurement product.
 
 - Core follow-up: separate scan match_start from deadline anchor to count alerts during the scan. Latest local total: 34 measurement + 19 security = 53 tests.
+
+## [0.9.1-study] — 2026-09-09 — T-17 / PR #22
+### Added
+- Primary-source intent study, proposed as-is/target/response diagrams, device/mobile coverage distinctions, source references, all 13 FR and 8 NFR mapped, decision and delivery gates.
+- ADR-013 proposed, ISSUE-047..049, explicit direct-reading and machine-analysis limits.
+### Corrected
+- Model allocation based on official Anthropic/OpenAI announcements; Fable pricing and Astra Terminal-Bench figure corrected, incomparable benchmarks and production safeguards qualified.
+- Study-first state/roadmap and source audit ledger; existing scope is not treated as the brother's own final decision.
+### Limits
+- No runtime changes, no scope approval, no new lab results; T-11/T-15/T-16 incomplete. T-17 study awaits owner confirmation and independent review.
