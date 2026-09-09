@@ -35,12 +35,29 @@ def poisson_upper_zero(hours, alpha=0.05):
     return -math.log(alpha) / hours
 
 
+def chi2_ppf(p, df):
+    """Wilson-Hilferty approximation of the chi-square quantile (adequate for df<=10)."""
+    z = N.inv_cdf(p)
+    return df * (1 - 2 / (9 * df) + z * math.sqrt(2 / (9 * df))) ** 3
+
+
+def poisson_upper_k(k, hours, alpha=0.05):
+    """Exact-style 95% upper bound on a Poisson rate with k events in `hours` (chi2(2k+2)/2T)."""
+    return chi2_ppf(1 - alpha, 2 * k + 2) / (2 * hours)
+
+
+def mwu_n_per_group(delta_over_sigma, alpha=0.05, power=0.80, are=0.955):
+    """Per-group n for Mann-Whitney U via t-test n divided by asymptotic relative efficiency."""
+    return math.ceil(n_two_sample(delta_over_sigma, 1.0, alpha, power) / are)
+
+
 def main():
     print("A. Detection rate — Wilson 95% CI at k=n (all detected)")
     for n in (5, 10, 20, 30, 50):
         lo, _ = wilson(n, n)
         print(f"   n={n:2d}: lower bound {lo*100:5.1f}%   rule-of-three miss bound {300/n:4.1f}%")
-    print("   -> plan: n=20 for standard UCs (>=83.9%), n=30 for AR UCs (>=88.6%)")
+    print("   -> v3.1 AUDIT: 19/20 lower = %.3f FAILS H1(>=0.80); 29/30 = %.3f passes" % (wilson(19, 20)[0], wilson(29, 30)[0]))
+    print("   -> plan v3.1: n=30 for ALL UCs (tolerates exactly 1 miss)")
 
     print("\nB. n for a mean latency with margin E=±1 s")
     for s in (1, 2, 3, 5):
@@ -50,12 +67,17 @@ def main():
     print("\nC. Two-sample per-group n (H4: hardened AR vs official)")
     for d, s in ((1, 1), (1, 2), (0.5, 1)):
         print(f"   delta={d}s sigma={s}s -> n/group={n_two_sample(d, s)}")
-    print("   -> plan: 30+30 detects delta ~= 0.75 sigma")
+    for d in (0.5, 0.75, 1.0):
+        print(f"   MWU delta/sigma={d} -> n/group={mwu_n_per_group(d)}")
+    print("   -> v3.1 AUDIT: 30/group detects 0.75 sigma, NOT 0.5")
 
     print("\nD. Baseline FP/hour — Poisson exact 95% upper bound at 0 FP")
     for h in (1, 2, 3, 4, 6, 8):
         print(f"   {h}h -> < {poisson_upper_zero(h):.2f} FP/h")
-    print("   -> plan: >= 6 h per OS to claim FP/h < 0.5")
+    for T in (6, 12):
+        for k in (0, 1, 2):
+            print(f"   T={T}h k={k} -> < {poisson_upper_k(k, T):.2f} FP/h")
+    print("   -> v3.1 AUDIT: 6h fails at first FP (0.79); 12h tolerates 1 FP (0.39). Plan: 12 h/OS")
 
     print("\nE. VirusTotal public API budget (4/min, 500/day)")
     lookups = 30 * 2
@@ -63,12 +85,13 @@ def main():
     print(f"   at 90 s spacing = {lookups*90/60:.0f} min; daily cap not binding")
 
     print("\nF. Trial budget")
-    std = 8 * 20 * 1.5
+    std = 8 * 30 * 1.5  # v3.1: n=30 everywhere
     ar = 2 * 30 * 1.5
     m0 = 10
     total = std + ar + m0
     print(f"   standard {std:.0f} + AR {ar:.0f} + M0 {m0} = {total:.0f} measured trials")
-    print(f"   + 40 PILOT; at 2 min each = {total*2/60:.1f} h + 12 h baseline")
+    print(f"   + 40 PILOT; at 2 min each = {total*2/60:.1f} h + 24 h baseline (12 x 2 OS)")
+    print(f"   UC-08 alone: 30 trials x 930 s (ignore=900) = {30*930/3600:.2f} h -> interleave in background")
 
     print("\nG. Memory budget (Cloud Computer 16 GB)")
     vms = {"wazuh-server": 4, "kali1": 2, "win1": 4, "mikrotik-chr": 0.25}
