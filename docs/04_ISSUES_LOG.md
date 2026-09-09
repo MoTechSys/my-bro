@@ -39,7 +39,7 @@
 | ISSUE-033 | 🟡 | `COLLABORATION_PROTOCOL.md` v1 | بيئة Genspark تفرض اسم الفرع `genspark_ai_developer` على كل الوكلاء → نموذج `agent/<name>` غير قابل للتطبيق (رصده Astra) | v2: فرع مشترك يُعاد ضبطه على main كل جلسة + بادئة commit `[AGENT]` + `--force-with-lease` | FIXED-IN-REPO |
 | ISSUE-032 | 🟡 | `docs/02_ARCHITECTURE.md`, runbooks | **حدود الإثبات (تصحيح Astra):** وجود إعداد مكتوب أو لقطة قديمة لا يُثبت أن المكوّن يعمل **الآن**؛ كل ✅ في المستودع يعني "نُفِّذ وظهر مرة" لا "يعمل حالياً". قبل المناقشة يلزم **جولة تحقق حيّة** لكل UC بلقطات جديدة مؤرَّخة | إضافة عمود "آخر تحقق حي" في `docs/lab/README.md`؛ يُملأ من P1.8 | OPEN |
 | ISSUE-031 | 🟡 | S2 ص32–33 | قاعدة auditd بـ `-F egid!=994` — GID 994 خاص بتوزيعة توثيق Wazuh (Ubuntu)؛ على Kali قد يختلف GID لمستخدم wazuh | التحقق بـ `getent group wazuh`؛ أو حذف الشرط | NEEDS-LAB |
-| ISSUE-032 | 🟡 | GitHub | توكن الوكيل بلا صلاحية `workflows` → ملف CI في `.github/workflows-pending/` | عضو الفريق ينقله إلى `.github/workflows/` | NEEDS-USER |
+| ISSUE-038 | 🟡 | GitHub | توكن الوكيل بلا صلاحية `workflows` → ملف CI في `.github/workflows-pending/` | عضو الفريق ينقله إلى `.github/workflows/` | NEEDS-USER |
 
 ---
 
@@ -48,9 +48,9 @@
 | ID | الخطورة | الموضع والدليل | الملاحظة / الإجراء المقترح | الحالة |
 |---|---|---|---|---|
 | ISSUE-034 | متوسطة | `tests/README.md`، وصف T-11، `tests/TEST_PLAN.md` §3–4 و§7.3؛ توثيق Wazuh 4.14 Alert management | لا يجوز افتراض أن الفرق بين `timestamp` و`@timestamp` هو MTTD؛ `alerts.json` وحده لا يحتوي مقام المحاولات المفقودة ولا يضمن وقت الحدث/إنجاز AR. @CLAUDE: اعتماد عقد سجل المحاولات + أدلة المصدر والوقت عند تحديث الوصف، وتنفيذه في T-11. الخطة تعالج المنهجية فقط، وISSUE-019 يبقى مفتوحاً | OPEN — يحتاج T-11 ونتائج معملية |
-| ISSUE-035 | منخفضة | هذا الملف عند `51bb2fc`: المعرّف ISSUE-032 مستخدم لحدود الإثبات ولصلاحيات CI | @CLAUDE: خصص معرفاً فريداً لأحد البندين وحدّث الإحالات؛ لم يُعدّل Astra الصفوف السابقة أو يُعد ترقيمها | OPEN |
+| ISSUE-035 | منخفضة | هذا الملف عند `51bb2fc`: المعرّف ISSUE-032 مستخدم لحدود الإثبات ولصلاحيات CI | أُعيد ترقيم بند CI إلى **ISSUE-038** (CLAUDE 2026-09-09) | CLOSED |
 | ISSUE-036 | عالية قبل تشغيل AR | `wazuh/agents/linux/active-response/remove-threat.sh` السطور 16–28 و`30-active-response-remove-threat.xml`؛ مراجعة ثابتة، لا تجربة استغلال | الحذف يقع خارج شرط add، والمسار ليس مقيداً بقائمة مسموحة، وLinux/Windows يشتركان في محفز 87105 دون فصل ظاهر. T-10 يضع بوابة سلامة قبل اختبار الحذف؛ يلزم حجز T-15 لمراجعة/إصلاح السكربت وتوجيه الاستجابة، ثم اختبار داخل VM. لا ادعاء بحدوث حذف خاطئ في المعمل | OPEN — T-15 / NEEDS-LAB |
-| ISSUE-037 | متوسطة | `docs/lab/UC-08_process_monitoring_netcat.md` يصف ignore=900 بأنه لنفس العملية؛ مرجع Wazuh 4.14 Rules syntax يعرّفه تجاهلاً للقاعدة بعد إطلاقها | @CLAUDE: صحح شرح الكبت؛ تغيير PID لا يضمن إعادة التنبيه. T-10 يفصل 930 s من أحدث 100051 ويضع تجربة SUPPRESSION_CONTROL مستقلة، دون تعديل القاعدة أو runbook المملوك لك | OPEN — تصحيح توثيق وتحقق معملي |
+| ISSUE-037 | متوسطة | `docs/lab/UC-08_process_monitoring_netcat.md` يصف ignore=900 بأنه لنفس العملية؛ مرجع Wazuh 4.14 Rules syntax يعرّفه تجاهلاً للقاعدة بعد إطلاقها | @CLAUDE: صحح شرح الكبت؛ تغيير PID لا يضمن إعادة التنبيه. T-10 يفصل 930 s من أحدث 100051 ويضع تجربة SUPPRESSION_CONTROL مستقلة، دون تعديل القاعدة أو runbook المملوك لك | FIXED-IN-REPO (runbook UC-08 مُصحَّح، CLAUDE) / NEEDS-LAB للتحقق |
 
 ## أسئلة مفتوحة للفريق (Open Questions)
 
