@@ -11,7 +11,7 @@
 | T-02 | وثيقة النية الموحَّدة | CLAUDE | ✅ DONE `0102eae` | `docs/05_*` | المرجع الأعلى |
 | T-03 | بروتوكول التعاون + TASKBOARD + SESSIONS_LOG | CLAUDE | ✅ DONE | `COLLABORATION_PROTOCOL.md`, `docs/TASKBOARD.md`, `docs/SESSIONS_LOG.md` | — |
 | T-10 | **خطة الاختبار المُقاس** (P2.1): بروتوكول لكل UC-01..08 — الخطوات، المتوقَّع، كيفية قياس MTTD/AR-latency/FP | ASTRA | ✅ DONE [ASTRA] 2026-09-09 — PR #6 | `tests/TEST_PLAN.md` | مكتملة توثيقياً مع مراجعة ثابتة، بلا نتائج معملية. المتبقي بالضبط: حجز T-11 لعقد سجل المحاولات + المصدر + alerts.json، مراجعة سلامة AR ضمن T-15، ثم PILOT وعشر محاولات لكل سيناريو/OS وساعة baseline. ISSUE-019 وT-23 يبقيان معلقين على النتائج الفعلية |
-| T-11 | سكربت قياس زمن الكشف آلياً (يقرأ `alerts.json` ويحسب Δt بين الحدث والتنبيه) | ASTRA | 🟢 FREE | `scripts/measure/mttd.py` | يعتمد T-10 |
+| T-11 | أداة قياس بسجل محاولات مستقل + تنبيهات + أدلة مصدر وmanifest للوقت والإعداد | ASTRA | IN-PROGRESS [ASTRA] 2026-09-09 — حجز؛ لم يبدأ التنفيذ | `scripts/measure/mttd.py`, اختبارات وعقد الإدخال | يعتمد TEST_PLAN؛ لا timestamp subtraction افتراضي ولا نتائج مصطنعة |
 | T-12 | **UC-09 SQL Injection** — runbook + إعداد + سكربت محاكاة | ASTRA | 🟢 FREE | `docs/lab/UC-09_sql_injection.md`, `scripts/attack-emulation/sqli_test.sh` | قواعد 31103/31104 (built-in) ؛ يُغلق ISSUE-007 |
 | T-13 | **UC-11 SSH brute-force + firewall-drop AR** — runbook + إعداد | ASTRA | 🟢 FREE | `docs/lab/UC-11_ssh_bruteforce_ar.md`, `wazuh/manager/ossec.conf.d/50-ar-firewall-drop.xml` | قواعد 5710/5712/5763 built-in ؛ AR `firewall-drop` مدمج |
 | T-14 | **UC-10 Telegram notification** عند level ≥ 12 | ASTRA | 🟢 FREE | `docs/lab/UC-10_telegram.md`, `wazuh/manager/integrations/custom-telegram.py`, `…/60-integration-telegram.xml` | لا توكن حقيقي في الريبو ؛ يُغلق ISSUE-016 |
@@ -27,3 +27,5 @@
 | T-32 | الملخص التنفيذي + المقدمة العامة + الخاتمة الأدبية للرسالة | ASTRA (كان CLAUDE) | 🟢 FREE | `docs/thesis/front_matter.md` | بعد ch4/ch5 |
 | T-33 | مراجعة لغوية/منطقية للفصلَين 4 و5 | ASTRA (كان CLAUDE) — أو الفريق البشري | ⛔ BLOCKED (T-22/T-23) | تعليقات في ISSUES | — |
 | T-40 | نقل CI: `.github/workflows-pending/validate.yml` → `.github/workflows/` (يحتاج صلاحية workflows — المستخدم يدوياً) | USER | ⛔ BLOCKED (توكن) | — | — |
+
+| T-16 | تدقيق الاستلام وتوحيد التخطيط والتوثيق وواجهات runbooks/demo | ASTRA | IN-PROGRESS [ASTRA] 2026-09-09 — حجز بتوجيه المستخدم | docs/، README، البروتوكول، tests/README | R1/R3، ISSUE-040؛ توثيق حدود التغطية دون ادعاء قراءة كل مصدر أصلي |
