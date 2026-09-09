@@ -7,11 +7,14 @@ FIM realtime → `100300/100301` (L7) → AR `yara_linux` → `yara.sh` → `act
 
 ## الوكيل (kali1)
 ```bash
-bash scripts/lab/install_yara_kali.sh     # YARA 4.5.5 من المصدر + قواعد VALHALLA إلى /var/ossec/etc/yara/rules (ISSUE-020)
-sudo cp wazuh/agents/linux/active-response/yara.sh /var/ossec/active-response/bin/ && sudo chown root:wazuh /var/ossec/active-response/bin/yara.sh && sudo chmod 750 /var/ossec/active-response/bin/yara.sh
+bash scripts/lab/install_yara_kali.sh --lab SOURCE_SHA256 RULES_SHA256     # YARA 4.5.5 من المصدر + قواعد VALHALLA إلى /var/ossec/etc/yara/rules (ISSUE-020)
+sudo install -o root -g wazuh -m 750 wazuh/agents/linux/active-response/soc_ar.py /var/ossec/active-response/bin/soc_ar.py
+sudo install -o root -g wazuh -m 750 wazuh/agents/linux/active-response/yara.sh /var/ossec/active-response/bin/yara.sh
 # ossec.conf: <directories realtime="yes">/tmp/yara/malware</directories>
 sudo systemctl restart wazuh-agent
 ```
+البصمتان SOURCE_SHA256 وRULES_SHA256 قيم معتمدة مستقلة وليستا نصين جاهزين؛ البناء كمستخدم غير root. helper مطلوب مع الغلاف. عند تفعيل UC-03 على Linux ثبّت remove-threat.sh باسم remove-threat.exe وفق UC-03؛ لا تنسخ exe الخاص بـWindows إلى Linux.
+
 خطأ شائع (S2 ص41): `libyara.so.9: cannot open shared object file` → `echo "/usr/local/lib" >> /etc/ld.so.conf && ldconfig`.
 
 ## المدير
@@ -21,11 +24,12 @@ sudo systemctl restart wazuh-agent
 4. `sudo systemctl restart wazuh-manager`.
 
 ## Windows (win1) — ⚠️ ISSUE-006 مكتوب ولم يُثبَت تنفيذه
-Python + VC++ Redistributable → `yara64.exe` في `active-response\bin\yara\` → `pip install valhallaAPI` + `download_yara_rules.py` → `yara.bat` → FIM على `Downloads` → قواعد 100303/100304 + command `yara_windows`.
+حدد YARA_ROOTS في soc_windows_ar.py قبل البناء. من مجلد Windows AR ابنِ `pyinstaller --clean --onefile --name soc-yara yara.py` ثم وزع soc-yara.exe مع yara.bat، والماسح الثابت yara64.exe وقواعده المحمية. تنزيل القواعد: `python download_yara_rules.py --expected-sha256 VERIFIED_HASH --output NEW_STAGING_FILE` ثم compilation ومراجعة. لا حاجة valhallaAPI. لا تشغيل JSON عبر cmd أو PowerShell. البناء والـACL والاختبار الأصلي معلقة.
 
 ## المحاكاة
+الأصل في القياس نص YARA اصطناعي غير تنفيذي حسب TEST_PLAN §6.7؛ لا تنزيل عينات حقيقية للقياس/الديمو. الأمر التالي مسار اختياري لتجربة عينات معزولة ومصرح بها، وليس شرطاً ولا أمراً جاهزاً قبل توفير commit وmanifest مستقلين؛ لا تنفذ العينات.
 ```bash
-sudo bash scripts/attack-emulation/malware_downloader.sh     # عينات Mirai/Xbash/VPNFilter/WebShell — بيئة معزولة فقط
+bash scripts/attack-emulation/malware_downloader.sh --lab COMMIT_40HEX SHA256_MANIFEST EXISTING_YARA_DIR     # عينات Mirai/Xbash/VPNFilter/WebShell — بيئة معزولة فقط
 ```
 
 ## النتيجة الفعلية

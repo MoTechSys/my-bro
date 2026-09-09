@@ -9,9 +9,14 @@
 `syscheck 550/554` → `100200/100201` (local) → `integratord → VirusTotal API` → `87105` → `AR remove-threat` (location local) → `657` → `100092` (نجاح) / `100093` (فشل).
 
 ## الوكيل (kali1)
-1. `sudo apt -y install jq`
+1. Python 3.9+، snapshot وخطة استعادة، مجلدات تثبيت محمية؛ بوابات `tests/SECURITY_REVIEW.md §5`.
 2. `<directories realtime="yes">/home/kali/SOCfile</directories>`
-3. `wazuh/agents/linux/active-response/remove-threat.sh` → `/var/ossec/active-response/bin/` ; `chmod 750` ; `chown root:wazuh`
+3. على Linux ثبّت الملفين معاً من جذر المستودع بعد مراجعة allowlists؛ الاسم `.exe` هنا سكربت Linux وليس ملف Windows:
+   ```bash
+   sudo install -o root -g wazuh -m 750 wazuh/agents/linux/active-response/soc_ar.py /var/ossec/active-response/bin/soc_ar.py
+   sudo install -o root -g wazuh -m 750 wazuh/agents/linux/active-response/remove-threat.sh /var/ossec/active-response/bin/remove-threat.exe
+   ```
+   لا تنسخ ملف Windows التنفيذي إلى Linux. لا تستخدم defined-agent كمرشح OS؛ استجابة local واحدة على الوكيل المصدر.
 4. `sudo systemctl restart wazuh-agent`
 
 ## المدير
@@ -21,11 +26,11 @@
 4. `sudo systemctl restart wazuh-manager`.
 
 ## Windows (win1)
-نفس المنطق مع `remove-threat.py` → `pyinstaller -F remove-threat.py` → `remove-threat.exe` في `active-response\bin\`. المجلد المراقب `C:\Users\<USER_NAME>\Downloads`. يجب إيقاف Defender realtime أثناء الاختبار (S2 ص25).
+غير جاهز للتشغيل: `VT_ROOTS` فارغة عمداً في `soc_windows_ar.py`. حدد الجذر الفعلي وطابق FIM ثم ابنِ على Windows `pyinstaller --clean --onefile --name remove-threat remove-threat.py` مع الوحدة المجاورة، واضبط ACL للإدارة/System. مرشح VT الحالي 100200/100201 خاص بمسار Linux؛ لا يعني توفر exe تفعيل Windows. لا تعطل Defender افتراضياً؛ الحجر السابق لـWazuh = INTERFERED موثق، لا نجاح AR. الاختبار الأصلي مطلوب.
 
 ## المحاكاة
 ```bash
-bash scripts/attack-emulation/eicar_test.sh /home/kali/SOCfile
+bash scripts/attack-emulation/eicar_test.sh --lab /home/kali/SOCfile
 ```
 
 ## النتيجة الفعلية
@@ -33,7 +38,9 @@ bash scripts/attack-emulation/eicar_test.sh /home/kali/SOCfile
 
 ## الأخطاء المعروفة
 - ISSUE-008 مسار `local_rules.xml` مكتوب خطأ في الدليل.
-- ISSUE-030 `rm -f $FILENAME` غير مقتبس — أُصلح.
+- ISSUE-030/036: حراسة add فقط وبصمة ومسار؛ الإصلاح مدموج #14 واختباره محلي، لا اعتماد معملي.
+- R3: chmod/chown بريء أثناء hashing قد يغير ctime ويؤدي إلى `file changed while hashing` و100093؛ سجل السبب ولا تتجاوز الحارس.
+- البصمة المفقودة/المختلفة والروابط والمسارات خارج القائمة تفشل مغلقة. سباق تبديل الاسم الأخير ما زال قيداً (ISSUE-039)، فلا اعتماد إنتاجي.
 - VirusTotal free: 4 طلبات/دقيقة → لا تستخدم `<group>syscheck</group>` كمحفّز.
 
 ## استعلام اللوحة

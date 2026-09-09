@@ -30,8 +30,8 @@ sudo suricata -T -c /etc/suricata/suricata.yaml && sudo systemctl enable --now s
 
 ## المحاكاة
 ```bash
-bash scripts/attack-emulation/nmap_scan.sh 192.168.100.108     # من جهاز آخر
-ping -c 20 192.168.100.108                                     # ET Open يملك قواعد ICMP
+sudo bash scripts/attack-emulation/nmap_scan.sh --lab 192.168.100.108     # من جهاز آخر
+# لا يعتبر ping دليلاً بديلاً على اكتشاف المسح؛ تحقق من التوقيع الفعلي في PILOT.
 ```
 
 ## النتيجة الفعلية

@@ -12,10 +12,10 @@
 > **تصميم وتنفيذ منصة مركز عمليات أمنية (SOC) باستخدام أدوات مفتوحة المصدر — Wazuh SIEM**
 > *Design & Implementation of an Open-Source Security Operations Center Platform*
 
-- **الأداة المركزية:** Wazuh **v4.14.7** (Manager + Indexer + Dashboard) على Ubuntu Server.
+- **الأداة المركزية:** Wazuh؛ إصدار الوكلاء التاريخي 4.14.7. نظام الخادم وإصدارات Manager/Indexer/Dashboard الحالية تحتاج تحققاً؛ OVA افتراض موثق لا دليل مشتق من prompt.
 - **نقاط النهاية المُراقبة:** Kali Linux 2025.4 (`kali1`) + Windows 10 Education (`win1`).
 - **ما تم تنفيذه فعلياً في المعمل** (مؤكَّد بلقطات شاشة): نشر الوكلاء، FIM، VirusTotal + Active Response، Suricata NIDS، auditd + CDB lists، Shellshock detection، YARA + Active Response، مراقبة Netcat.
-- **المرحلة الحالية:** الجزء العملي الأساسي مكتمل ~90%. المتبقي: توثيق أكاديمي (الفصول 2، 4، 5)، اختبارات مُقاسة، وتوسعة الرؤية (مراقبة أجهزة الشبكة والهواتف — انظر الرؤية في `docs/01_SOURCE_ANALYSIS.md §7`).
+- **المرحلة الحالية:** راجع STATE وTASKBOARD، لا نسبة إنجاز تقديرية. الفصول 1–3 مسودات موجودة؛ الأمن مدموج باختبارات محلية فقط؛ القياس والتوسعات والفصلان 4–5 والتحقق المعملي متبقية. الهواتف وAI خارج التنفيذ.
 
 ---
 
@@ -26,7 +26,7 @@
 | # | الملف | لماذا |
 |---|-------|-------|
 | 1 | `AI_AGENT_START_HERE.md` | (هذا الملف) البروتوكول |
-| 1b | `COLLABORATION_PROTOCOL.md` | **إلزامي** — يعمل أكثر من وكيل AI على المستودع (Claude + Astra): الفروع، الحجز، الملكية |
+| 1b | `COLLABORATION_PROTOCOL.md` | **إلزامي** — ASTRA المالك الحالي؛ حفظ تاريخ المؤلفين، فرع تطوير واحد وحجز المهام |
 | 1c | `docs/TASKBOARD.md` + `docs/SESSIONS_LOG.md` | المهام المتاحة/المحجوزة + آخر ما فعله الوكلاء الآخرون |
 | 1d | `docs/AGENT_CAPABILITIES_AND_ALLOCATION.md` | **من يعمل على ماذا ولماذا** + قاعدة Zero-Skip + هندسة السياق الإلزامية |
 | 2 | `docs/05_PROJECT_INTENT_UNIFIED_VISION.md` | **النية الموحَّدة — المرجع الأعلى**؛ عند أي تعارض هذه هي الحاكمة |
@@ -68,7 +68,7 @@
 قبل إضافة أي قاعدة: شغّل `python3 scripts/validate/check_rule_ids.py`.
 
 ### 2.3 سير عمل Git (إلزامي بعد كل تعديل)
-الفرع المشترك `genspark_ai_developer` يُعاد ضبطه على `origin/main` في بداية كل جلسة؛ التمييز بين الوكلاء بـ **بادئة الـ commit** `[CLAUDE]`/`[ASTRA]` وبالحجز في TASKBOARD. التفاصيل في `COLLABORATION_PROTOCOL.md §1.1`.
+الفرع `genspark_ai_developer` يُفحص للعمل غير المدموج قبل مزامنته مع `origin/main`؛ ممنوع reset تلقائياً؛ التمييز بين الوكلاء بـ **بادئة الـ commit** `[CLAUDE]`/`[ASTRA]` وبالحجز في TASKBOARD. التفاصيل في `COLLABORATION_PROTOCOL.md §1.1`.
 ```bash
 git add -A && git commit -m "[ME] type(scope): description"
 git fetch origin main && git rebase origin/main   # حل التعارضات لصالح remote

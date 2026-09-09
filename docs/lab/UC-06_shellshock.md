@@ -18,7 +18,7 @@ sudo systemctl status apache2                          # active (img15)
 
 ## المحاكاة (من جهاز المهاجم)
 ```bash
-bash scripts/attack-emulation/shellshock_test.sh 192.168.100.108
+bash scripts/attack-emulation/shellshock_test.sh --lab 192.168.100.108
 ```
 استجابة Apache الافتراضية ("It works") **طبيعية** — الخادم غير مصاب فعلياً (لا CGI)، لكن الطلب يُسجَّل في access.log وهذا كل ما يحتاجه Wazuh للكشف.
 

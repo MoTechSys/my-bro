@@ -1,6 +1,6 @@
 # `wazuh/` — Clean, corrected, deployable configuration
 
-Everything in this directory is **extracted from the team's lab sources (S2, S5) and corrected** according to `docs/04_ISSUES_LOG.md`. Nothing here is invented; every file header cites its source page/screenshot.
+This directory combines source-derived lab configurations with newly authored T-15 hardening (#14). Local tests are not native deployment acceptance. Follow tests/SECURITY_REVIEW.md for gates, backup and rollback; never copy all files blindly.
 
 ```
 wazuh/
@@ -18,6 +18,9 @@ wazuh/
 ├── suricata/suricata.yaml.patch.md
 └── auditd/wazuh.rules
 ```
+
+## Linux and Windows deployment contract
+Linux: install remove-threat.sh as /var/ossec/active-response/bin/remove-threat.exe, with soc_ar.py beside it; install yara.sh with that same helper. All root:wazuh 0750 in protected parents. Never copy the Windows binary to Linux. Windows needs verified allowlists, native PyInstaller builds and ACL testing. The manager uses one local remove-threat dispatch; current VT integration does not automatically cover Windows. See docs/lab/UC-03 and UC-07.
 
 ## Apply order (manager)
 1. `lists/suspicious-programs` → then add `<list>` line (`ossec.conf.d/10-*`).
