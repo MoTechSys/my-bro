@@ -84,7 +84,7 @@ sudo install -o root -g wazuh -m 750 wazuh/agents/linux/active-response/yara.sh 
 
 | السكربت | الواجهة الجديدة |
 |---|---|
-| EICAR | `bash scripts/attack-emulation/eicar_test.sh --lab EXISTING_MONITORED_DIRECTORY` |
+| EICAR | `bash scripts/attack-emulation/eicar_test.sh --lab EXISTING_MONITORED_DIRECTORY UNIQUE_TRIAL_KEY` |
 | nmap | `sudo bash scripts/attack-emulation/nmap_scan.sh --lab PRIVATE_IPV4` |
 | Shellshock | `bash scripts/attack-emulation/shellshock_test.sh --lab PRIVATE_IPV4` |
 | Netcat | `bash scripts/attack-emulation/netcat_tests.sh --lab` (loopback، لا shell بعيد) |

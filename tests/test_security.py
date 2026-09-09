@@ -207,6 +207,35 @@ class LabScriptGuards(unittest.TestCase):
                                          '--lab', target], capture_output=True, timeout=5)
                 self.assertNotEqual(result.returncode, 0, (name, target))
 
+    def eicar_embedded(self, key):
+        import re
+        text = (ROOT/'scripts/attack-emulation/eicar_test.sh').read_text()
+        body = re.search(r"<<'PY'\n(.*?)\nPY", text, re.S)[1]
+        with patch.object(sys, 'argv', ['-', '/home/kali/SOCfile', key]), \
+             patch.object(os, 'open', return_value=123) as opened, \
+             patch.object(os, 'write', return_value=68) as written, \
+             patch.object(os, 'close'), contextlib.redirect_stdout(io.StringIO()):
+            exec(compile(body, 'eicar embedded fixture', 'exec'), {})
+            return opened.call_args, written.call_args
+
+    def test_eicar_unique_name_and_unchanged_payload(self):
+        a, first = self.eicar_embedded('trial_01')
+        b, second = self.eicar_embedded('trial_02')
+        self.assertEqual(a.args[0], 'eicar_trial_01.com')
+        self.assertEqual(b.args[0], 'eicar_trial_02.com')
+        self.assertEqual(first.args[1], second.args[1])
+        self.assertTrue(a.args[1] & os.O_EXCL)
+        self.assertTrue(a.args[1] & os.O_NOFOLLOW)
+
+    def test_eicar_invalid_trial_names_rejected(self):
+        for key in ['', '../escape', 'a/b', 'a b', 'x\nforge', '-option', 'x'*97]:
+            with self.subTest(key=key), self.assertRaises(SystemExit): self.eicar_embedded(key)
+
+    def test_eicar_requires_trial_key_before_creation(self):
+        result = subprocess.run(['bash',str(ROOT/'scripts/attack-emulation/eicar_test.sh'),
+                                 '--lab','/home/kali/SOCfile'], capture_output=True, timeout=5)
+        self.assertEqual(result.returncode,2)
+
     def test_embedded_python_compiles(self):
         import ast
         import re

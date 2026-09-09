@@ -36,18 +36,18 @@ def poisson_upper_zero(hours, alpha=0.05):
 
 
 def chi2_ppf(p, df):
-    """Wilson-Hilferty approximation of the chi-square quantile (adequate for df<=10)."""
+    """Wilson-Hilferty approximation only; not an exact quantile, especially at small df."""
     z = N.inv_cdf(p)
     return df * (1 - 2 / (9 * df) + z * math.sqrt(2 / (9 * df))) ** 3
 
 
 def poisson_upper_k(k, hours, alpha=0.05):
-    """Exact-style 95% upper bound on a Poisson rate with k events in `hours` (chi2(2k+2)/2T)."""
+    """Approximate illustration only; use mttd.poisson_upper for exact reported limits."""
     return chi2_ppf(1 - alpha, 2 * k + 2) / (2 * hours)
 
 
 def mwu_n_per_group(delta_over_sigma, alpha=0.05, power=0.80, are=0.955):
-    """Per-group n for Mann-Whitney U via t-test n divided by asymptotic relative efficiency."""
+    """Normal-location heuristic via two-sided normal-test n / ARE; not guaranteed MWU power."""
     return math.ceil(n_two_sample(delta_over_sigma, 1.0, alpha, power) / are)
 
 
@@ -62,21 +62,21 @@ def main():
     print("\nB. n for a mean latency with margin E=±1 s")
     for s in (1, 2, 3, 5):
         print(f"   sigma={s}s -> n={n_for_mean(s, 1.0)}")
-    print("   -> sigma unknown until PILOT (n=5); floor n=20")
+    print("   -> sigma unknown until PILOT (n=5); floor n=30 for every measured UC (v3.1)")
 
     print("\nC. Two-sample per-group n (H4: hardened AR vs official)")
     for d, s in ((1, 1), (1, 2), (0.5, 1)):
         print(f"   delta={d}s sigma={s}s -> n/group={n_two_sample(d, s)}")
     for d in (0.5, 0.75, 1.0):
         print(f"   MWU delta/sigma={d} -> n/group={mwu_n_per_group(d)}")
-    print("   -> v3.1 AUDIT: 30/group detects 0.75 sigma, NOT 0.5")
+    print("   -> v3.1 planning heuristic only: ~30/group at 0.75 sigma under stated normal-location/ARE assumptions")
 
     print("\nD. Baseline FP/hour — Poisson exact 95% upper bound at 0 FP")
     for h in (1, 2, 3, 4, 6, 8):
         print(f"   {h}h -> < {poisson_upper_zero(h):.2f} FP/h")
     for T in (6, 12):
         for k in (0, 1, 2):
-            print(f"   T={T}h k={k} -> < {poisson_upper_k(k, T):.2f} FP/h")
+            print(f"   APPROXIMATION ONLY: T={T}h k={k} -> {poisson_upper_k(k, T):.2f} FP/h (use mttd for exact)")
     print("   -> v3.1 AUDIT: 6h fails at first FP (0.79); 12h tolerates 1 FP (0.39). Plan: 12 h/OS")
 
     print("\nE. VirusTotal public API budget (4/min, 500/day)")
