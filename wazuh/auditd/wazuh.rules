@@ -1,0 +1,11 @@
+# auditd rules - UC-05 Monitoring execution of malicious commands
+# Target: /etc/audit/rules.d/wazuh.rules   (then: sudo augenrules --load  OR  sudo auditctl -R /etc/audit/audit.rules)
+# Source: S2 pp.32-33 ; S5 img02
+# Notes:
+#   -F auid=1000    : audit only the user with login UID 1000 (first regular user: "omar" in S5 / "kali" in S2 - ISSUE-017)
+#   -F egid!=994    : exclude effective GID 994 (wazuh group on the doc's Ubuntu; verify on Kali with `getent group wazuh` - ISSUE-031)
+#   -F auid!=-1     : exclude unset login UID (= 4294967295, system/daemon processes) - ISSUE-023
+#   -S execve       : every program execution
+#   -k audit-wazuh-c: key mapped to "command" by /var/ossec/etc/lists/audit-keys
+-a exit,always -F auid=1000 -F egid!=994 -F auid!=-1 -F arch=b32 -S execve -k audit-wazuh-c
+-a exit,always -F auid=1000 -F egid!=994 -F auid!=-1 -F arch=b64 -S execve -k audit-wazuh-c

@@ -1,0 +1,19 @@
+<!--
+  Wazuh Manager - Custom decoders
+  Target: /var/ossec/etc/decoders/local_decoder.xml
+  Source: S2 pp.45-46, 53 ; S5 img28
+-->
+<decoder name="local_decoder_example">
+  <program_name>local_decoder_example</program_name>
+</decoder>
+
+<!-- UC-07 YARA: parses lines written by yara.sh / yara.bat into active-responses.log -->
+<decoder name="yara_decoder">
+  <prematch>wazuh-yara:</prematch>
+</decoder>
+
+<decoder name="yara_decoder1">
+  <parent>yara_decoder</parent>
+  <regex>wazuh-yara: (\S+) - Scan result: (\S+) (\S+)</regex>
+  <order>log_type, yara_rule, yara_scanned_file</order>
+</decoder>

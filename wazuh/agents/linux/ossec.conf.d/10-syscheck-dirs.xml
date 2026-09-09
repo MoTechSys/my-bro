@@ -1,0 +1,11 @@
+<!-- Inside existing <syscheck> block. Ensure <disabled>no</disabled>. -->
+<ossec_config>
+  <syscheck>
+    <!-- UC-02 FIM with who-data style details -->
+    <directories check_all="yes" report_changes="yes" realtime="yes">/home/kali/abdul</directories>
+    <!-- UC-03 VirusTotal trigger dir -->
+    <directories realtime="yes">/home/kali/SOCfile</directories>
+    <!-- UC-07 YARA scan dir -->
+    <directories realtime="yes">/tmp/yara/malware</directories>
+  </syscheck>
+</ossec_config>

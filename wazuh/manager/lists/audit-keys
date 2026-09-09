@@ -1,0 +1,7 @@
+# Default Wazuh CDB list - shipped with the manager, shown here for reference only.
+# Target: /var/ossec/etc/lists/audit-keys
+audit-wazuh-w:write
+audit-wazuh-r:read
+audit-wazuh-a:attribute
+audit-wazuh-x:execute
+audit-wazuh-c:command
