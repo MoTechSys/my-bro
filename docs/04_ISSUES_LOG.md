@@ -97,7 +97,39 @@ ISSUE-040: تحديث الواجهات وR1/R3 في T-16 = FIXED-IN-REPO للت�
 ISSUE-044: FIXED-IN-REPO في #22: مصادر Anthropic/OpenAI أولية، تصحيح Fable $10/$50 وAstra Terminal-Bench 57.9؛ منع مقارنة OSWorld غير المتكافئة ونقل نتائج بلا حواجز إلى قدرات الإنتاج؛ حذف ترتيب قوة غير مثبت من وثيقة القدرات الحالية مع بقاء التاريخ في Git. ليس اختباراً مستقلاً للنموذجين.
 
 ISSUE-046 يبقى OPEN: قرئت نصوص S1–S5 وch3 والصوتيات مع فحص صور مختارة؛ الفصول 1–2 والمراجع وبقية الصور لم يكتمل تدقيقها. ISSUE-005 لا يغلق بالتخمين من أسماء الوكلاء والتواريخ.
-| ISSUE-050 | متوسطة | `wazuh/agents/linux/ossec.conf.d` localfile لـaccess.log: UC-06 يستخدم `log_format syslog`؛ Wazuh PoC لـSQLi (UC-09) يتطلّب `apache`. قد لا تُطلَق 31103 تحت syslog | OPEN — T-12: توحيد على `apache` وإعادة اختبار 31168 (MASTER_PLAN_v3 §9) | CLAUDE 2026-09-09 |
-| ISSUE-051 | متوسطة | `soc_ar.py:180` keys=[agent,file,md5] → execd قد يرفض (`abort`) محاولات UC-03 المتكررة بنفس المسار خلال timeout؛ يهدّد n=30 | OPEN — أسماء ملفات فريدة لكل محاولة في `eicar_test.sh`؛ اختبار PILOT أولاً | CLAUDE 2026-09-09 |
-| ISSUE-052 | عالية للقياس | دقّة `alert.timestamp` في `alerts.json` (ثانية أم ms) غير مُتحقَّقة؛ تحدّد دقّة t2 وكل مقاييس MTTD | OPEN — أول فحص في G2؛ إن كانت بالثانية تُعدَّل §5.4 | CLAUDE 2026-09-09 |
-| ISSUE-053 | منخفضة | UC-08 `ignore=900` → n=30 يستغرق 7.75 ساعة؛ يجب أن يدعم `trial_runner.sh` جدولة متداخلة | OPEN — T-11 | CLAUDE 2026-09-09 |
+| ISSUE-059 | متوسطة | `wazuh/agents/linux/ossec.conf.d` localfile لـaccess.log: UC-06 يستخدم `log_format syslog`؛ Wazuh PoC لـSQLi (UC-09) يتطلّب `apache`. قد لا تُطلَق 31103 تحت syslog | OPEN — T-12: توحيد على `apache` وإعادة اختبار 31168 (MASTER_PLAN_v3 §9) | CLAUDE 2026-09-09 |
+| ISSUE-060 | متوسطة | `soc_ar.py:180` keys=[agent,file,md5] → execd قد يرفض (`abort`) محاولات UC-03 المتكررة بنفس المسار خلال timeout؛ يهدّد n=30 | OPEN — أسماء ملفات فريدة لكل محاولة في `eicar_test.sh`؛ اختبار PILOT أولاً | CLAUDE 2026-09-09 |
+| ISSUE-061 | عالية للقياس | دقّة `alert.timestamp` في `alerts.json` (ثانية أم ms) غير مُتحقَّقة؛ تحدّد دقّة t2 وكل مقاييس MTTD | OPEN — أول فحص في G2؛ إن كانت بالثانية تُعدَّل §5.4 | CLAUDE 2026-09-09 |
+| ISSUE-062 | منخفضة | UC-08 `ignore=900` → n=30 يستغرق 7.75 ساعة؛ يجب أن يدعم `trial_runner.sh` جدولة متداخلة | OPEN — T-11 | CLAUDE 2026-09-09 |
+
+
+## عقد T-11 وفق طلب المستخدم وMASTER_PLAN v3 §5 — قبل التنفيذ
+
+| ID | التعارض/الفجوة | الإجراء المعلن (لا حسم صامت) | الحالة |
+|---|---|---|---|
+| ISSUE-050 | §5.1 والطلب يقولان 6 طوابع لكن يسردان t0..t6 = سبعة؛ t2-prime لـVT إضافي | تطبيق الأسماء السبعة كلها مع t2_prime منفصل، UTC epoch milliseconds أو null مع السبب؛ لا حذف t3 | OPEN للتوضيح؛ واجهة v2 موثقة |
+| ISSUE-051 | TEST_PLAN عشرة/PILOT واحد/baseline ساعة وNTP غير المتحقق يبقي الكشف؛ v3 خمسة PILOT و20/30 وست ساعات ورفض جلسة offset>100 | طلب المستخدم يحكم العقد الجديد: رفض كل session عند أي جهاز يتجاوز الحد، مع حفظ كل المحاولات؛ ترحيل v2 صريح مع إبقاء v1 للقراءة التاريخية لا قبول جديد | IN-PROGRESS |
+| ISSUE-052 | §5.3 يعد الاستبعادات في المقام؛ TEST_PLAN يقسم على DETECTED+MISSED فقط | إخراج معدل محسوب على كل MEASURED كما في v3 ومعدل conditional على الصالح منفصلاً، Wilson لكل مقام مسمى؛ عدم حذف المحاولات | IN-PROGRESS |
+| ISSUE-053 | v3 MTTD=t2-t1 لكل UC، بينما TEST_PLAN يسمي Suricata integration؛ UC03 t2=FIM لا87105، L_AR_trigger=t4-t2 يشملVT رغم تسميته نقل؛ UC07 final YARA بعد AR وليس محفزه | تطبيق صيغ §5.2 حرفياً وتسميات حدودها، stage selectors صريحة؛ عدم استبدال t2 بـ87105 أو نتيجة YARA عند حساب trigger؛ حفظ final detection مستقلاً | IN-PROGRESS |
+| ISSUE-054 | H4 median overhead≤1s ليست مكافئة لعدم رفض MWU؛ اتجاه الاختبار وطريقة ties/quantiles غير محددين، plan_math لا ينفذ MWU أو Poisson k>0 | اختبار أحادي greater: hardened أبطأ، exact permutation ranks للعينات الصغيرة مع ties، تقريب مصحح للكبير؛ عرض Δmedian وp دون ادعاء non-inferiority؛ type7 quantiles وPoisson CDF inversion موثقان | OPEN منهجياً؛ تنفيذ حسابات لا إثبات H4 |
+| ISSUE-055 | t1 FIM/t4 Starting/t5 independent/t3 polling ليست كلها سجلات موجودة في الكود الحالي؛ storage بدقةms لا يخلق دقة فعلية | runner يجمع الأدلة المتاحة ويترك null وسبباً عند غياب المراقب/الحقل، لا يختلق وقتاً؛ حدود الربط وnative adapters/PILOT تبقى معلقة | NEEDS-LAB |
+| ISSUE-056 | خارج §5: v3 V5 يقول rm على symlink يحذف الهدف، وهذا غير صحيح لحذف symlink النهائي؛ موارد/Suricata7/DefenderOFF وتعميم الأمان تحتاج مراجعة | لا تنفيذ للـPoC الخطر أو تعطيل Defender أو تعديل النشر في T-11؛ سجل للمراجع، merge وثيقة الخطة لا اعتماد هذه الادعاءات | OPEN |
+
+
+## مراجعة مرشح T-11 — PR #24
+
+| ID | التعارض/القرار المعلن | الحالة |
+|---|---|---|
+| ISSUE-057 | §5 يحدد رفض offset>100؛ التطبيق يحتاط أيضاً برفض uncertainty>100. ساعات t2/t2_prime/t6 موحدة، t6 يحتاج selector خام، وغياب Netcat lookback يصنف INVALID في v2 بدلاً من NOT_EVALUATED القديم. هذه قيود قبول صريحة لا نتائج native ولا تغيير صامت لـv1 | OPEN للمراجعة المنهجية؛ قيود مرشح v2 موثقة في TEST_PLAN/README واختبارات PR #24 |
+
+ISSUE-051/052/053: FIXED-IN-REPO في PR #24 من جهة العقد والتوثيق: PILOT5 و20/30 وbaseline6h، session rejection، المقامان مسميان، ثمانية مقاييس وD_VT وselectors منفصلة. لا إغلاق للقبول المعملي. ISSUE-050 يحتفظ بتعارض العدد الأصلي، والتنفيذ يحفظ السبعة كلها. ISSUE-054 OPEN: حساب MWU لا يثبت non-inferiority أو ادعاءات power. ISSUE-055 NEEDS-LAB: runner يستورد مراقبي t1/t3/t4/t5 ولا ينشرهم؛ AR الحالي بلا Starting معتمد، وnative clocks/causality/rotation يحتاج PILOT. ISSUE-056 خارج نطاق هذه التغييرات ويبقى OPEN.
+
+
+ISSUE-058 — NEEDS-USER: تفويض GitHub رفض آخر push وgh api user بـ401 خلال تسليم PR #24، بعد push ناجح للكود حتى af61ebf. استعادة الربط/التفويض مطلوبة؛ سجل التسليم committed محلياً، وsquash/update/merge معلقة دون إعادة كتابة remote.
+
+تصادم الترقيم عند دمج v3.1: بنود CLAUDE §9 القديمة050/051/052/053 أصبحت059/060/061/062 على الترتيب؛ بنود PR24 الأصلية050..058 محفوظة. EICAR المطلوب باسم ISSUE-051 في رسالة المستخدم = ISSUE-060 الحالي؛ دقة timestamp باسم ISSUE-052 = ISSUE-061. لا حذف لأي بند.
+
+
+متابعة v3.1 في PR24: ISSUE-058 CLOSED — الربط المجدد دفع12c95b5 بنجاح دون استخدام التوكن المنشور. ISSUE-060 FIXED-IN-REPO/NEEDS-LAB — اسم EICAR فريد، ربط selectors ثابت واختبارات mocks؛ سلوك execd/dedup لم يتحقق أصلياً. ISSUE-061 NEEDS-LAB — أداة فحص الصيغة وG2-0 موثقتان، لا نتيجة دقة أصلية. ISSUE-059/062 OPEN لمهام log_format والجدولة المتداخلة، لا إغلاق ضمن البنود الأربعة الحالية.
+
+ISSUE-063 — OPEN منهجياً: v3.1 plan_math يستعمل Wilson–Hilferty تقريبياً ويسميه exact-style، وMWU power مشتق من normal two-sided/ARE تحت افتراضات توزيع؛ §5 بقي فيه floor20 وبند budget قديم بعد تعديل §9. صُححت تسميات helper وfloor في§5 إلى30، ووسم budget تاريخياً؛ mttd يبقى exactPoisson. الحسابات والتقرير لا يدعيان power مضمونة أو non-inferiority. حجم الجدول النهائي حسب UC/OS والجرد ما زال يحتاج مراجعة، دون تعديل خفي لنتائج أو نطاق.

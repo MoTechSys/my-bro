@@ -127,3 +127,26 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 - Study-first state/roadmap and source audit ledger; existing scope is not treated as the brother's own final decision.
 ### Limits
 - No runtime changes, no scope approval, no new lab results; T-11/T-15/T-16 incomplete. T-17 study awaits owner confirmation and independent review.
+
+
+## 2026-09-09 — T-11 v3 measurement candidate (PR #24)
+
+### Added / changed
+- Explicit v2 attempt contract: seven t0..t6 fields plus UC-03 t2_prime, device-minus-UTC offsets and whole-session invalidation; historical v1 retained separately.
+- Eight exact timeline metrics plus D_VT; stdlib type7 summaries, Wilson 95%, exact Poisson upper limit, one-sided Mann–Whitney U and sample_size planning.
+- Baseline exposure union/adjudication and H4 independent-group reporting, without unsupported non-inferiority conclusions.
+- Guarded trial_runner.sh/Python backend: --lab/replay, durable pre-launch t0, bounded JSON/audit/Apache and observer imports, no shell, timeouts, append locking and failed-attempt retention.
+- TEST_PLAN/README contract reconciliation and ISSUE-050..057; raw confirmation, cross-role alert ownership, fixed stage protocol and session guard regressions.
+
+### Validation / limits
+- 130 local tests (111 measurement/runner +19 security), validate_all and diff checks pass. No native Wazuh/Windows/YARA acceptance or real SOC attack/PILOT. Source archives and AR/security runtime unchanged.
+- T-11 remains IN-PROGRESS: reviewed native observers/clock/causality evidence, UC-01, full AR success denominator, independent statistical/technical review and laboratory PILOT still required.
+
+
+## 2026-09-09 — v3.1 corrections before PR #24 merge
+
+- Restored repository authentication; pushed saved12c95b5 without using the exposed user token. Preserved incoming CLAUDE v3.1 ancestry through PR25; issue-ID crosswalk retained (EICAR060, timestamp061).
+- Raised sample_size and every UC planned_n floor to30; baseline target/warning to12h per OS/config. Exact Poisson estimator retained; helper approximations labeled.
+- Added unique validated EICAR filenames and runner --eicar-dir with deterministic session/run/trial identity and exact source/FIM/VT selectors, durable pre-launch path/argv, exclusive/no-follow creation.
+- Added read-only --inspect-alert-timestamps and made native precision review the first G2 step before PILOT; serialized decimals are not native accuracy proof.
+- Updated TEST_PLAN, README, runbook/demo/security interfaces, TASKBOARD and session handoff. 145 local tests (123 measurement/runner +22 security); no real EICAR creation, SOC attack, native acceptance or PILOT. T-11 stays IN-PROGRESS.

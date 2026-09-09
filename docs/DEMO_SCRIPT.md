@@ -122,7 +122,8 @@ bash scripts/attack-emulation/netcat_tests.sh --lab
 **ما نُنفّذ (المشغّل — على kali1):**
 ```bash
 ls -l /home/kali/SOCfile/                       # فارغ
-bash scripts/attack-emulation/eicar_test.sh --lab /home/kali/SOCfile
+: "${TRIAL_KEY:?Set a NEW globally unique ASCII trial key; never reuse after cleanup}"
+bash scripts/attack-emulation/eicar_test.sh --lab /home/kali/SOCfile "$TRIAL_KEY"
 sleep 15; ls -l /home/kali/SOCfile/             # يجب أن يكون الملف قد اختفى
 ```
 **ما نبحث عنه (الأزمنة من القياس فقط):**
@@ -199,3 +200,5 @@ sleep 15; ls -l /home/kali/SOCfile/             # يجب أن يكون المل�
 
 ---
 *T-30 — CLAUDE — 2026-09-09. تصحيح ASTRA بعد التسليم: القواعد الأبناء قد تحل محل الآباء، ولا يُشترط ظهور 657 كسطر مستقل؛ اختفاء الملف وحده ليس إثبات AR دون السجل المرتبط. كل معرّف قاعدة أعلاه مأخوذ من `wazuh/manager/rules/local_rules.xml` أو runbook الـUC المذكور؛ لا ادعاء غير مرجَّع.*
+
+تحديث v3.1/ISSUE-060: EICAR الآن باسم `eicar_<UNIQUE_TRIAL_KEY>.com`، لا eicar.com ثابتاً. الاسم الفريد يغير file ضمن AR keys مع بقاء المحتوى؛ لا تعديل للحراس. للقياس استخدم trial_runner --eicar-dir وفق tests/README وربط الدليل قبل الإطلاق. الصور/المسارات التاريخية لم تتغير، ولا قبول execd أو PILOT من نجاح الاختبار المحلي.

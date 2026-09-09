@@ -30,7 +30,8 @@
 
 ## المحاكاة
 ```bash
-bash scripts/attack-emulation/eicar_test.sh --lab /home/kali/SOCfile
+: "${TRIAL_KEY:?Set a NEW globally unique ASCII trial key; never reuse after cleanup}"
+bash scripts/attack-emulation/eicar_test.sh --lab /home/kali/SOCfile "$TRIAL_KEY"
 ```
 
 ## النتيجة الفعلية
@@ -45,3 +46,5 @@ bash scripts/attack-emulation/eicar_test.sh --lab /home/kali/SOCfile
 
 ## استعلام اللوحة
 Threat Hunting → `rule.id: is one of 553,100092,87105,100201`.
+
+تحديث v3.1/ISSUE-060: EICAR الآن باسم `eicar_<UNIQUE_TRIAL_KEY>.com`، لا eicar.com ثابتاً. الاسم الفريد يغير file ضمن AR keys مع بقاء المحتوى؛ لا تعديل للحراس. للقياس استخدم trial_runner --eicar-dir وفق tests/README وربط الدليل قبل الإطلاق. الصور/المسارات التاريخية لم تتغير، ولا قبول execd أو PILOT من نجاح الاختبار المحلي.
