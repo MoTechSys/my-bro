@@ -51,3 +51,11 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 - ISSUE-033: نموذج الفروع v2 — فرع مشترك `genspark_ai_developer` + بادئة `[AGENT]` + `--force-with-lease` (البيئة تفرض اسم الفرع على كل الوكلاء).
 ### Added
 - ISSUE-032 (حدود الإثبات) وتصحيح T-10 — من مراجعة Astra.
+
+## [Unreleased] — 2026-09-09 — [ASTRA] T-10 (PR #6)
+### Added
+- `tests/TEST_PLAN.md`: بروتوكولات UC-01..08، عشر محاولات لكل سيناريو ونظام مشمول، ساعة baseline، عقد سجل المحاولات والربط بالأدلة، مقاييس الكشف والاستجابة والإنذارات الكاذبة، وضوابط السلامة والكبت.
+- مقترحات ISSUE-034..037: مصادر الوقت ومقام المحاولات، تكرار معرف ISSUE-032، مراجعة سلامة الحذف وتوجيه AR، ودقة شرح ignore=900.
+### Validation and handoff
+- نجحت فحوص IDs وBash/Python وXML بعد تحييد placeholders وCDB وروابط الخطة؛ لا تشغيل Wazuh/Windows/YARA أو قياس أداء في المعمل.
+- T-10 مكتملة توثيقياً؛ ISSUE-019 مفتوح. T-11 يحتاج سجل المحاولات وأدلة المصدر مع alerts.json، وT-15 مطلوب قبل اختبار الحذف الآلي. لا تغيير في ملفات `wazuh/` أو مهام Claude.
