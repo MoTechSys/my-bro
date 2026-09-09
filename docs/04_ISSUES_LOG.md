@@ -6,9 +6,9 @@
 
 | ID | خطورة | الموضع | الوصف | الإصلاح المقترح | الحالة |
 |----|:-----:|--------|-------|-----------------|--------|
-| ISSUE-001 | 🟠 | S4 جدول 1.1 + §3.6 | الرسالة تذكر **Zeek** (وS3 تذكر Zeek فقط بلا Suricata)، بينما المُنفَّذ **Suricata فقط**؛ لا أثر لـ Zeek في أي لقطة | حذف Zeek من جدول 1.1 و§3.6 أو نقله إلى "أعمال مستقبلية" | NEEDS-USER (قرار الفريق) |
-| ISSUE-002 | 🟠 | S4 جدول 1.1 | "Windows 11" بينما الوكيل الفعلي **Windows 10 Education 19045** (📷 p04_0) | تعديل الجدول إلى Windows 10 (أو تحديث الجهاز فعلاً) | NEEDS-USER |
-| ISSUE-003 | 🟠 | S1, S3, S4 | ذكر **Elasticsearch + Kibana + Filebeat** كمكونات مستقلة؛ الواقع: **Wazuh Indexer + Wazuh Dashboard** (مدمجان في 4.x)، وFilebeat داخلي في المدير | استبدال المسميات في الرسالة؛ يجوز ذكر أن Indexer مبني على OpenSearch | FIXED-IN-REPO (`02_ARCHITECTURE.md`) / NEEDS-USER للرسالة |
+| ISSUE-001 | 🟠 | S4 جدول 1.1 + §3.6 | الرسالة تذكر **Zeek** (وS3 تذكر Zeek فقط بلا Suricata)، بينما المُنفَّذ **Suricata فقط**؛ لا أثر لـ Zeek في أي لقطة | حذف Zeek من جدول 1.1 و§3.6 أو نقله إلى "أعمال مستقبلية" | FIXED-IN-REPO (ch1 v2 §1.8، T-24) — يبقى قرار الفريق النهائي |
+| ISSUE-002 | 🟠 | S4 جدول 1.1 | "Windows 11" بينما الوكيل الفعلي **Windows 10 Education 19045** (📷 p04_0) | تعديل الجدول إلى Windows 10 (أو تحديث الجهاز فعلاً) | FIXED-IN-REPO (ch1 v2 §1.8، T-24) — يبقى قرار الفريق النهائي |
+| ISSUE-003 | 🟠 | S1, S3, S4 | ذكر **Elasticsearch + Kibana + Filebeat** كمكونات مستقلة؛ الواقع: **Wazuh Indexer + Wazuh Dashboard** (مدمجان في 4.x)، وFilebeat داخلي في المدير | استبدال المسميات في الرسالة؛ يجوز ذكر أن Indexer مبني على OpenSearch | FIXED-IN-REPO (ch1 v2 §1.8، T-24) — يبقى قرار الفريق النهائي |
 | ISSUE-004 | 🟡 | S2 p18_1 (192.168.8.5) + S5 img17 (192.168.0.186) | ظهور شبكتين مختلفتين عن `192.168.100.0/24` — دلالة على تغيّر الشبكة بين الجلسات أو أجهزة مختلفة | توثيق أن المعمل مرّ بأكثر من تكوين شبكي؛ توحيد الـ IPs في العرض النهائي | OPEN |
 | ISSUE-005 | 🟡 | S2 ص19، 26، 31، 39، 49، 55 | بعض لقطات "Visualize the alerts" منسوخة من **توثيق Wazuh الرسمي** وليست من المعمل (تواريخ 2024، وكلاء `Ubuntu22`, `Windows11`) | يجب عدم إدراجها في الرسالة كنتائج؛ استبدالها بلقطات المعمل الحقيقية (متوفرة في S5) | OPEN |
 | ISSUE-006 | 🟡 | S2 ص49–55 | تكامل YARA على **Windows** مكتوب كاملاً لكن لا توجد لقطة تُثبت تنفيذه على `win1` | إما تنفيذه وتوثيقه، أو وصفه كـ "مُعدّ وغير مُختبَر" | NEEDS-LAB |
@@ -20,7 +20,7 @@
 | ISSUE-012 | 🟡 | S2 ص36 | `sudo apt -y install netcat` — في Kali 2025 الحزمة `netcat-openbsd` أو `netcat-traditional` (nc موجود مسبقاً غالباً) | استخدام `nc -h` مباشرة أو `apt install netcat-traditional` | FIXED-IN-REPO |
 | ISSUE-013 | 🟡 | S2 ص47 (النص المستخرج) | regex `^[Yy]$` انكسر في استخراج النص فقط | لا شيء — النسخة النظيفة في `scripts/attack-emulation/` | CLOSED |
 | ISSUE-014 | 🟡 | S2 p06_1 | فشل `wget` بـ `Temporary failure in name resolution` أثناء تثبيت الوكيل على Kali | مشكلة DNS مؤقتة في VM؛ توثيق في Troubleshooting | CLOSED (تجاوزها الفريق) |
-| ISSUE-015 | 🟠 | S4 جدول 1.1 | "Ubuntu Server → SOC Server" بينما البرومبت `wazuh-user@wazuh-server` يدل على **Wazuh OVA** الرسمية | تأكيد من الفريق: هل ثُبِّت Wazuh على Ubuntu يدوياً أم استُخدمت الـ OVA؟ ثم توحيد الرسالة | NEEDS-USER |
+| ISSUE-015 | 🟠 | S4 جدول 1.1 | "Ubuntu Server → SOC Server" بينما البرومبت `wazuh-user@wazuh-server` يدل على **Wazuh OVA** الرسمية | ch1 v2 اعتمد OVA (تصحيح #1)؛ إن أكد الفريق Ubuntu يُعدَّل سطر واحد | FIXED-IN-REPO (افتراضي) / NEEDS-USER للتأكيد |
 | ISSUE-016 | 🟡 | S4 §3.6.1 الطبقة 6 | "تنبيهات Email/Telegram/Syslog" — غير منفَّذة | تنفيذ Email أو Telegram (بسيط) أو نقلها لأعمال مستقبلية | OPEN → مقترح UC-10 |
 | ISSUE-017 | 🟡 | S2 (user `kali`) vs S5 (user `omar`, UID 1000) | مستخدمان مختلفان على Kali — أجهزة مختلفة أو أعضاء فريق مختلفون | توضيح من الفريق؛ في auditd القاعدة `-F auid=1000` تراقب UID 1000 فقط | NEEDS-USER |
 | ISSUE-018 | 🟠 | S5 img27 | `<field name="file">/tmp/home/kali/omar</field>` — مسار غريب (خطأ إملائي؟ المقصود `/home/kali/omar` أو `/tmp/yara/malware`) | التأكد من المسار الفعلي المراقب في `ossec.conf` على الجهاز ومطابقته | NEEDS-LAB |
@@ -32,7 +32,7 @@
 | ISSUE-024 | 🟡 | S5 §3.2 | تقديم `yum: command not found` على Kali كـ "معالجة خطأ" — بل هو تنفيذ أوامر RHEL على Debian | حذفه من التقرير النهائي | OPEN (للرسالة) |
 | ISSUE-025 | 🟡 | S2 ص41–42، S5 | استخدام VALHALLA **demo key** (`1111…`) — مجموعة قواعد محدودة | ذكره صراحة في الرسالة؛ يمكن إضافة قواعد YARA مفتوحة (مثل `Yara-Rules/rules` على GitHub) | OPEN |
 | ISSUE-026 | 🟡 | S2 p04_0 | `win1` بحالة **disconnected** في لقطة الوكلاء | لقطة نهائية يجب أن تُظهر الوكيلين `active` | NEEDS-LAB |
-| ISSUE-027 | 🟠 | S1 مقابل S4 | المقترح الأولي يعد بـ TheHive + AI + Telegram؛ الرسالة الحالية لا تذكرها إطلاقاً في الأهداف — **جيد**، لكن يجب ذكرها صريحاً في "الأعمال المستقبلية" وإلا سيسأل الممتحن | إضافة قسم Future Work في الفصل 5 | OPEN |
+| ISSUE-027 | 🟠 | S1 مقابل S4 | المقترح الأولي يعد بـ TheHive + AI + Telegram؛ الرسالة الحالية لا تذكرها إطلاقاً في الأهداف — **جيد**، لكن يجب ذكرها صريحاً في "الأعمال المستقبلية" وإلا سيسأل الممتحن | إضافة قسم Future Work في الفصل 5 | FIXED-IN-REPO (ch1 v2 §1.8، T-24) — يبقى قرار الفريق النهائي |
 | ISSUE-028 | 🟠 | S4 | الفصل 2 (الإطار النظري/الدراسات السابقة) والفصلان 4 و5 **غائبون**؛ الفصل 3 فيه §3.6 فقط | خطة الكتابة في `docs/thesis/README.md` | OPEN |
 | ISSUE-029 | 🟡 | S4 (ملف DOCX) | الملف الأصلي **معطوب** (CRC في image1.png) | أُصلح؛ النسخة في `docs/sources/originals/04_..._REPAIRED.docx`؛ يجب على الفريق إعادة الحفظ من Word | FIXED-IN-REPO |
 | ISSUE-030 | 🟡 | S2 ص13–14 `remove-threat.sh` | السكربت الرسمي يستخدم `FILENAME=$(echo $INPUT_JSON | jq -r .parameters.alert.data.virustotal.source.file)` ثم `rm -f $FILENAME` بدون اقتباس — يفشل مع المسارات التي فيها فراغات | `rm -f "$FILENAME"` | FIXED-IN-REPO |
