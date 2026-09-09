@@ -8,7 +8,7 @@
 | T-01 | تأسيس المستودع (P0 كامل) | CLAUDE | ✅ DONE `859aa03` | كل المستودع | — |
 | T-02 | وثيقة النية الموحَّدة | CLAUDE | ✅ DONE `0102eae` | `docs/05_*` | المرجع الأعلى |
 | T-03 | بروتوكول التعاون + TASKBOARD + SESSIONS_LOG | CLAUDE | ✅ DONE | `COLLABORATION_PROTOCOL.md`, `docs/TASKBOARD.md`, `docs/SESSIONS_LOG.md` | — |
-| T-10 | **خطة الاختبار المُقاس** (P2.1): بروتوكول لكل UC-01..08 — الخطوات، المتوقَّع، كيفية قياس MTTD/AR-latency/FP | ASTRA | 🔒 [ASTRA] 2026-09-09 | `tests/TEST_PLAN.md` | **لا** يُغلق ISSUE-019 وحده — الإغلاق يحتاج نتائج فعلية (T-11 + تنفيذ معملي). تصحيح من Astra |
+| T-10 | **خطة الاختبار المُقاس** (P2.1): بروتوكول لكل UC-01..08 — الخطوات، المتوقَّع، كيفية قياس MTTD/AR-latency/FP | ASTRA | ✅ DONE [ASTRA] 2026-09-09 — PR #6 | `tests/TEST_PLAN.md` | مكتملة توثيقياً مع مراجعة ثابتة، بلا نتائج معملية. المتبقي بالضبط: حجز T-11 لعقد سجل المحاولات + المصدر + alerts.json، مراجعة سلامة AR ضمن T-15، ثم PILOT وعشر محاولات لكل سيناريو/OS وساعة baseline. ISSUE-019 وT-23 يبقيان معلقين على النتائج الفعلية |
 | T-11 | سكربت قياس زمن الكشف آلياً (يقرأ `alerts.json` ويحسب Δt بين الحدث والتنبيه) | ASTRA | 🟢 FREE | `scripts/measure/mttd.py` | يعتمد T-10 |
 | T-12 | **UC-09 SQL Injection** — runbook + إعداد + سكربت محاكاة | ASTRA | 🟢 FREE | `docs/lab/UC-09_sql_injection.md`, `scripts/attack-emulation/sqli_test.sh` | قواعد 31103/31104 (built-in) ؛ يُغلق ISSUE-007 |
 | T-13 | **UC-11 SSH brute-force + firewall-drop AR** — runbook + إعداد | ASTRA | 🟢 FREE | `docs/lab/UC-11_ssh_bruteforce_ar.md`, `wazuh/manager/ossec.conf.d/50-ar-firewall-drop.xml` | قواعد 5710/5712/5763 built-in ؛ AR `firewall-drop` مدمج |
