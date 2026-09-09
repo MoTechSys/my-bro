@@ -15,3 +15,8 @@ __pycache__/
 build/
 dist/
 *.spec
+
+# never commit private bootstrap bundles
+*BOOTSTRAP*PRIVATE*
+*.pem
+*cloudlab*

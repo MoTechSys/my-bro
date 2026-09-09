@@ -46,6 +46,11 @@ cat ~/.ssh/cloudlab.pub     # أرسل هذا فقط للمستخدم → يضي
 المفاتيح العامة المُصرَّح بها حالياً (3): مفتاح صاحب البيئة، مفتاح وكيل السحابة، ومفتاح CLAUDE:
 `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBioG9VOW3xqrFA0/o4GHixP8OYB5x8Bhf+reA1Curjw claude-lab-agent`
 
+## 2.3 الطريقة الأسرع: حزمة Bootstrap للنسخ واللصق (يحتفظ بها المستخدم)
+المستخدم يملك ملفاً خاصاً `CLOUD_LAB_BOOTSTRAP_PRIVATE.txt` (**خارج Git** — فيه المفتاح الخاص base64 + بصمة المضيف + `~/.ssh/config` + أمر تحقق). يلصقه كاملاً في أي جلسة وكيل جديدة → الوكيل ينفّذ الكتلة → `ssh cloudlab` يعمل فوراً. **مُختبَر من HOME نظيف 2026-09-09 08:18Z.**
+- إن ضاع الملف أو اشتُبه بتسرّب المفتاح: وكيل السحابة يحذف سطر `claude-lab-agent` من `/home/work/.ssh/authorized_keys`، ويُولَّد مفتاح جديد (§2.1) وتُعاد الحزمة.
+- الحزمة **لا** تحوي كلمات مرور Wazuh؛ تلك تبقى في `~/soc/.secrets.env` على السيرفر.
+
 ### 2.2 مسار احتياطي: Genspark Mesh
 السيرفر منضمّ إلى mesh حساب صاحب البيئة: `100.64.0.1` (اسم `manus-mab1-f36ed7b3-5606-vm`)، `gsk-mesh serve` يعمل. **يعمل فقط لوكيل على نفس حساب Genspark.** إن كنت كذلك: `gsk mesh join && gsk mesh ssh work@manus-mab1-f36ed7b3-5606-vm`.
 
