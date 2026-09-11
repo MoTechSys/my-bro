@@ -189,7 +189,7 @@ def prepare(records, catalog, language='ar', window_seconds=300):
         if key not in aliases:
             aliases[key] = kind + '_' + str(len(aliases) + 1)
         return aliases[key]
-    for row in records:
+    for position, row in enumerate(records, 1):
         try:
             if not isinstance(row, dict):
                 raise AnalystError('ALERT_OBJECT_REQUIRED')
@@ -211,8 +211,8 @@ def prepare(records, catalog, language='ar', window_seconds=300):
                 continue
             # Alias the manager-agent pair, never merge agent001 across managers.
             agent_ref = alias('AGENT', json.dumps([manager, agent], ensure_ascii=True))
-            projected = {'ref': 'A' + str(len(alerts) + 1), 'timestamp': at,
-                         'manager': alias('MANAGER', manager), 'agent': agent_ref,
+            projected = {'ref': 'A' + str(len(alerts) + 1), 'source_record': position,
+                         'timestamp': at, 'manager': alias('MANAGER', manager), 'agent': agent_ref,
                          'rule_id': rid, 'level': level}
             data = row.get('data', {})
             if not isinstance(data, dict):
@@ -279,6 +279,8 @@ def validate_response(raw, context):
         refs = strings(item['evidence_refs'])
         if not set(refs) <= by_ref.keys():
             raise AnalystError('UNKNOWN_EVIDENCE_REFERENCE')
+        if covered.intersection(refs):
+            raise AnalystError('REPEATED_ALERT_FINDING')
         if any(frozenset((a, b)) not in links for i, a in enumerate(refs) for b in refs[i + 1:]):
             raise AnalystError('UNSUPPORTED_CROSS_ALERT_LINK')
         classification, action = item['classification'], item['recommendation']
@@ -351,7 +353,12 @@ class Ollama:
 
 
 def analyze(context, provider=None):
-    """Provider-neutral callable interface; default has no network or model call."""
+    """Provider-neutral callable interface; default has no network or model call.
+
+    Copies prevent accidental adapter mutation from changing validation evidence.
+    Python provider implementations remain trusted code, not sandboxed plugins.
+    """
+    context = strict_json(encoded(context))
     result = {'schema_version': 1, 'execution_authority': 'none',
               'requires_human_review': True, 'semantic_grounding_verified': False,
               'context': context, 'findings': [], 'inference_seconds': None}
@@ -361,7 +368,8 @@ def analyze(context, provider=None):
         result['status'] = 'offline_context_only'
     else:
         start = time.monotonic()
-        result['findings'] = validate_response(provider(context), context)
+        raw = provider(strict_json(encoded(context)))
+        result['findings'] = validate_response(raw, context)
         result['inference_seconds'] = time.monotonic() - start
         result['status'] = 'unverified_model_advice'
     return result

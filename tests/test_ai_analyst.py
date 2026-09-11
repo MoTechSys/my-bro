@@ -174,6 +174,43 @@ class Findings(unittest.TestCase):
         self.assertEqual(result['findings'][0]['knowledge_refs'], ['rule:100210'])
         self.assertEqual(result['findings'][0]['execution_authority'], 'none')
 
+    def test_duplicate_findings_for_one_alert_are_rejected(self):
+        value = response()
+        value['findings'].append(copy.deepcopy(value['findings'][0]))
+        value['findings'][1]['classification'] = 'likely_benign'
+        with self.assertRaisesRegex(a.AnalystError, 'REPEATED_ALERT_FINDING'):
+            self.validate(value)
+
+    def test_provider_cannot_rewrite_validation_knowledge(self):
+        ctx = context(); before = copy.deepcopy(ctx)
+        def provider(value):
+            value['knowledge'][0]['mitre_ids'].append('T9999')
+            return json.dumps(response(mitre=['T9999']))
+        with self.assertRaisesRegex(a.AnalystError, 'UNSUPPORTED_MITRE_MAPPING'):
+            a.analyze(ctx, provider)
+        self.assertEqual(ctx, before)
+
+    def test_provider_cannot_rewrite_alert_references(self):
+        ctx = context(); before = copy.deepcopy(ctx)
+        def provider(value):
+            value['alerts'][0]['ref'] = 'A999'
+            return json.dumps(response(refs=['A999']))
+        with self.assertRaisesRegex(a.AnalystError, 'UNKNOWN_EVIDENCE_REFERENCE'):
+            a.analyze(ctx, provider)
+        self.assertEqual(ctx, before)
+
+    def test_offline_result_does_not_alias_input_context(self):
+        ctx = context(); before = copy.deepcopy(ctx)
+        output = a.analyze(ctx)
+        output['context']['alerts'].clear()
+        self.assertEqual(ctx, before)
+
+    def test_source_record_index_preserved_after_filter_and_dedup(self):
+        row = alert('eligible')
+        value = context([alert('low', level=6), row, copy.deepcopy(row), alert('last', second=5)])
+        self.assertEqual([item['source_record'] for item in value['alerts']], [2, 4])
+        self.assertNotIn('eligible', json.dumps(value))
+
     def test_offline_default_never_invokes_network(self):
         with patch.object(a.urllib.request, 'build_opener') as build:
             result = a.analyze(context())
