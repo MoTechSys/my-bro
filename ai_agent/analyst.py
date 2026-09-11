@@ -5,6 +5,7 @@ Experimental, not native acceptance. No response executor, shell, model download
 raw-log forwarding, external API, or autonomous approval. Default CLI is offline.
 """
 import argparse
+import importlib.util
 from datetime import datetime, timezone
 import ipaddress
 import json
@@ -290,12 +291,16 @@ def validate_response(raw, context):
         mitre = strings(item['mitre_ids'], 20, allow_empty=True)
         rule_ids = {by_ref[ref]['rule_id'] for ref in refs}
         allowed = {m for rid in rule_ids if rid in by_rule for m in by_rule[rid]['mitre_ids']}
+        if 'mitre_documents' in context:
+            allowed &= {doc['technique_id'] for doc in context['mitre_documents']}
         if not set(mitre) <= allowed:
             raise AnalystError('UNSUPPORTED_MITRE_MAPPING')
         covered.update(refs)
         accepted.append({'evidence_refs': refs, 'classification': classification,
                          'assessment': assessment, 'mitre_ids': mitre, 'recommendation': action,
-                         'knowledge_refs': sorted('rule:' + rid for rid in rule_ids if rid in by_rule),
+                         'knowledge_refs': sorted(
+                             ['rule:' + rid for rid in rule_ids if rid in by_rule]
+                             + ['mitre:' + tid for tid in mitre if 'mitre_documents' in context]),
                          'requires_human_review': True, 'execution_authority': 'none'})
     if covered != by_ref.keys():
         raise AnalystError('UNCOVERED_ALERTS')
@@ -379,6 +384,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--alerts', required=True, help='bounded JSONL export; do not use a live unbounded stream')
     parser.add_argument('--rules', default=str(Path(__file__).resolve().parents[1] / 'wazuh/manager/rules/local_rules.xml'))
+    parser.add_argument('--inventory', help='optional operator-reviewed private inventory snapshot')
+    parser.add_argument('--inventory-sha256', help='independently approved SHA256 for the inventory file')
     parser.add_argument('--language', choices=('ar', 'en'), default='ar')
     parser.add_argument('--window-seconds', type=int, default=300)
     parser.add_argument('--infer', action='store_true', help='explicitly call an already installed local model')
@@ -387,11 +394,17 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         provider = Ollama(args.model, args.endpoint) if args.infer else None
-        context = prepare(read_alerts(read_file(args.alerts)), load_rules(read_file(args.rules)),
-                          args.language, args.window_seconds)
+        records, rules_text = read_alerts(read_file(args.alerts)), read_file(args.rules)
+        context = prepare(records, load_rules(rules_text), args.language, args.window_seconds)
+        spec = importlib.util.spec_from_file_location('_analyst_knowledge', Path(__file__).with_name('knowledge.py'))
+        knowledge = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(knowledge)
+        context = knowledge.enrich(context, rules_text, records,
+                                   read_file(args.inventory) if args.inventory else None,
+                                   args.inventory_sha256)
         print(encoded(analyze(context, provider)).decode('ascii'))
         return 0
-    except (AnalystError, OSError, UnicodeError):
+    except (ValueError, OSError, UnicodeError):
         # Never echo raw events, filenames, model text, endpoints or error bodies.
         print('{"status":"rejected","execution_authority":"none"}', file=sys.stderr)
         return 1
