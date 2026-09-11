@@ -13,7 +13,6 @@ import math
 import os
 from pathlib import Path
 import signal
-import stat
 import subprocess
 import sys
 import threading
@@ -59,13 +58,14 @@ def guard():
         protected(path)
     snapshot = health.collect()
     # Never start a second agent or clear stale state on the operator's behalf.
-    if snapshot['processes'] or snapshot['zombies'] or snapshot['errors'] and snapshot['pid1'] is None:
+    if snapshot['processes'] or snapshot['zombies'] or snapshot['pid1'] is None:
         raise ValueError('EXISTING_OR_UNREADABLE_PROCESS_STATE')
     # Inspect the process table independently: absent state files before the first
     # start are expected, but proc permission/parse errors must still fail closed.
-    for path in Path('/proc').iterdir():
-        if not path.name.isdecimal():
-            continue
+    entries = [p for p in Path('/proc').iterdir() if p.name.isdecimal()]
+    if len(entries) > health.MAX_PROCESSES:
+        raise ValueError('PROCESS_LIMIT')
+    for path in entries:
         try:
             record = health.parse_stat(health.bounded_text(path / 'stat'))
         except FileNotFoundError:
