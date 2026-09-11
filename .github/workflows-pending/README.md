@@ -15,9 +15,24 @@ Credentials are not part of this workflow or repository. `contents: read`, pinne
 actions, `persist-credentials: false`, eight-minute job timeouts, and concurrency
 limits remain unchanged. No extra deployment permission is requested.
 
-## Acceptance gate
+## Verified first activation — 2026-09-11
 
-Activation is submitted through PR #28. Inspect the actual run and head SHA at:
+Commit `095cd869f08a23d88f7ed3d9d434db816c04fb37` was pushed and verified as PR #28's head.
+Both the [PR run](https://github.com/MoTechSys/my-bro/actions/runs/34598831817) and [push run](https://github.com/MoTechSys/my-bro/actions/runs/34598830852) completed successfully.
+The PR job logs were read directly and each contains `Ran 212 tests` and
+`ALL CHECKS PASSED`:
+
+| Job | Result | Test count | Suite runtime (not job or SOC latency) |
+|---|---|---|---|
+| [Python 3.12](https://github.com/MoTechSys/my-bro/actions/runs/34598831817/job/103260895963) | success | 212 | 2.390s |
+| [Python 3.13](https://github.com/MoTechSys/my-bro/actions/runs/34598831817/job/103260896103) | success | 212 | 1.912s |
+
+T-40/ISSUE-038 are verified for this revision. Subsequent commits must pass their
+own runs; this historical success is not proof of future checks or cloud recovery.
+
+## Continuing acceptance gate
+
+Activation was published through PR #28; the PR remains open for review. Inspect the actual run and head SHA at:
 https://github.com/MoTechSys/my-bro/actions/workflows/validate.yml
 
 Both `validate (3.12)` and `validate (3.13)` must finish successfully on the current

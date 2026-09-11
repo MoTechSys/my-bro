@@ -2,6 +2,13 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-11 — [AI] Published revision and verified CI evidence
+
+- Fast-forward push of `095cd869f08a23d88f7ed3d9d434db816c04fb37` succeeded and PR #28 was updated; remote PR head matched. Git configuration was unchanged and no credentials were persisted.
+- [PR run](https://github.com/MoTechSys/my-bro/actions/runs/34598831817) and [push run](https://github.com/MoTechSys/my-bro/actions/runs/34598830852) both succeeded on Python 3.12 and 3.13. Direct PR log inspection confirmed all212 tests and the validator passed in each job.
+- Closed T-40/ISSUE-038 for the verified revision, preserving the earlier permission rejection as history. Later commits need their own runs; final head checks are linked on PR #28.
+- No cloud deployment, service restart, rollback, canary, PILOT, or native acceptance was performed.
+
 ## [Unreleased] — 2026-09-11 — [AI] Authorized synchronization and CI activation
 
 - Verified the user-authorized temporary credential belongs to MoTechSys and has repository push and workflow scope; no credential written to project files or Git configuration.
