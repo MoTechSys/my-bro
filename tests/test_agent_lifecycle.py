@@ -287,6 +287,76 @@ class Lifecycle(unittest.TestCase):
     def test_host_is_rejected_without_start(self):
         with patch.object(life.os, 'geteuid', return_value=1000), self.assertRaises(ValueError): life.guard()
 
+    def guarded_fixture(self, pid1='docker-init', parent=1, snapshot=None):
+        stack = contextlib.ExitStack()
+        self.addCleanup(stack.close)
+        stack.enter_context(patch.object(life.os, 'geteuid', return_value=0))
+        stack.enter_context(patch.object(life.os, 'getppid', return_value=parent))
+        stack.enter_context(patch.object(life, 'protected'))
+        stack.enter_context(patch.object(life.health, 'bounded_text', return_value=stat_line(1, pid1)))
+        stack.enter_context(patch.object(life.health, 'collect', return_value=snapshot or
+                                        {'processes': [], 'zombies': 0, 'pid1': pid1,
+                                         'errors': ['SNAPSHOT_INCOMPLETE_OR_INVALID']}))
+        stack.enter_context(patch.object(life.Path, 'iterdir', return_value=iter([Path('/proc/1')])) )
+
+    def test_prestart_absent_state_files_do_not_block_clean_process_table(self):
+        self.guarded_fixture()
+        life.guard()  # First connection has not created state files yet.
+
+    def test_noninit_or_nondirect_child_is_rejected(self):
+        for pid1, parent in [('tail', 1), ('tini', 42)]:
+            with self.subTest(pid1=pid1, parent=parent):
+                self.guarded_fixture(pid1, parent)
+                with self.assertRaises(ValueError): life.guard()
+
+    def test_preexisting_agent_or_zombie_is_rejected(self):
+        for change in ({'processes': [healthy()['processes'][0]]}, {'zombies': 1}):
+            state = dict(processes=[], zombies=0, pid1='tini', errors=[])
+            state.update(change)
+            self.guarded_fixture(snapshot=state)
+            with self.assertRaises(ValueError): life.guard()
+
+    def test_installation_permission_guards(self):
+        for uid, mode, regular, accepted in [(0, 0o644, True, True), (1000, 0o644, True, False),
+                                              (0, 0o664, True, False), (0, 0o644, False, False)]:
+            source, resolved = Mock(), Mock()
+            source.resolve.return_value = resolved
+            source.parents = resolved.parents = ()
+            source.stat.return_value = resolved.stat.return_value = Mock(st_uid=uid, st_mode=mode)
+            resolved.is_file.return_value = regular
+            with self.subTest(uid=uid, mode=mode, regular=regular), patch.object(life, 'Path', return_value=source):
+                if accepted: life.protected('/fixture')
+                else:
+                    with self.assertRaises(ValueError): life.protected('/fixture')
+
+    def test_signal_handlers_request_clean_shutdown(self):
+        handlers = {}
+        def register(sig, handler): handlers[sig] = handler
+        def run(stopped):
+            self.assertFalse(stopped())
+            handlers[life.signal.SIGTERM](None, None)
+            self.assertTrue(stopped())
+            return 0
+        with patch.object(life, 'guard'), patch.object(life, 'run', side_effect=run), \
+             patch.object(life.signal, 'signal', side_effect=register), patch.object(life.time, 'tzset'), \
+             patch.dict(life.os.environ):
+            self.assertEqual(life.main(['--lab']), 0)
+        self.assertIn(life.signal.SIGINT, handlers)
+
+    def test_shutdown_requested_between_service_starts(self):
+        calls = []
+        stop = iter([False, True])
+        result = life.run(lambda: next(stop), lambda *args: calls.append(args), Mock(), lambda *a, **kw: None)
+        self.assertEqual(result, 0)
+        self.assertEqual([(p, a) for p, a, _ in calls], [(life.APACHE, 'start'), (life.APACHE, 'stop')])
+
+    def test_monitor_failure_still_cleans_both_services(self):
+        calls = []
+        result = life.run(lambda: False, lambda *args: calls.append(args),
+                          Mock(side_effect=RuntimeError('synthetic')), lambda *a, **kw: None)
+        self.assertEqual(result, 1)
+        self.assertEqual([a for _, a, _ in calls], ['start', 'start', 'stop', 'stop'])
+
     def test_fixed_argv_no_shell_and_clean_environment(self):
         with patch.object(life.subprocess, 'run', return_value=Mock(returncode=0)) as execute:
             life.service(life.CONTROL, 'start', 45)
