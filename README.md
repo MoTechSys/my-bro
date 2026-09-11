@@ -4,7 +4,7 @@
 
 > **مشروع تخرّج:** تصميم وتنفيذ مركز عمليات أمنية (SOC) يعتمد على أدوات مفتوحة المصدر — Wazuh 4.14.7 + Suricata 8.0.6 + YARA + VirusTotal + auditd — في معمل افتراضي يراقب Windows 10 وKali Linux.
 
-> CI: see `.github/workflows-pending/README.md` to enable the validation workflow.
+> CI: [validation workflow](.github/workflows/validate.yml) · [actual runs](https://github.com/MoTechSys/my-bro/actions/workflows/validate.yml) · [activation history](.github/workflows-pending/README.md). CI does not deploy or certify the SOC lab.
 
 ## 🤖 للوكلاء الآليين (AI agents)
 **ابدأ من [`AI_AGENT_START_HERE.md`](AI_AGENT_START_HERE.md)** ثم [`docs/00_PROJECT_STATE.md`](docs/00_PROJECT_STATE.md). لا تعمل قبل قراءتهما.

@@ -87,14 +87,22 @@ def service(program, action, timeout):
 
 
 def watch(stopped, sample=health.collect, wait=time.sleep, now=time.monotonic,
-          startup_seconds=120, poll_seconds=5, failure_limit=3, log=emit):
+          startup_seconds=120, poll_seconds=5, failure_limit=3,
+          progress_failure_limit=2, log=emit):
+    """Count health failures per poll, progress failures per completed window.
+
+    Adapted from the cloud operator's 2026-09-11 handoff. Reusing one failed
+    window on every poll can force a restart after counters have recovered.
+    Each completed window contributes once; a good window resets its counter.
+    """
     for value in (startup_seconds, poll_seconds):
         if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
             raise ValueError('INVALID_SUPERVISION_INTERVAL')
-    if type(failure_limit) is not int or failure_limit < 1:
-        raise ValueError('INVALID_FAILURE_LIMIT')
+    for value in (failure_limit, progress_failure_limit):
+        if type(value) is not int or value < 1:
+            raise ValueError('INVALID_FAILURE_LIMIT')
     deadline = now() + startup_seconds
-    ready, failures, baseline, progress_errors = False, 0, None, []
+    ready, failures, window_failures, baseline = False, 0, 0, None
     while not stopped():
         current = sample()
         reasons = health.assess(current)
@@ -103,18 +111,24 @@ def watch(stopped, sample=health.collect, wait=time.sleep, now=time.monotonic,
         elif baseline is not None and current['monotonic'] - baseline['monotonic'] >= 65:
             progress_errors = health.assess_progress(baseline, current)
             baseline = current
-        reasons += progress_errors
+            if progress_errors:
+                window_failures += 1
+                log('progress_window_failed', reasons=progress_errors, consecutive=window_failures)
+            else:
+                window_failures = 0
         if reasons:
             failures += 1
             log('health_failed', reasons=reasons, consecutive=failures)
-            if (ready and failures >= failure_limit) or (not ready and now() >= deadline):
-                log('lifecycle_exit', reason='HEALTH_GATE_FAILED')
-                return 1
         else:
             failures = 0
             if not ready:
                 ready = True
                 log('services_live', notice='Not canary/PILOT acceptance; progress window still required.')
+        if ((ready and (failures >= failure_limit or window_failures >= progress_failure_limit))
+                or (not ready and now() >= deadline)):
+            log('lifecycle_exit', reason='HEALTH_GATE_FAILED',
+                health_consecutive=failures, progress_windows_failed=window_failures)
+            return 1
         wait(poll_seconds)
     log('shutdown_requested')
     return 0

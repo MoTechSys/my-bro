@@ -403,13 +403,15 @@ class Lifecycle(unittest.TestCase):
         self.assertEqual(life.run(lambda: True, service, Mock(), lambda *a, **kw: None), 0)
         service.assert_not_called()
 
-    def simulated_watch(self, make_sample, stop_at=200, startup=15):
+    def simulated_watch(self, make_sample, stop_at=200, startup=15,
+                        progress_failure_limit=2, log=None):
         clock = [0.0]
         def wait(seconds): clock[0] += seconds
         def sample(): return make_sample(clock[0])
         return life.watch(lambda: clock[0] >= stop_at, sample, wait, lambda: clock[0],
                           startup_seconds=startup, poll_seconds=5, failure_limit=3,
-                          log=lambda *a, **kw: None), clock[0]
+                          progress_failure_limit=progress_failure_limit,
+                          log=log if log is not None else lambda *a, **kw: None), clock[0]
 
     def test_startup_grace_is_bounded(self):
         def sample(t):
@@ -440,7 +442,79 @@ class Lifecycle(unittest.TestCase):
         def sample(t):
             value = healthy(t); value['collector']['events'] = 50; return value
         result, elapsed = self.simulated_watch(sample)
-        self.assertEqual((result, elapsed), (1, 75))
+        self.assertEqual((result, elapsed), (1, 130))
+
+    def test_recovered_progress_window_does_not_exit(self):
+        """Cloud handoff regression: recovery must not replay an old verdict."""
+        def sample(t):
+            value = healthy(t)
+            value['collector']['events'] = 50 if t <= 65 else 50 + int((t - 65) // 5)
+            return value
+        self.assertEqual(self.simulated_watch(sample, stop_at=400), (0, 400))
+
+    def test_progress_window_failure_limit_validated(self):
+        for value in (0, -1, True, 1.0, float('nan'), None):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                life.watch(lambda: True, progress_failure_limit=value)
+
+    def test_progress_failure_is_counted_once_per_window(self):
+        events = []
+        def sample(t):
+            value = healthy(t); value['collector']['events'] = 50; return value
+        result = self.simulated_watch(sample, log=lambda event, **fields: events.append((event, fields)))
+        self.assertEqual(result, (1, 130))
+        failed = [fields for event, fields in events if event == 'progress_window_failed']
+        self.assertEqual([fields['consecutive'] for fields in failed], [1, 2])
+        self.assertFalse(any(event == 'health_failed' for event, _ in events))
+        self.assertEqual(events[-1], ('lifecycle_exit', {
+            'reason': 'HEALTH_GATE_FAILED', 'health_consecutive': 0, 'progress_windows_failed': 2}))
+
+    def test_good_progress_window_resets_consecutive_failures(self):
+        def sample(t):
+            value = healthy(t)
+            # Bad window at65, good at130, then bad at195 and260.
+            value['collector']['events'] = 50 if t <= 65 else 100
+            return value
+        self.assertEqual(self.simulated_watch(sample, stop_at=300), (1, 260))
+
+    def test_progress_failure_limit_one_is_explicit_policy(self):
+        def sample(t):
+            value = healthy(t); value['collector']['events'] = 50; return value
+        self.assertEqual(self.simulated_watch(sample, progress_failure_limit=1), (1, 65))
+
+    def test_daemon_failure_does_not_wait_for_second_bad_window(self):
+        def sample(t):
+            value = healthy(t); value['collector']['events'] = 50
+            if t >= 70: value['processes'] = value['processes'][1:]
+            return value
+        self.assertEqual(self.simulated_watch(sample), (1, 80))
+
+    def test_config_integrity_guard_is_not_replaced_by_existence_check(self):
+        self.guarded_fixture()
+        def protected(path):
+            if path == '/var/ossec/etc/ossec.conf':
+                raise ValueError('UNPROTECTED_INSTALLATION')
+        with patch.object(life, 'protected', side_effect=protected) as check, \
+             patch.object(life.health, 'collect') as collect, \
+             self.assertRaisesRegex(ValueError, 'UNPROTECTED_INSTALLATION'):
+            life.guard()
+        self.assertIn(('/var/ossec/etc/ossec.conf',), [call.args for call in check.call_args_list])
+        collect.assert_not_called()
+
+    def test_shutdown_request_during_start_timeout_still_cleans_up(self):
+        stopped = [False]
+        calls = []
+        def service(program, action, timeout):
+            calls.append((program, action, timeout))
+            if program == life.CONTROL and action == 'start':
+                stopped[0] = True
+                raise subprocess.TimeoutExpired(program, timeout)
+        monitor = Mock()
+        result = life.run(lambda: stopped[0], service, monitor, lambda *a, **kw: None)
+        self.assertEqual(result, 1)  # Cleanup must not hide the failed start.
+        monitor.assert_not_called()
+        self.assertEqual(calls, [(life.APACHE, 'start', 45), (life.CONTROL, 'start', 45),
+                                 (life.CONTROL, 'stop', 30), (life.APACHE, 'stop', 30)])
 
     def test_invalid_watch_intervals_rejected(self):
         for value in (0, -1, float('nan'), True):

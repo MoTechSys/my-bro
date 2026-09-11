@@ -1,38 +1,36 @@
-# CI workflow — pending activation
+# CI activation history and verification
 
-`validate.yml` is a candidate, **not an active workflow in this directory**.
-On activation it runs `scripts/validate/validate_all.sh`, including the bounded
-local unittest suite, on Python 3.12 and 3.13. Actions are pinned to commit SHAs,
-permissions are `contents: read`, checkout does not persist credentials, and
-jobs have timeout/concurrency limits. None of these checks deploys the lab.
+The reviewed workflow now lives at [`../workflows/validate.yml`](../workflows/validate.yml),
+not in this historical pending directory. It runs the repository validator and its
+bounded unittest suite on Python 3.12 and 3.13. It does not deploy the cloud lab.
 
-## Permission verified on 2026-09-11
+## Verified authorization — 2026-09-11
 
-GitHub Actions is enabled for the repository, but pushing the candidate to
-`.github/workflows/validate.yml` was explicitly rejected:
+The owner explicitly authorized temporary token use. GitHub `/user` verified
+`MoTechSys`; repository push permission and the `workflow` scope were present.
+Repository Actions policy was enabled, and both action commit pins were resolved
+against their upstream repositories before moving the candidate.
+
+Credentials are not part of this workflow or repository. `contents: read`, pinned
+actions, `persist-credentials: false`, eight-minute job timeouts, and concurrency
+limits remain unchanged. No extra deployment permission is requested.
+
+## Acceptance gate
+
+Activation is submitted through PR #28. Inspect the actual run and head SHA at:
+https://github.com/MoTechSys/my-bro/actions/workflows/validate.yml
+
+Both `validate (3.12)` and `validate (3.13)` must finish successfully on the current
+PR revision before T-40 is considered verified. Pushing a workflow or passing
+212 tests locally is not evidence that GitHub executed it. Current observations
+are recorded in `docs/SESSIONS_LOG.md` and the PR; native SOC acceptance stays open.
+
+## Historical rejection
+
+Earlier on 2026-09-11 the configured GitHub App rejected activation with:
 
 > refusing to allow a GitHub App to create or update workflow without workflows permission
 
-The unpublished activation commit was replaced with this pending-only candidate;
-there is no hidden active workflow or successful Actions run to report. T-40 and
-ISSUE-038 remain blocked. Repository write/admin access alone does not prove the
-installed application's workflow permission.
-
-## Activation by an appropriately authorized operator
-
-Grant the GitHub integration **Workflows: write**, approve the updated installation
-permissions, or use an independently authorized owner session. Never paste an API
-token into a commit, issue, PR or chat. Then, from a reviewed up-to-date branch:
-
-```bash
-mkdir -p .github/workflows
-git mv .github/workflows-pending/validate.yml .github/workflows/validate.yml
-git add -A .github/workflows .github/workflows-pending
-git commit -m "ci: activate reviewed validation matrix"
-git push
-```
-
-Follow the normal PR/sync policy. Confirm successful jobs for both Python versions
-on the actual PR commit before closing T-40. A local validator pass or a successful
-workflow-file push is not proof that CI executed successfully. Update this README
-and the taskboard after activation, retaining the dated denial as historical context.
+That attempt was safely restored to pending-only. Owner-token authorization is a
+separate, verified session; it does not retroactively grant the App permission or
+make earlier CI claims valid. The old candidate remains recoverable in Git history.

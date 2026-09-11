@@ -2,6 +2,40 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-11 — [AI] Authorized synchronization and CI activation
+
+- Verified the user-authorized temporary credential belongs to MoTechSys and has repository push and workflow scope; no credential written to project files or Git configuration.
+- Fetched main and development refs before synchronization; no collaborator changes observed. Consolidation is limited to unpublished commits, preserving the published branch history and local recovery references.
+- Moved the reviewed Python 3.12/3.13 workflow into `.github/workflows/validate.yml` after verifying repository Actions policy and upstream action pins. Least privilege, no checkout credential persistence, concurrency and timeouts retained.
+- PR #28 and the session log carry the actual push/run outcome. The workflow-file change alone does not close T-40; both matrix jobs must succeed. Cloud deployment and ISSUE-068 remain unresolved.
+- Earlier local checkpoint IDs (including e40990f and330c76f) in the append-only history identify pre-consolidation work, not necessarily a published commit. The PR head identifies the submitted revision.
+
+## [Unreleased] — 2026-09-11 — [AI] Cloud handoff review (checkpoint before authentication restoration)
+
+### Fixed and verified
+- Reproduced the stale progress verdict forcing exit at simulated75s after recovery; adapted the cloud operator's fix to count each completed window once. Healthy windows reset the progress counter independently of per-poll daemon health.
+- Added eight regressions including recovered/sustained stalls, counter resets, explicit thresholds, daemon failures, config-integrity enforcement and shutdown requested during a mocked start timeout. All212 local tests and the validator pass.
+- Inspected the operator's actual patch in memory: one test errors because `mock` is not imported. Did not import that broken test or the proposed config-existence-only relaxation.
+- Independently checked cloud backup archive indexes, full gzip stream integrity, current-versus-archived identity equality without disclosure, and backup-image existence. No restore or remote service mutation.
+
+### Open boundaries
+- Retained the protected-config trust boundary. The actual agent config and parent permissions fail it; ISSUE-068 requires a compatible, reviewed deployment layout rather than silently weakening the check.
+- Public fetch confirms PR28 still at480384e. The configured gh account is not the agreed MoTechSys identity; no authenticated repository writes or published-history rewrite. Changes remain local until correct-account synchronization.
+- The sandbox write boundary still excludes the cloud host. Native deployment, storage migration, recovery, rollback, canary and PILOT remain pending.
+
+## [Unreleased] — 2026-09-11 — [AI] Tested lifecycle candidate (PR #28)
+
+### Added
+- `scripts/lab/agent_health.py`: read-only, bounded process/state health and two-snapshot collection-progress checks; explicit state timezone, no secret reads, no end-to-end approval claim.
+- `scripts/lab/agent_lifecycle.py`: opt-in prepared-container supervisor with init/root/protected-install guards, fixed service commands, bounded startup/shutdown, signal handling and exit on sustained health or progress failure.
+- `tests/test_agent_lifecycle.py`: 59 synthetic tests covering parsers, zombies versus live services, stale clocks/state, duplicate processes, stalled counters, startup guards, permissions, interrupted starts and reverse cleanup.
+
+### Changed and verified
+- `validate_all.sh` now requires the unittest suite to pass, with a 180-second timeout and rejection of empty discovery. All 204 local tests pass (145 existing plus 59 added).
+- Executed the health script itself through stdin inside live kali1: expected exit1 with healthy=false, progress_verified=true and explicit PID1/zombie reasons. No remote file installation, service mutation or active attack.
+- Prepared a pinned, read-only-permission CI matrix for Python 3.12/3.13. GitHub App explicitly denied workflow activation; the candidate remains in workflows-pending. CI execution is not claimed.
+- Added official Docker/Wazuh references, deployment/rollback prerequisites and precise runtime acceptance limits. T-62 remains incomplete for native deployment, recovery and independent review; T-11/T-15/T-60 are not closed.
+
 ## [Unreleased] — 2026-09-11 — [AI] Cloud audit (PR #28)
 
 ### Verified
