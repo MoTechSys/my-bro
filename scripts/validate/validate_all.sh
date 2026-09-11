@@ -29,7 +29,7 @@ echo; echo "== 4. Python syntax =="
 if ! python3 - <<'PY'
 import ast
 from pathlib import Path
-for directory in ('scripts', 'tests', 'wazuh'):
+for directory in ('scripts', 'tests', 'wazuh', 'ai_agent'):
     for path in sorted(Path(directory).rglob('*.py')):
         ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
         print('ok  ', path)
