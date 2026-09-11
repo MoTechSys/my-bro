@@ -2,6 +2,19 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-11 — [AI] Cloud audit (PR #28)
+
+### Verified
+- Connected to the authorized cloud host using pinned SSH host keys, with credentials kept outside tracked files and entirely inside the sandbox workspace.
+- Observed 19 zombie processes alongside five live Wazuh services in kali1. Two passive snapshots showed increasing agent, collector and manager counters; a complete collection outage was not established.
+- Confirmed PID 1 is tail, Docker init/healthcheck are absent, restart policy is no, and mounts are empty. The endpoint image is Ubuntu 24.04.4, despite its kali1 name. Hardened AR and YARA artifacts are absent at their deployment paths.
+- Re-ran 145 local unittest cases successfully and passed validate_all.sh on code baseline e51dd7d; these are not native SOC experiment results.
+
+### Documented
+- Updated CLOUD_ENV_ACCESS section 9 with dated observations, limits, reproducible evidence references and a state-preserving lifecycle recovery plan; historical pilot commands are explicitly gated.
+- Updated current state, task ownership and session handoff; opened ISSUE-064 through ISSUE-066.
+- No remote mutation, container recreation, canary, PILOT, attack, or write to the remote decision log. The session write boundary permits only /home/user/webapp; an appropriately scoped execution session must perform recovery before live experiments. No claim of completed T-11, T-15 or T-60.
+
 ## [0.1.0] — 2026-09-09 — Session 01: Repository foundation
 
 ### Added
