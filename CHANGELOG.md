@@ -2,6 +2,20 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-11 — [AI] Pinned knowledge and offline C4 evaluator
+
+### Implemented and published
+- `01f3f94`: official MITRE ATT&CK Enterprise v19.2 subset (T1059/T1204.002/T1571), pinned upstream commit, verified Git blob/source SHA256, retained descriptions and full license.
+- `db1eab9`: exact retrieval, bounded explicit excerpts, source/rule digests, curated semantic caveats only for reviewed XML hash, optional hash-approved <=24h inventory contract without raw identity/source fields.19 new tests;277 total at this checkpoint.
+- `120efba`: bounded offline three-file C4 evaluator; stable case/batch refs, frozen declared provenance, complete planned denominators, explicit missing/failed/rejected/abstained cases, classification/MITRE metrics, human-adjudicated unsupported claims, per-status latency and conditional Wilson.23 synthetic tests;300 total at this checkpoint.
+- `5744011`: self-review fix suppresses Wilson for shared inference batches even with distinct cluster labels; regression added. **301 total local tests PASS**, validator and diff check clean. No independent review claimed.
+- Updated Arabic UC-14 operating contracts, executable synthetic demonstration, source-update procedure, next-agent resume/state/task/session/issue records. PR28 remains open for review; final documentation-head CI evidence is recorded there after publication.
+
+### Not implemented or accepted
+- No real model inference, private live inventory, independent human-labelled dataset or real C4 results. Evaluator consumes normalized records, not an automatically audited analyst-artifact import; hashes/declarations are not proof of artifact contents, timing or reviewer identity. Durable importer/runner and hard wall-clock deadline are next.
+- No cloud mutation, lifecycle native deployment/restore/canary/PILOT, autonomous AI execution or final academic results. T-70 and ISSUE-070/071/073 remain open. ISSUE-072 shared-batch interval handling fixed in repository only.
+- Published history preserved with fast-forward checkpoints; no force-push, saved PAT or global Git credential changes. Commit attribution metadata is distinct from the verified MoTechSys push account; commits are not cryptographically signed.
+
 ## [Unreleased] — 2026-09-11 — [AI] T-70 advisory analyst core
 
 ### Added

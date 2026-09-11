@@ -186,3 +186,14 @@ ISSUE-038/T-40: CLOSED/DONE على `095cd869f08a23d88f7ed3d9d434db816c04fb37`. �
 
 - توثيق ADR-002/ADR-014 ومواضع AI future-only في docs/05 وSTART صُحح ليتبع قرار المستخدم المعتمد؛ لا تغيير جديد للنطاق أو وعد بجودة نموذج غير مختبر.
 - محاولة consult_advisor أعادت أنه متاح فقط داخل Super Agent Sandbox؛ لا تقرير مستقل وصل. المراجعة ذاتية، والاختبارات258 محلية (46 للمحلل) لا تعوض C4 أو اختبارات التعافي السحابي.
+
+## متابعة المعرفة وC4 — 2026-09-11 [AI]
+
+| ID | الدليل والقرار | الحالة |
+|---|---|---|
+| ISSUE-070 (تحديث، لا حذف للسجل السابق) | حزمة MITRE v19.2 ذات provenance في01f3f94، الاسترجاع وعقد الجرد فيdb1eab9، evaluator في120efba/5744011؛43 اختباراً إضافياً فوق258، مجموع301. لم تعد المعرفة/audit الحسابي مجرد خطة | PARTIAL — لا جرد حي أو inference أو30 labels بشرية؛ wall-clock deadline والخصوصية والمراجعة/القبول لا تزال مفتوحة |
+| ISSUE-071 | تعريفات MITRE الرسمية: YARA match في108001 لا يثبت user execution لـT1204.002، وNetcat listener في100051 لا يثبت non-standard protocol/port pairing لـT1571؛ annotation ليس gold | OPEN-SEMANTIC — الشروح المثبتة تحذر صراحة، لا تغيير للقواعد؛ مطلوب تحكيم بشري/دليل سلوكي قبل تعديل mapping أو اعتماد نتائجMITRE |
+| ISSUE-072 | مراجعة ذاتية لـ120efba: cluster_id مختلفة كانت تسمح بـWilson رغم اشتراك التنبيهات في inference batch واحدة | FIXED-IN-REPO في5744011 مع regression؛ الفاصل يُحجب عند تكرارbatch أوcluster أو عدم التصريح بالاستقلال. لا cluster-bootstrap؛ كل ما تبقى مشروط بصدق التصميم لا تحققاً من الاستقلال |
+| ISSUE-073 | evaluator يربط normalized predictions وhash declarations ولا يقرأ artifacts الأصلية للتحقق من الإسقاط أوحفظ attempt journal؛ تزييف تصريحات real/human/hash يظل ممكناً خارج حد الأداة | OPEN — flags التحقق/القبولfalse وعقدUC-14 §10 يطلب تدقيقاً خارجياً. التالي importer/runner durable ومثبت artifacts، عدم تمريرgold للمزود، حفظ الفشل والمهل، ثم مراجعة مستقلة وتجربة فعلية |
+
+لا نتائجC4 أوغياب هلاوس مثبتاً من301 اختباراً؛ لا إغلاقT-70 أوبواباتالسحابة. رموز reviewers/labelers والـhashes قد تسمح بالربط؛ لا حفظraw exports أوinventory خاص أوPAT فيGit.
