@@ -179,7 +179,8 @@ def evaluate(manifest, attempts, reviews):
     n = len(cases)
     counts = {status: sum(v['status'] == status for v in recorded.values()) for status in STATUSES}
     counts['missing'] = n - len(recorded)
-    intervals = manifest['independent_cases'] and len(clusters) == n
+    # Multiple alerts from one inference batch share context and generation.
+    intervals = manifest['independent_cases'] and len(clusters) == n and len(batch_hashes) == n
     correct = exact_mitre = tp = fp = fn = label_abstentions = 0
     case_results = []
     confusion = {label: {pred: 0 for pred in a.CLASSIFICATIONS} for label in a.CLASSIFICATIONS}
@@ -231,13 +232,15 @@ def evaluate(manifest, attempts, reviews):
                                                 if v['status'] == status and v['latency_seconds'] is not None]) for status in STATUSES},
             'untimed_recorded_attempts': sum(v['latency_seconds'] is None for v in recorded.values()),
             'intervals': {'method': 'wilson_95' if intervals else 'suppressed', 'cluster_count': len(clusters),
+                          'batch_count': len(batch_hashes),
                           'reason': 'Conditional on declared independent Bernoulli cases; not verified.' if intervals else
-                                    'Independence undeclared or repeated clusters; no cluster-adjusted interval implemented.'},
+                                    'Independence undeclared or repeated clusters/batches; no cluster-adjusted interval implemented.'},
             'limitations': ['Normalized records require external audit against private source artifacts.',
                             'One predeclared attempt per case; retries must use a separate evaluation, never replace failures.',
                             'Completed-only, reviewed-only and latency metrics are conditional and may have selection bias.',
                             'Claims within a narrative are dependent; no claim-level Wilson interval.',
-                            'No automatic hallucination judgement, clinical/statistical acceptance or native SOC proof.'],
+                            'Per-status latency is per case; shared batch durations are repeated, not independent calls.',
+                            'No automatic hallucination judgement, acceptance decision or native SOC proof.'],
             'cases': case_results}
 
 

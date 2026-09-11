@@ -116,6 +116,15 @@ class Evaluation(unittest.TestCase):
             self.assertEqual(r['intervals']['method'], 'suppressed')
             self.assertIsNone(r['classification_all_planned']['wilson_95'])
 
+    def test_shared_batch_suppresses_intervals_despite_distinct_clusters(self):
+        m, attempts, reviews = fixture(2)
+        m['cases'][1].update(batch_id='batch-0', alert_ref='A2')
+        result = e.evaluate(m, attempts, reviews)
+        self.assertEqual(result['intervals']['batch_count'], 1)
+        self.assertEqual(result['intervals']['cluster_count'], 2)
+        self.assertEqual(result['intervals']['method'], 'suppressed')
+        self.assertIsNone(result['classification_all_planned']['wilson_95'])
+
     def test_wilson_known_values_and_zero(self):
         self.assertIsNone(e.wilson(0, 0))
         self.assertAlmostEqual(e.wilson(0, 30)[1], .11351339317)
