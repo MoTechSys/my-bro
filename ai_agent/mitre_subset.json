@@ -1,0 +1,47 @@
+{
+  "license": {
+    "sha256": "738144f7fb054722a4ef9d3367c51710341dc12fc574c6ac3a41daaaecd8bf5e",
+    "text": "License\n-------\nThe MITRE Corporation (MITRE) hereby grants you a non-exclusive, royalty-free license to use ATT&CK® for research,\ndevelopment, and commercial purposes. Any copy you make for such purposes is authorized provided that you reproduce\nMITRE's copyright designation and this license in any such copy.\n\n\"© 2026 The MITRE Corporation. This work is reproduced and distributed with the permission of The MITRE Corporation.\"\n\nDisclaimers\n-----------\nMITRE does not claim ATT&CK enumerates all possibilities for the types of actions and behaviors documented as part\nof its adversary model and framework of techniques. Using the information contained within ATT&CK to address or cover\nfull categories of techniques will not guarantee full defensive coverage as there may be undisclosed techniques or\nvariations on existing techniques not documented by ATT&CK.\n\nALL DOCUMENTS AND THE INFORMATION CONTAINED THEREIN ARE PROVIDED ON AN \"AS IS\" BASIS AND THE CONTRIBUTOR, THE\nORGANIZATION HE/SHE REPRESENTS OR IS SPONSORED BY (IF ANY), THE MITRE CORPORATION, ITS BOARD OF TRUSTEES, OFFICERS,\nAGENTS, AND EMPLOYEES, DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT\nTHE USE OF THE INFORMATION THEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR\nFITNESS FOR A PARTICULAR PURPOSE.\n",
+    "url": "https://raw.githubusercontent.com/mitre-attack/attack-stix-data/6cda5ad8462c79e14fbb872f4e09059b18e0cfc4/LICENSE.txt"
+  },
+  "schema_version": 1,
+  "scope": "enterprise_attack_subset_for_current_local_rule_mappings",
+  "source": {
+    "commit": "6cda5ad8462c79e14fbb872f4e09059b18e0cfc4",
+    "git_blob_sha1": "8b8a9c8cc9e553f96f963b91265f50ee0854636d",
+    "path": "enterprise-attack/enterprise-attack.json",
+    "release": "v19.2",
+    "repository": "mitre-attack/attack-stix-data",
+    "retrieved_at": "2026-09-11T12:58:53.290157+00:00",
+    "sha256": "dc1639caa5501d720e280cf1cbd8fbe009884a0c9b3e6e9ed9d0c25166c3d8f4"
+  },
+  "techniques": [
+    {
+      "description": "Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries. These interfaces and languages provide ways of interacting with computer systems and are a common feature across many different platforms. Most systems come with some built-in command-line interface and scripting capabilities, for example, macOS and Linux distributions include some flavor of [Unix Shell](https://attack.mitre.org/techniques/T1059/004) while Windows installations include the [Windows Command Shell](https://attack.mitre.org/techniques/T1059/003) and [PowerShell](https://attack.mitre.org/techniques/T1059/001).\n\nThere are also cross-platform interpreters such as [Python](https://attack.mitre.org/techniques/T1059/006), as well as those commonly associated with client applications such as [JavaScript](https://attack.mitre.org/techniques/T1059/007) and [Visual Basic](https://attack.mitre.org/techniques/T1059/005).\n\nAdversaries may abuse these technologies in various ways as a means of executing arbitrary commands. Commands and scripts can be embedded in [Initial Access](https://attack.mitre.org/tactics/TA0001) payloads delivered to victims as lure documents or as secondary payloads downloaded from an existing C2. Adversaries may also execute commands through interactive terminals/shells, as well as utilize various [Remote Services](https://attack.mitre.org/techniques/T1021) in order to achieve remote Execution.(Citation: Powershell Remote Commands)(Citation: Cisco IOS Software Integrity Assurance - Command History)(Citation: Remote Shell Execution in Python)",
+      "modified": "2026-05-12T15:12:00.641Z",
+      "name": "Command and Scripting Interpreter",
+      "object_version": "2.7",
+      "stix_id": "attack-pattern--7385dfaf-6886-4229-9ecd-6fd678040830",
+      "technique_id": "T1059",
+      "url": "https://attack.mitre.org/techniques/T1059"
+    },
+    {
+      "description": "An adversary may rely upon a user opening a malicious file in order to gain execution. Users may be subjected to social engineering to get them to open a file that will lead to code execution. This user action will typically be observed as follow-on behavior from [Spearphishing Attachment](https://attack.mitre.org/techniques/T1566/001). Adversaries may use several types of files that require a user to execute them, including .doc, .pdf, .xls, .rtf, .scr, .exe, .lnk, .pif, .cpl, .reg, and .iso.(Citation: Mandiant Trojanized Windows 10)\n\nAdversaries may employ various forms of [Masquerading](https://attack.mitre.org/techniques/T1036) and [Obfuscated Files or Information](https://attack.mitre.org/techniques/T1027) to increase the likelihood that a user will open and successfully execute a malicious file. These methods may include using a familiar naming convention and/or password protecting the file and supplying instructions to a user on how to open it.(Citation: Password Protected Word Docs) \n\nWhile [Malicious File](https://attack.mitre.org/techniques/T1204/002) frequently occurs shortly after Initial Access it may occur at other phases of an intrusion, such as when an adversary places a file in a shared directory or on a user's desktop hoping that a user will click on it. This activity may also be seen shortly after [Internal Spearphishing](https://attack.mitre.org/techniques/T1534).",
+      "modified": "2026-05-12T15:12:00.623Z",
+      "name": "Malicious File",
+      "object_version": "1.6",
+      "stix_id": "attack-pattern--232b7f21-adf9-4b42-b936-b9d6f7df856e",
+      "technique_id": "T1204.002",
+      "url": "https://attack.mitre.org/techniques/T1204/002"
+    },
+    {
+      "description": "Adversaries may communicate using a protocol and port pairing that are typically not associated. For example, HTTPS over port 8088(Citation: Symantec Elfin Mar 2019) or port 587(Citation: Fortinet Agent Tesla April 2018) as opposed to the traditional port 443. Adversaries may make changes to the standard port used by a protocol to bypass filtering or muddle analysis/parsing of network data.\n\nAdversaries may also make changes to victim systems to abuse non-standard ports. For example, Registry keys and other configuration settings can be used to modify protocol and port pairings.(Citation: change_rdp_port_conti)",
+      "modified": "2026-05-12T15:12:00.707Z",
+      "name": "Non-Standard Port",
+      "object_version": "1.3",
+      "stix_id": "attack-pattern--b18eae87-b469-4e14-b454-b171b416bc18",
+      "technique_id": "T1571",
+      "url": "https://attack.mitre.org/techniques/T1571"
+    }
+  ]
+}

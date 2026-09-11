@@ -2,6 +2,88 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-11 — [AI] Pinned knowledge and offline C4 evaluator
+
+### Implemented and published
+- `01f3f94`: official MITRE ATT&CK Enterprise v19.2 subset (T1059/T1204.002/T1571), pinned upstream commit, verified Git blob/source SHA256, retained descriptions and full license.
+- `db1eab9`: exact retrieval, bounded explicit excerpts, source/rule digests, curated semantic caveats only for reviewed XML hash, optional hash-approved <=24h inventory contract without raw identity/source fields.19 new tests;277 total at this checkpoint.
+- `120efba`: bounded offline three-file C4 evaluator; stable case/batch refs, frozen declared provenance, complete planned denominators, explicit missing/failed/rejected/abstained cases, classification/MITRE metrics, human-adjudicated unsupported claims, per-status latency and conditional Wilson.23 synthetic tests;300 total at this checkpoint.
+- `5744011`: self-review fix suppresses Wilson for shared inference batches even with distinct cluster labels; regression added. **301 total local tests PASS**, validator and diff check clean. No independent review claimed.
+- Updated Arabic UC-14 operating contracts, executable synthetic demonstration, source-update procedure, next-agent resume/state/task/session/issue records. PR28 remains open for review; final documentation-head CI evidence is recorded there after publication.
+
+### Not implemented or accepted
+- No real model inference, private live inventory, independent human-labelled dataset or real C4 results. Evaluator consumes normalized records, not an automatically audited analyst-artifact import; hashes/declarations are not proof of artifact contents, timing or reviewer identity. Durable importer/runner and hard wall-clock deadline are next.
+- No cloud mutation, lifecycle native deployment/restore/canary/PILOT, autonomous AI execution or final academic results. T-70 and ISSUE-070/071/073 remain open. ISSUE-072 shared-batch interval handling fixed in repository only.
+- Published history preserved with fast-forward checkpoints; no force-push, saved PAT or global Git credential changes. Commit attribution metadata is distinct from the verified MoTechSys push account; commits are not cryptographically signed.
+
+## [Unreleased] — 2026-09-11 — [AI] T-70 advisory analyst core
+
+### Added
+- Offline-first `ai_agent/analyst.py`: bounded strict JSONL, level7 filtering, conflict-aware deduplication, batch-local identity/IP pseudonyms, exclusion of raw logs/free text/URLs and source-record tracing.
+- Exact repository-rule structural retrieval and explicit missing-rule reporting; bounded same-manager/agent temporal candidates (not causality). Strict evidence/MITRE/output validation, complete nonduplicated alert coverage and no execution authority.
+- Optional provider-neutral callable interface and explicit local Ollama adapter: literal loopback, no proxies/redirects/tool calls or model download; bounded payload/response and socket timeout. No external LLM adapter or live inference.
+-46 synthetic regressions,258 total local tests passed. Validator now syntax-checks ai_agent. Added UC-14 operating contract and privacy/acceptance limits.
+
+### Self-review fixes and limits
+- Reproduced shared context mutation in7033616;5da888b copies validation evidence separately from provider input, rejects repeated findings and preserves selected source-record indices. Python provider code remains trusted, not sandboxed.
+- Advisor call was unavailable for this sandbox type; no independent review claimed.
+- Full pinned MITRE/inventory RAG, real-model quality/latency/privacy tests, approval UI/integration and C4 on30 independently human-labelled alerts remain open. Reference validity is not semantic grounding. No cloud mutation or whole-project completion.
+- Reconciled explicit AI-future-only statements with already accepted ADR-014 without changing the approved scope. Historical source/measurement claims are not treated as new evidence.
+
+## [Unreleased] — 2026-09-11 — [AI] Published revision and verified CI evidence
+
+- Fast-forward push of `095cd869f08a23d88f7ed3d9d434db816c04fb37` succeeded and PR #28 was updated; remote PR head matched. Git configuration was unchanged and no credentials were persisted.
+- [PR run](https://github.com/MoTechSys/my-bro/actions/runs/34598831817) and [push run](https://github.com/MoTechSys/my-bro/actions/runs/34598830852) both succeeded on Python 3.12 and 3.13. Direct PR log inspection confirmed all212 tests and the validator passed in each job.
+- Closed T-40/ISSUE-038 for the verified revision, preserving the earlier permission rejection as history. Later commits need their own runs; final head checks are linked on PR #28.
+- No cloud deployment, service restart, rollback, canary, PILOT, or native acceptance was performed.
+
+## [Unreleased] — 2026-09-11 — [AI] Authorized synchronization and CI activation
+
+- Verified the user-authorized temporary credential belongs to MoTechSys and has repository push and workflow scope; no credential written to project files or Git configuration.
+- Fetched main and development refs before synchronization; no collaborator changes observed. Consolidation is limited to unpublished commits, preserving the published branch history and local recovery references.
+- Moved the reviewed Python 3.12/3.13 workflow into `.github/workflows/validate.yml` after verifying repository Actions policy and upstream action pins. Least privilege, no checkout credential persistence, concurrency and timeouts retained.
+- PR #28 and the session log carry the actual push/run outcome. The workflow-file change alone does not close T-40; both matrix jobs must succeed. Cloud deployment and ISSUE-068 remain unresolved.
+- Earlier local checkpoint IDs (including e40990f and330c76f) in the append-only history identify pre-consolidation work, not necessarily a published commit. The PR head identifies the submitted revision.
+
+## [Unreleased] — 2026-09-11 — [AI] Cloud handoff review (checkpoint before authentication restoration)
+
+### Fixed and verified
+- Reproduced the stale progress verdict forcing exit at simulated75s after recovery; adapted the cloud operator's fix to count each completed window once. Healthy windows reset the progress counter independently of per-poll daemon health.
+- Added eight regressions including recovered/sustained stalls, counter resets, explicit thresholds, daemon failures, config-integrity enforcement and shutdown requested during a mocked start timeout. All212 local tests and the validator pass.
+- Inspected the operator's actual patch in memory: one test errors because `mock` is not imported. Did not import that broken test or the proposed config-existence-only relaxation.
+- Independently checked cloud backup archive indexes, full gzip stream integrity, current-versus-archived identity equality without disclosure, and backup-image existence. No restore or remote service mutation.
+
+### Open boundaries
+- Retained the protected-config trust boundary. The actual agent config and parent permissions fail it; ISSUE-068 requires a compatible, reviewed deployment layout rather than silently weakening the check.
+- Public fetch confirms PR28 still at480384e. The configured gh account is not the agreed MoTechSys identity; no authenticated repository writes or published-history rewrite. Changes remain local until correct-account synchronization.
+- The sandbox write boundary still excludes the cloud host. Native deployment, storage migration, recovery, rollback, canary and PILOT remain pending.
+
+## [Unreleased] — 2026-09-11 — [AI] Tested lifecycle candidate (PR #28)
+
+### Added
+- `scripts/lab/agent_health.py`: read-only, bounded process/state health and two-snapshot collection-progress checks; explicit state timezone, no secret reads, no end-to-end approval claim.
+- `scripts/lab/agent_lifecycle.py`: opt-in prepared-container supervisor with init/root/protected-install guards, fixed service commands, bounded startup/shutdown, signal handling and exit on sustained health or progress failure.
+- `tests/test_agent_lifecycle.py`: 59 synthetic tests covering parsers, zombies versus live services, stale clocks/state, duplicate processes, stalled counters, startup guards, permissions, interrupted starts and reverse cleanup.
+
+### Changed and verified
+- `validate_all.sh` now requires the unittest suite to pass, with a 180-second timeout and rejection of empty discovery. All 204 local tests pass (145 existing plus 59 added).
+- Executed the health script itself through stdin inside live kali1: expected exit1 with healthy=false, progress_verified=true and explicit PID1/zombie reasons. No remote file installation, service mutation or active attack.
+- Prepared a pinned, read-only-permission CI matrix for Python 3.12/3.13. GitHub App explicitly denied workflow activation; the candidate remains in workflows-pending. CI execution is not claimed.
+- Added official Docker/Wazuh references, deployment/rollback prerequisites and precise runtime acceptance limits. T-62 remains incomplete for native deployment, recovery and independent review; T-11/T-15/T-60 are not closed.
+
+## [Unreleased] — 2026-09-11 — [AI] Cloud audit (PR #28)
+
+### Verified
+- Connected to the authorized cloud host using pinned SSH host keys, with credentials kept outside tracked files and entirely inside the sandbox workspace.
+- Observed 19 zombie processes alongside five live Wazuh services in kali1. Two passive snapshots showed increasing agent, collector and manager counters; a complete collection outage was not established.
+- Confirmed PID 1 is tail, Docker init/healthcheck are absent, restart policy is no, and mounts are empty. The endpoint image is Ubuntu 24.04.4, despite its kali1 name. Hardened AR and YARA artifacts are absent at their deployment paths.
+- Re-ran 145 local unittest cases successfully and passed validate_all.sh on code baseline e51dd7d; these are not native SOC experiment results.
+
+### Documented
+- Updated CLOUD_ENV_ACCESS section 9 with dated observations, limits, reproducible evidence references and a state-preserving lifecycle recovery plan; historical pilot commands are explicitly gated.
+- Updated current state, task ownership and session handoff; opened ISSUE-064 through ISSUE-066.
+- No remote mutation, container recreation, canary, PILOT, attack, or write to the remote decision log. The session write boundary permits only /home/user/webapp; an appropriately scoped execution session must perform recovery before live experiments. No claim of completed T-11, T-15 or T-60.
+
 ## [0.1.0] — 2026-09-09 — Session 01: Repository foundation
 
 ### Added

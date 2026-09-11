@@ -29,7 +29,7 @@ echo; echo "== 4. Python syntax =="
 if ! python3 - <<'PY'
 import ast
 from pathlib import Path
-for directory in ('scripts', 'tests', 'wazuh'):
+for directory in ('scripts', 'tests', 'wazuh', 'ai_agent'):
     for path in sorted(Path(directory).rglob('*.py')):
         ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
         print('ok  ', path)
@@ -47,6 +47,20 @@ echo; echo "== 6. Required handoff docs exist =="
 for f in AI_AGENT_START_HERE.md README.md CHANGELOG.md docs/00_PROJECT_STATE.md docs/01_SOURCE_ANALYSIS.md docs/02_ARCHITECTURE.md docs/03_ROADMAP.md docs/04_ISSUES_LOG.md docs/DECISIONS.md; do
   if [ -f "$f" ]; then echo "ok   $f"; else echo "FAIL missing $f"; fail=1; fi
 done
+
+echo; echo "== 7. Local regression tests (not native lab acceptance) =="
+# Bound execution and disable bytecode writes. Test fixtures stay inside the repo.
+if ! timeout --kill-after=5s 180s python3 -B - <<'PY'
+import sys
+import unittest
+suite = unittest.defaultTestLoader.discover('tests', pattern='test_*.py')
+if suite.countTestCases() == 0:
+    print('FAIL: no regression tests discovered', file=sys.stderr)
+    sys.exit(1)
+result = unittest.TextTestRunner(verbosity=1).run(suite)
+sys.exit(0 if result.wasSuccessful() else 1)
+PY
+then fail=1; fi
 
 echo
 if [ $fail -eq 0 ]; then echo "ALL CHECKS PASSED"; else echo "SOME CHECKS FAILED"; exit 1; fi

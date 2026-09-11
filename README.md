@@ -4,7 +4,7 @@
 
 > **مشروع تخرّج:** تصميم وتنفيذ مركز عمليات أمنية (SOC) يعتمد على أدوات مفتوحة المصدر — Wazuh 4.14.7 + Suricata 8.0.6 + YARA + VirusTotal + auditd — في معمل افتراضي يراقب Windows 10 وKali Linux.
 
-> CI: see `.github/workflows-pending/README.md` to enable the validation workflow.
+> CI: [validation workflow](.github/workflows/validate.yml) · [actual runs](https://github.com/MoTechSys/my-bro/actions/workflows/validate.yml) · [activation history](.github/workflows-pending/README.md). CI does not deploy or certify the SOC lab.
 
 ## 🤖 للوكلاء الآليين (AI agents)
 **ابدأ من [`AI_AGENT_START_HERE.md`](AI_AGENT_START_HERE.md)** ثم [`docs/00_PROJECT_STATE.md`](docs/00_PROJECT_STATE.md). لا تعمل قبل قراءتهما.
@@ -21,6 +21,10 @@
 | أنسخ إعدادات Wazuh النظيفة إلى السيرفر | [`wazuh/README.md`](wazuh/README.md) |
 | أكتب فصلاً من الرسالة | [`docs/thesis/README.md`](docs/thesis/README.md) |
 | أفهم رؤية التوسعة (أجهزة الشبكة/الهواتف) | [`extension/VISION_AND_FEASIBILITY.md`](extension/VISION_AND_FEASIBILITY.md) |
+
+## محلل التنبيهات الاستشاري — قيد التطوير
+
+مكونات [T-70 / UC-14](docs/lab/UC-14_ai_analyst.md): محللoffline افتراضياً مع Ollama باختيار صريح، معرفة MITRE v19.2 مثبتة لثلاث تقنيات وعقد جرد اختياري، وأداة `ai_agent/evaluate.py` لتقييم C4 offline بمقامات كاملة. **301 اختباراً محلياً ناجحاً** على الكود5744011؛ لا تنفيذ استجابة، ولا inference أو جرد أو بيانات/نتائجC4 أصلية بعد. الدليل يحدد عقود التشغيل والخصوصية والتقييم، و[CONTEXT_RESUME](CONTEXT_RESUME.md) يحفظ الخطوة التالية وحدود الإنجاز.
 
 ## حالات الاستخدام الموثقة تاريخياً — تحتاج إعادة تحقق حي
 
