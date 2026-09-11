@@ -2,6 +2,20 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-11 — [AI] T-70 advisory analyst core
+
+### Added
+- Offline-first `ai_agent/analyst.py`: bounded strict JSONL, level7 filtering, conflict-aware deduplication, batch-local identity/IP pseudonyms, exclusion of raw logs/free text/URLs and source-record tracing.
+- Exact repository-rule structural retrieval and explicit missing-rule reporting; bounded same-manager/agent temporal candidates (not causality). Strict evidence/MITRE/output validation, complete nonduplicated alert coverage and no execution authority.
+- Optional provider-neutral callable interface and explicit local Ollama adapter: literal loopback, no proxies/redirects/tool calls or model download; bounded payload/response and socket timeout. No external LLM adapter or live inference.
+-46 synthetic regressions,258 total local tests passed. Validator now syntax-checks ai_agent. Added UC-14 operating contract and privacy/acceptance limits.
+
+### Self-review fixes and limits
+- Reproduced shared context mutation in7033616;5da888b copies validation evidence separately from provider input, rejects repeated findings and preserves selected source-record indices. Python provider code remains trusted, not sandboxed.
+- Advisor call was unavailable for this sandbox type; no independent review claimed.
+- Full pinned MITRE/inventory RAG, real-model quality/latency/privacy tests, approval UI/integration and C4 on30 independently human-labelled alerts remain open. Reference validity is not semantic grounding. No cloud mutation or whole-project completion.
+- Reconciled explicit AI-future-only statements with already accepted ADR-014 without changing the approved scope. Historical source/measurement claims are not treated as new evidence.
+
 ## [Unreleased] — 2026-09-11 — [AI] Published revision and verified CI evidence
 
 - Fast-forward push of `095cd869f08a23d88f7ed3d9d434db816c04fb37` succeeded and PR #28 was updated; remote PR head matched. Git configuration was unchanged and no credentials were persisted.
