@@ -6,12 +6,12 @@ Run inside the agent's PID namespace. Health is NOT end-to-end acceptance.
 State timestamps require the explicitly declared timezone of the agent processes.
 """
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime
 import json
-import math
+import os
 from pathlib import Path
 import re
-import sys
+import stat
 import time
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -29,11 +29,14 @@ class HealthError(ValueError):
 
 
 def bounded_text(path):
-    with Path(path).open('r', encoding='utf-8') as stream:
+    fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
+    with os.fdopen(fd, 'rb') as stream:
+        if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+            raise HealthError('REGULAR_INPUT_REQUIRED')
         value = stream.read(MAX_BYTES + 1)
     if len(value) > MAX_BYTES:
         raise HealthError('INPUT_TOO_LARGE')
-    return value
+    return value.decode('utf-8')
 
 
 def integer(value, label):
@@ -118,8 +121,10 @@ def collect(proc=Path('/proc'), state=Path('/var/ossec/var/run'), zone='UTC'):
                     argv0 = bounded_text(path / 'cmdline').split('\x00')[0]
                     record['identity_ok'] = argv0 == '/var/ossec/bin/' + names[0]
                     again = parse_stat(bounded_text(path / 'stat'))
-                    if (again['start_ticks'], again['state']) != (record['start_ticks'], record['state']):
+                    if (again['start_ticks'], again['name']) != (record['start_ticks'], names[0][:15]):
                         raise HealthError('PROCESS_CHANGED_DURING_READ')
+                    # Ordinary R <-> S scheduling is not a process identity change.
+                    record['state'] = again['state']
                 else:
                     record['identity_ok'] = False
                 snapshot['processes'].append(record)
@@ -219,6 +224,8 @@ def assess_progress(first, second):
 
 
 def report(samples):
+    if len(samples) not in (1, 2):
+        raise HealthError('ONE_OR_TWO_SAMPLES_REQUIRED')
     reasons = [f'sample{i + 1}:' + r for i, s in enumerate(samples) for r in assess(s)]
     progress = assess_progress(*samples) if len(samples) == 2 else None
     reasons.extend(progress or [])
