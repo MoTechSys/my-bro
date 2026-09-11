@@ -217,3 +217,52 @@ Exit code=0 لكليهما. سجلا التشغيل الخاصان محفوظا�
 8. فحص الساعات ودقة المصادر والمراقبين، ثم PILOT5 للحالات الجاهزة وفق TEST_PLAN. يبقى AR/YARA/Windows خارج القبول حتى نشرها وفحصها؛ لا إنتاج أرقام فصل5 من هذا التدقيق السلبي.
 
 المشكلات المرتبطة: ISSUE-064 لدورة الحياة، ISSUE-065 لفقد الحالة عند إعادة الإنشاء، ISSUE-066 لحدود بيانات الصحة والقياس. تبقى OPEN/NEEDS-LAB حتى أدلة قبول مستقلة عن هذا الوصف.
+
+## 10. مرشح إدارة الوكيل وفحصه — T-62، متابعة PR #28
+
+**2026-09-11 [AI]: تنفيذ داخل المستودع، لا نشر للمشرف.** أضيف `scripts/lab/agent_health.py` (قراءة فقط) و`agent_lifecycle.py` (بدء/مراقبة/إيقاف الخدمات في حاوية معدّة، مع --lab وحراسة init/root). عقد التثبيت والتخزين والتعافي والقيود والمراجع الأولية في `scripts/lab/README.md`. init/restart/volumes على الخادم لم تتغير؛ لا حاجة لافتراض أن الفاحص الجديد أصلح العيب بمجرد اكتشافه.
+
+### 10.1 تشغيل الفاحص نفسه على الحاوية، دون تثبيت
+
+مُرّر كود `agent_health.py` عبر SSH/stdin إلى `docker exec -i kali1 python3 -I -B - --state-timezone UTC --progress`. لم تُكتب ملفات على الخادم ولم تُستدع start/stop أو تجربة هجومية. هذه تجربة فحص صحة حيّة سلبية، لا canary أو قبول استجابة.
+
+SHA-256 للكود الذي شُغّل: `e69d8929c194543b9c29f4984f457ec2f94dd520b2063b948f0642e978758177`.
+
+| المؤشر | 10:08:45.650 UTC | 10:09:50.655 UTC |
+|---|---:|---:|
+| logcollector process-list events | 6008 | 6010 |
+| agent msg_count | 13133 | 13135 |
+| agent msg_sent | 22148 | 22153 |
+| مجموع zombie في الحاوية | 19 | 19 |
+| أخطاء قراءة/تحليل snapshot | 0 | 0 |
+
+مخرج الفاحص المختصر:
+
+```json
+{
+  "healthy": false,
+  "progress_verified": true,
+  "canary_verified": false,
+  "deployment_approved": false,
+  "reasons": [
+    "sample1:PID1_NOT_RECOGNIZED_INIT",
+    "sample1:ZOMBIES_PRESENT",
+    "sample2:PID1_NOT_RECOGNIZED_INIT",
+    "sample2:ZOMBIES_PRESENT"
+  ]
+}
+```
+
+Exit code الفاحص=1 **رفض متوقع للبيئة المعيبة**، وليس تعذّر اتصال أو فشل Python. وُجدت23 عملية Wazuh في اللقطتين:18 zombie تخص Wazuh وخمس حية؛ zombie التاسع عشر عملية أخرى. الملف الخاص `health-probe-v1.json` تحت `.git/soclab-private/` يحتوي العيّنتين وبصمة الكود؛ الملخص المنقح أعلاه محفوظ في Git.
+
+### 10.2 نتائج الاختبارات المحلية وCI
+
+- أضيفت52 حالة في `tests/test_agent_lifecycle.py`؛ مرّت جميعها.
+- الفاحص `validate_all.sh` أصبح يشغّل الاختبارات فعلًا بمهلة180ث، ويرفض discovery الفارغ أو أي فشل. مجموع197 اختباراً محلياً مرّ مع ALL CHECKS PASSED.
+- start/stop وقياس التعافي في اختبارات المشرف محاكاة؛ الفاحص فقط اختُبر على الحاوية الفعلية. لا Windows أصلي ولا YARA/AR ولا rollback حي.
+- جُهز CI بـPython3.12/3.13، actions مثبتة ببصمات commits، contents:read، وبدون حفظ checkout credentials، ومهل وحدود تزامن.
+- GitHub رفض نشر `.github/workflows/validate.yml` صراحة لغياب `workflows` عن GitHub App. عُدّل الالتزام غير المنشور ليحفظ المرشح في `.github/workflows-pending/validate.yml` فقط ثم دُفع بنجاح؛ **لا CI نشط ولا نتيجة Actions مُدعاة**. تعليمات التفعيل في README المجاور. T-40/ISSUE-038 باقية.
+
+### 10.3 المتبقي دون تغيير نطاق
+
+نشر المشرف بعد حفظ الحالة، اختبار healthy على البيئة المُصلحة، إيقاف/تعافٍ/استعادة أصلي، ثم canary وPILOT وفق §9.5. مرشح T-62 لا يغلق T-60 أو ISSUE-064/065/066. لا مراجعة مستقلة بعد. Q5/Q6 وجرد المعمل المحلي وبقية متطلبات AI والقياس والرسالة لا تسقط بهذا التنفيذ.
