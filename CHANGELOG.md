@@ -2,6 +2,14 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-18 — [AI] Cloud operator evidence handoff
+
+- Recorded Genspark Claw's migration to kali1-init with init, three persistent volumes and unless-stopped; preserved attribution for its crash/restart and two indexed canary reports.
+- Independently checked replacement configuration, five live daemons, zero zombies and advancing agent/collector counters across65 seconds. Current key and archived key match the existing backup in memory; no key, key digest, raw logs or credentials published.
+- Indexed byte sizes/SHA256 of nine private operator logs and DECISIONS.md; hashes identify snapshots, not signed authenticity. Originals remain on cloud host. Existing checkout updates PR28; no additional clone/credentials on host.
+- Host reboot, individual-daemon recovery and current-state rollback remain unverified. Init alone does not supervise daemons; the old stopped container is not proof of safe rollback after replay-state advances. Updated ISSUE-064..066/068 and added verification gate081.
+- Documentation-only work in this session; cloud operations were read-only. No remote mutation, reboot, new backup/canary, AI inference or PILOT by this assistant. Code baseline remains7de4a52 with366 tests; final validation evidence is recorded in PR28.
+
 ## [Unreleased] — 2026-09-18 — [AI] Runner review adjudication
 
 - Completed adjudication of the separate static review of09e91e2; no reviewer tests/clone or human certification. Reproduced post-reap group signaling and cleanup timeout leaving stdout open on be5160c. Known unknown/orphan artifacts were already fixed; rejected silent drops, partial response acceptance and incorrect tracked-file/timeout claims.
