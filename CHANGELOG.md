@@ -2,6 +2,14 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-18 — [AI] Durable AI evidence runner
+
+- Added offline prepare/export and explicit-opt-in batch execution; immutable-by-convention private snapshots, exclusive directory lock, file/directory fsync before worker launch, frozen manifest and one attempt per batch.
+- Byte/hash reconstruction and response-to-C4 projection; corrupt/partial/unknown entries fail closed, intact interrupted intent remains failed/untimed, orphan output is explicitly unverified, missing batches remain in denominator.
+- Bounded isolated worker environment/stdout and monotonic invocation deadline; tested real SIGINT/SIGTERM with synthetic descendants. No live Ollama, model download, HTTP service or cloud changes. Parent SIGKILL/power loss require external supervision; Ollama computation is not killed or attested.
+- 46 runner tests; 353 full-suite tests and ALL CHECKS PASSED at5423a6f. Separate automated read-only review of09e91e2 and final-head CI are tracked on PR28, not implied by submission or historical CI.
+- Documented exact CLI, model-descriptor (not runtime-weight) hashes, latency scope, reconstruction/version retention, private storage and original human C4 acceptance gates. T-70 remains IN-PROGRESS. Only this implementation session abovebf2fab0 is eligible for consolidation.
+
 ## [Unreleased] — 2026-09-18 — [AI] Evidence-based audit and remediation
 
 ### Fixed

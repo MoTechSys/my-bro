@@ -12,7 +12,7 @@
 | L2 الترابط | أزواج مرشحة لنفس manager/agent ضمن نافذة زمنية، وفحص مراجع النتائج | سرد مترابط مُقاس ومتعدد المصادر؛ الترابط الزمني ليس إثبات سببية أو سلسلة هجوم |
 | L3 التوصيات | أنواع توصية محددة و`requires_human_review=true`؛ لا منفذ أوامر | سير عمل بشري مُصادق عليه وسجل قرارات؛ العلم البرمجي ليس نظام موافقات |
 | RAG | استرجاع مطابق للقواعد وثلاث تقنيات MITRE v19.2 مثبتة؛ شروح مشروطة ببصمة القواعد؛ عقد جرد اختياري | جرد حقيقي معتمد ومراجعة مستقلة وقياس جودة التغطية؛ ليست قاعدة ATT&CK كاملة |
-| C4 | `ai_agent/evaluate.py`: حساب offline بعقد صارم واختبارات اصطناعية | ربط آلي مدقق بالمخرجات الأصلية، 30 تنبيهاً حقيقياً معلماً بشرياً وتجربة نموذج وتحكيم؛ لا نتائج أصلية بعد |
+| C4 | `ai_agent/evaluate.py` للحساب و`ai_agent/runner.py` لحفظ المحاولات والتحقق من بايتات الأدلة والإسقاط، انظر §11 | مراجعة مختصة و30 تنبيهاً حقيقياً معلماً بشرياً وتجربة نموذج وتحكيم؛ لا نتائج أصلية بعد |
 
 المصدر `ai_agent/analyst.py` مستقل عن مزود النموذج عبر callable: يستقبل سياقاً منقحاً ويعيد JSON نصياً. المحول الوحيد المطبق حالياً هو Ollama محلي. لا يوجد OpenAI أو أي API خارجي، ولا خدمة HTTP جديدة أو تكامل مباشر بالمدير، ولا تنزيل تلقائي لنموذج.
 
@@ -210,7 +210,7 @@ python3 -I -B ai_agent/evaluate.py \
 - completed: prediction بنفس بنية gold، output_sha256 إلزامي، وزمن محدود0..86400ث ليس bool أو null.
 - غير completed: prediction=null؛ output_sha256 إما بصمة أثر الرد/الفشل المحفوظ أوnull إن لم يوجد؛ الزمن إما قياس فعلي أوnull، لا صفر مختلق.
 - finding صالح يصنف insufficient_evidence هو completed ويُحسب في `completed_insufficient_evidence`، لا حالة abstained التشغيلية. يمكن أن يطابق gold إن كان هذا الحكم البشري؛ أعلن rubric قبل التجربة لمنع تحيز المكافأة للامتناع.
-- latency هنا مدة القياس المعلنة وفق protocol، لا MTTD. عند الإسقاط من analyst استخدم inference_seconds للاستدعاء والتحقق مع تسجيل أزمنة الفشل في runner خارجي؛ collector لذلك **غير مطبق بعد**.
+- latency هنا مدة القياس وفق protocol، لا MTTD. المسار المباشر analyst يقيس inference_seconds للاستدعاء والتحقق. runner في §11 يقيس بدء العملية إلى انتهائها/قتلها وإعادة حصدها؛ يستثني تجهيز الأدلة والتحقق النهائي وكتابة الملفات. لا تخلط التعريفين في تجربة واحدة.
 
 **reviews** قائمة0..1000؛ يسمح بـ`[]` مع إظهار نقص التحكيم، لا نسبة هلاوس صفرية. كل صف:
 
@@ -218,12 +218,12 @@ python3 -I -B ai_agent/evaluate.py \
 
 المراجعة فريدة ولمحاولة completed فقط؛ بصمة الرد تطابق المحاولة. independent تصريح bool، وليس تحقق هوية بشري. العدّان integers0..1000000 وunsupported≤claims. claims=0 لا تدخل مقام الحالات ذات الادعاءات. لا تمرر gold أوreviews إلى النموذج.
 
-### 10.3 من مخرجات analyst إلى عقد التقييم — تدقيق مطلوب، لا أتمتة مُدّعاة
+### 10.3 من مخرجات analyst إلى عقد التقييم — فصل التحقق الآلي عن التحكيم البشري
 
 1. ثبّت حالات **التنبيهات المؤهلة** مسبقاً مع خط أساس بشري مستقل وrubric: suspicious قرائن تستلزم تحقيقاً، likely_benign تفسير مشروع مسند، insufficient_evidence لا تكفي الأدلة للتمييز. لا تساوِ annotation أو مستوى الخطورة بحكم الحقيقة.
 2. احفظ التصدير الخاص والسياق المنقح والرد الأصلي/الرفض وتوقيت المحاولة وإعداداتها وبصماتها. الربط إلى case عبر batch_id وAref وsource_record، لا اسم الوكيل وحده.
 3. في التشغيل الأول فضّل **تنبيهاً واحداً لكل batch**. للمخرجات متعددة المراجع، نفس classification/MITRE ينطبق على كل evidence_ref وفق العقد الحالي؛ إسقاطه إلى الحالات يشترك في الرد والزمن وقد يظلم التصنيف على مستوى التنبيه. أعلن ذلك مسبقاً واحتفظ بـcluster مشترك؛ لا تسمه30 استدعاء مستقلاً.
-4. راجع التصنيف المنقول والبصمة مقابل الملف الأصلي؛ الأداة لا تتحقق من صدق هذا النقل. لا تسجل offline_context_only كـcompleted؛ ليس inference. المستورد/runner الآلي المحصن وأرشفة المحاولات ما زالت خطوة تنفيذ تالية.
+4. evaluator منفرداً لا يقرأ الملف الأصلي. استخدم runner/export في §11 لإعادة بناء السياق والتحقق من بايتات الأدلة والإسقاط، مع مراجعة أصل البيانات خارج الأداة. لا تسجل offline_context_only كـcompleted؛ المستورد يرفضه. التحقق المحلي ليس توقيعاً أو إثبات تشغيل نموذج بعينه.
 5. يقوم محكّم بشري، لا النموذج نفسه، بتقسيم assessment إلى ادعاءات قابلة للفحص ومراجعة كل ادعاء مقابل الأدلة المتاحة للنموذج؛ احفظ rubric والتعليل والخلافات الخاصة. توصية متحفظة أو سؤال ليسا تلقائياً ادعاء حقيقة. لا تستخدم schema-valid أو regex كحكم هلاوس.
 
 ### 10.4 المقاييس وحدودها
@@ -255,3 +255,81 @@ PY
 
 
 تدقيق2026-09-18: أُنجزت مراجعة آلية ثانية للقطة4f62a15 وأعيد التحقق من ملاحظاتها؛ ليست اعتماداً للإصلاحات اللاحقة أو المعمل. جدول التحكيم في TAKEOVER_AUDIT §8.3. صيغة قواعد CLI الحالية fragments بلا XML declaration؛ الملف الافتراضي يعمل. دعم full XML في077، وعقد سياق Python الناقص في078؛ ليس مسار CLI الحالي. أرقام commits أعلاه checkpoints قبل تجميع الجلسة؛ الرأس النهائي في PR28.
+
+## 11. سجل أدلة AI والمهلة الكلية — تنفيذ محلي 2026-09-18
+
+`ai_agent/runner.py` على Linux/Python stdlib: `prepare` و`export` بلا inference، و`run` يحتاج `--infer`. اختبارات runner اصطناعية؛ لم يُشغّل نموذج حي ولم تُجمع نتائج C4 أصلية. راجع PR28 لعدد اختبارات الرأس النهائي وCI؛ لا تعادل المراجعة الآلية تحكيماً بشرياً.
+
+### 11.1 المدخلات والتثبيت المسبق
+
+ملفات UTF-8 غير فارغة ومحدودة4MiB لكل artifact: تصديرalerts.jsonl، rules.xml، configuration.json، model.json، rubric.txt؛ inventory.json اختياري. manifest وفق §10 منفصل ويجب أن يغطي بالضبط كل Aref مؤهل في الدفعة، لا raw السجلات المستبعدة. يفضّل تنبيه واحد لكل batch في التجربة الأولى. لا تغيّر code/prompt/config/rubric أثناء تجربة مجمدة.
+
+مثال **إعداد اصطناعي**، الاسم ليس نموذجاً مثبتاً:
+
+```json
+{"schema_version":1,"model":"INSTALLED_MODEL_NAME","endpoint":"http://127.0.0.1:11434","language":"ar","window_seconds":300,"deadline_seconds":30,"inventory_sha256":null}
+```
+
+اللغة ar/en؛ النافذة integer1..3600؛ المهلة رقم محدود أكبر من0 وحتى120ث؛ bool مرفوض. ملف model.json له المفاتيح فقط: schema_version=1، name مطابق للإعداد، sha256 بصمة weights التي يصرح بها المشغّل (64hex صغيرة). **حقل C4 model_sha256 هو بصمة بايتات ملف الوصف model.json، لا إثبات بصمة الأوزان المحملة في Ollama.** النموذج ورخصته وهويته التشغيلية تحتاج تحققاً مستقلاً. inventory_sha256 يجب أن يطابق بايتات الجرد المعتمد؛ الملف والبصمة مطلوبان معاً أو كلاهما غائب. حد freshness24h عند التحضير، لا عند قراءة أرشيف قديم.
+
+تشغيل التحضير offline من جذر المستودع؛ `/approved/private` أمثلة لدى المشغّل لا مسارات أنشأتها الجلسة:
+
+```bash
+python3 -I -B ai_agent/runner.py prepare \
+  --alerts /approved/private/alerts.jsonl \
+  --rules wazuh/manager/rules/local_rules.xml \
+  --configuration /approved/private/configuration.json \
+  --model-record /approved/private/model.json \
+  --rubric /approved/private/rubric.txt
+```
+
+أضف `--inventory /approved/private/inventory.json` عند وجوده. النتيجة input_sha256، provenance بسبع بصمات، وeligible_alerts(ref/source_record)، وinference_performed=false. استخدمها لتثبيت manifest الخاص قبل التشغيل مع gold بشري وcluster/labeler؛ لا تنقل gold إلى النموذج. `prepare` لا يحفظ السياق ولا يُشغّل أو يُنزّل نموذجاً. لا تحفظ datasets أو المراجعات أو مخزن الأدلة في Git.
+
+### 11.2 تشغيل محاولة واحدة وأرشفتها
+
+المشغّل ينشئ store فارغاً خاصاً0700 في مسار موثوق. الأسلاف root/current UID وبلا group/other write؛ لا `/tmp` ولا symlink. الملفات0600، عادية، رابط واحد؛ ACLs والنسخ الاحتياطية والاحتفاظ والحصة القرصية مسؤوليات تشغيلية. القفل flock على directory inode، وO_EXCL يمنع استبدال محاولة قديمة.
+
+```bash
+python3 -I -B ai_agent/runner.py run \
+  --alerts /approved/private/alerts.jsonl \
+  --rules wazuh/manager/rules/local_rules.xml \
+  --configuration /approved/private/configuration.json \
+  --model-record /approved/private/model.json \
+  --rubric /approved/private/rubric.txt \
+  --manifest /approved/private/manifest.json \
+  --store /approved/private/evidence_store --batch-id BATCH_ID --infer
+```
+
+- قبل إطلاق العملية: فحص manifest/provenance/coverage، تجميد manifest.json حرفياً، إنشاء directory دفعة مشتق SHA256 من evaluation_id/batch_id، نسخ المدخلات والمعرفة المثبتة وcode.json/prompt.json/context.json، ثم intent.json. كل كتابة fsync للملف **وللدليل** قبل استدعاء المزود. code.json يحمل بصمات أربعة ملفات Python لا نسخها؛ احتفظ بإصدار الكود الأصلي.
+- العملية `python -I -B` ببيئة دنيا، دون shell أو أسرار موروثة؛ argv يحوي مسارات config/context فقط، لا محتوياتها أو gold/manifest/rubric. ليست sandbox تمنع شفرة Python خبيثة بنفسUID؛ worker شفرة موثوقة.
+- مهلة monotonic كلية تغطي العملية/الاتصال/القراءة، فلا يمددها dripping stdout. سقف captured output هو128KiB+1 لإثبات تجاوز الحد. stdout هنا **محتوى جواب النموذج UTF-8** بعد تحقق Ollama من envelope، وليس HTTP body الأصلي؛ فشل النقل قد يترك output.bin فارغاً ولا يحتفظ بنص خطأ خاص.
+- output.bin ثم terminal.json يحوي intent hash، status/reason، returncode، latency_seconds، output hash. completed يعني فقط مخططاً ومراجع صحيحة؛ failed لأخطاء التشغيل/المهلة، rejected لجواب غير صالح. insufficient_evidence صالح يبقى completed حسب §10.
+- الزمن من بدء worker إلى نهايته وتنظيفه، مشترك بين حالات batch؛ لا يشمل preflight/fsync/التحقق النهائي، ولا يثبت دقة الساعة. يوجد socket timeout30ث أيضاً؛ deadline ليس ضمان hard-real-time ولا يُلزم الخادم بوقف computation بعد قطع العميل.
+- SIGTERM/SIGINT ينهيان worker group ويحصدان worker المباشر، لا Ollama server. إشارة ثانية لا تقطع التنظيف. لا يمكن للبرنامج ضمان التنظيف عند SIGKILL للوالد أو انقطاع الطاقة؛ يلزم إشراف عمليات خارجي قبل نشر دائم. نسل يغادر process group ليس sandboxed، وreaping الأحفاد مسؤولية init/subreaper.
+
+### 11.3 الاستيراد والتعافي دون إعادة تشغيل
+
+```bash
+python3 -I -B ai_agent/runner.py export \
+  --store /approved/private/evidence_store \
+  --manifest-sha256 INDEPENDENTLY_RECORDED_MANIFEST_SHA256
+```
+
+بصمة manifest المتوقعة تؤخذ من السجل المعتمد خارج store، لا من ملف ربما عُدّل. `--attempts-only` يعيد array ملائماً لملف attempts في evaluate.py؛ بدونه يعيد envelope مع batches وحدود التحقق. export قراءة فقط ولا يتصل بالنموذج. يحتفظ evaluator بكل مقام manifest بما فيه دفعات لم تبدأ.
+
+| الحالة المحفوظة | نتيجة الاستيراد |
+|---|---|
+| لا directory للدفعة | لا attempt؛ evaluator يحسبها missing |
+| directory جزئي أو intent تالف/غائب | رفض التصدير، لا إخفاء المحاولة ولا إعادة تشغيل تلقائية |
+| intent سليم بلا terminal | failed / INTERRUPTED_AFTER_INTENT؛ prediction/output_sha256/latency=null |
+| output يتيم بلا terminal | يبقى failed؛ فحص النوع/الصلاحيات/الحجم فقط، unverified_artifacts=[output.bin] وstored_artifact_bytes_verified=false |
+| terminal جزئي أو hash/schema/context/code غير مطابق أو ملف غير متوقع | رفض التصدير صراحة |
+| terminal سليم | إعادة تحقق جواب النموذج وإسقاط classification/MITRE على كل evidence_ref مع نفس output hash والزمن |
+
+التحقق يعيد بناء السياق من نسخ المدخلات عند prepared_at ويقارن كل بايت، ويشترط نفس بصمات الكود والمعرفة الحالية. استعمل إصدار الكود الأصلي لاستيراد تجربته؛ تعديله يستلزم تجربة جديدة، لا تحوير الأرشيف. توجد سلامة محلية لا توقيع تشفيري: نفسUID يستطيع تزوير سجل متسق أو حذف ملفات؛ missing/interrupt ليس إثباتاً لسبب الانقطاع. stored_artifact_bytes_verified يغطي المرفقات الموجودة المرتبطة بالـhash، **لا** أصالة المصدر أو الزمن أو استقلال البشر أو حقيقة تشغيل النموذج؛ الأعلام model_runtime_identity_verified/human_independence_verified/acceptance_approved تبقىfalse.
+
+لا overwrite أو retry لنفس batch حتى لو فشل التحضير. الاحتفاظ بالأولى ثم تجربة جديدة صريحة بإقرار الحالات هو طريق إعادة المحاولة، لا انتقاء الأفضل. أكواد CLI:0 لنجاح prepare/export أوcompleted، 2 لمحاولة محفوظة failed/rejected، 1 لرفض preflight/مخزن/import برسالة عامة، 130 لإلغاء CLI. لا تضف طبقة تنفيذ AR لهذا المسار.
+
+### 11.4 ما بقي قبل تجربة أصلية
+
+مراجعة تقنية/إحصائية مختصة، اختيار نموذج ورخصة وموارد وهوية تشغيلية، اختبار transport فعلي وخصوصية/حقن تعليمات، جرد معتمد، rubric و30 labels بشرية مستقلة، ثم C4 مع المخرجات والفشل والتحكيم. SIGKILL/انقطاع الطاقة وحصة التخزين وinit/ACL والاحتفاظ مسؤوليات نشر تحتاج اختباراً أصلياً. المسار المباشر analyst.py لا يكتسب مهلة runner تلقائياً. لا إغلاق T-70 أو بوابات السحابة/Windows/PILOT من اختبارات هذا القسم.

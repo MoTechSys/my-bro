@@ -1,6 +1,16 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
-## تحديث حاكم للاستئناف — 2026-09-18 [AI]
+## تحديث تنفيذ حاكم للاستئناف — 2026-09-18 [AI]
+
+- حزمة runner/importer والمهلة **منفذة**؛ راجع `ai_agent/runner.py` و`tests/test_ai_runner.py` وUC-14 §11. checkpoints: b01af8a أساس15 اختباراً،09e91e2 تشغيل/استيراد39،6a6d232 تقوية45،5423a6f إلغاء فعلي46؛353 إجمالاً وvalidator/diff ناجحان. الأرقام checkpoints قبل تجميع هذه الجولة فوقbf2fab0 فقط، لا فوق4f62a15.
+- prepare/export offline، run يحتاج --infer؛ store خاص0700 وأسلاف موثوقة، snapshots0600، manifest مجمد ومحاولة واحدة/دفعة، fsync(file+directory) للـintent قبل Popen. code.json hashes لا نسخ كود؛ الاحتفاظ بإصدار التجربة إلزامي لإعادة بناء السياق عند الاستيراد.
+- لا gold/rubric/هويات خام في سياق النموذج. model_sha256 بصمة descriptor معلن لا إثبات weights؛ output_sha256 بايتات محتوى الجواب لا HTTP envelope. latency من بدء worker إلى حصدها لا preflight/كتابة/التحقق النهائي ولا MTTD.
+- absent batch=missing؛ intact intent بلاterminal=failed بزمن/ردnull؛ orphan output معلن unverified؛ partial/corrupt/unknown artifacts ترفض export. لا retry أو overwrite. export يعيد تحقق الرد وإسقاطه لكلrefs ويحفظ المقام الكامل.
+- اختبارات subprocess فعلية للمهلة وSIGINT/SIGTERM ووقف نسل worker، لا قتل Ollama. SIGKILL للوالد/انقطاع الطاقة أو نسل يغادر المجموعة ليس مضمون التنظيف؛ تحتاج supervisor/init وحصص/ACL/retention وتجربة أصلية قبل خدمة دائمة. same-UID وصدق المصدر/البشر خارج التحقق المحلي.
+- مراجعة قراءة فقط منفصلة للقطة09e91e2: https://www.genspark.ai/agents?id=6e1a4dd4-5fe5-55a0-ab98-7637fd35d393 . راجع PR28 لمعرفة اكتمالها وتحكيم الملاحظات؛ لا تعتبرها اعتماداً لآخرHEAD. CI للرأس النهائي يثبت في PR منعاً لحلقة تعديل SHA.
+- التالي: استكمال أي ملاحظات مراجعة غير محسومة، ثم transport فعلي/مراجعة مختصة واختيار نموذج معتمد ورخصته وموارده، جرد مؤرخ و30labels بشرية وC4 أصلي. لا تنفيذ حي أو نشر سحابي في هذه الجولة؛ T-70 مستمر. Q5/Q6 وبوابات config/restore/canary/Windows/PILOT مستقلة.
+
+## سجل التدقيق السابق — 2026-09-18 [AI]
 
 - بدأت مراجعة PR28 من `4f62a15`، لا من main القديم. نجح خط الأساس: 301 اختبار. أُصلح تكرار مصدر C4 بتغيير أسماء الدفعات والعناقيد في checkpoint `a2ba875`، وحُجبت الفواصل عند اشتراك المصدر؛ وأُصلح تسرب أخطاء HTTP في `d13ff7f`.
 - **307 اختبارات ناجحة محلياً**: 145 سابقة +67 lifecycle +48 analyst +19 knowledge +28 evaluate؛ وvalidator/diff ناجحان. اختبارات الانحدار تكشف السلوك القديم أيضاً. ليست نتائج نموذج أو C4 أو معمل أصلي.
