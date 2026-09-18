@@ -36,3 +36,77 @@ bash scripts/validate/validate_all.sh
 
 ## Rule-ID namespace
 See `docs/02_ARCHITECTURE.md §5`. Reserved for extensions: 100400–100499 (network/syslog), 100500–100599 (AI/reporting).
+
+
+## UC-10: private Telegram notifications — implementation, native acceptance pending
+
+Files: `manager/integrations/custom-telegram.py` and `manager/ossec.conf.d/60-integration-telegram.xml`. No autonomous response or approval. Linux Python3 stdlib only. The helper reads one bounded JSON alert (4MiB), filters level>=12, and sends only rule ID/level, UTC time and keyed event/agent references. Raw log, description, names, source IP, usernames and file paths are excluded. HMAC references are pseudonyms, not a guarantee of anonymity; timing/rule metadata may still identify incidents. Approve the external disclosure policy first.
+
+### Private configuration (never in Git, XML or process arguments)
+
+On the authorized manager, install the script as `/var/ossec/integrations/custom-telegram.py`, root:wazuh0750, with a verified `/usr/bin/python3`. Use a dedicated root-owned0700 `/etc/soc-telegram/` and `/var/lib/soc-telegram/`; ancestors must not be group/other writable or symlinks. Config is `/etc/soc-telegram/config.json`, root0600, regular and single-link. Store stays root0700. If Integrator runs under another UID, explicitly review ownership/isolation rather than relaxing private permissions. The code does not chmod/chown existing Wazuh trees.
+
+Configuration contract (placeholders intentionally invalid until replaced privately):
+
+```json
+{
+  "schema_version": 1,
+  "enabled": false,
+  "bot_token": "PRIVATE_BOT_TOKEN",
+  "chat_id": "PRIVATE_NUMERIC_CHAT_ID",
+  "hmac_key": "64_LOWERCASE_HEX_FROM_32_RANDOM_BYTES",
+  "min_level": 12,
+  "max_per_hour": 10,
+  "max_total_attempts": 1000
+}
+```
+
+`enabled` must be boolean; min_level12..16, hourly1..60, lifetime1..1000. Obtain the token privately from BotFather, approve the numeric private chat/group destination, and generate a random32-byte HMAC key via a trusted local secret manager (`secrets.token_hex(32)` is suitable; do not paste its output in chat/Git). Do not reuse the synthetic test values. No real token is provided or requested in this repository.
+
+Preview, without network or store writes:
+
+```bash
+python3 -I -B wazuh/manager/integrations/custom-telegram.py \
+  --alert /approved/private/one-alert.json \
+  --config /approved/private/config.json
+```
+
+`--send` plus `enabled=true` are both required for manual delivery. The native Wazuh entrypoint is invoked via positional arguments, so `enabled=true` is the explicit deployment opt-in there. Merge only the60-integration-telegram.xml block after preview and native installation validation. Do not add api_key/hook_url/options: the native Integrator passes these on argv, and this helper deliberately rejects them. Rule levels5712/5763=10 and31103=7 are **below this notification threshold**; they will not notify by default. Do not raise rule severity just to force a test.
+
+### Delivery and failure semantics
+
+- Fixed `https://api.telegram.org/.../sendMessage` API, default TLS certificate/hostname verification, no proxies or redirects. No arbitrary endpoint. No Markdown/HTML parse_mode; link previews disabled and protect_content requested (not a screenshot-prevention guarantee).
+- Worker receives token/config in memory, not subprocess argv; child environment/stdin/stdout/stderr are stripped. Socket timeout5s plus a10s parent process deadline/alarm, bounded16KiB acknowledgement. CLI signal cancellation cleans up its child where possible; OS scheduling/D-state/SIGKILL are not hard-real-time guarantees. Fork requires this trusted single-thread CLI; not a plugin sandbox.
+- `sent` requires Telegram ok=true, positive message_id and matchingchat; it confirms API acceptance, not a human reading the message. Failure/timeout is `unknown` because delivery may have occurred before losing the acknowledgement. **No automatic retry.** The integration never guesses delivery from HTTP200 alone.
+- Private store uses directory flock, exclusive0600 records and file+directoryfsync. HMAC event identity (manager,agent,id) is reserved durably before networking; duplicate or interrupted intents never resend. Same identity with altered content fails closed. This is at-most-one application attempt per retained identity, not distributed exactly-once delivery or signed evidence.
+- Hourly and lifetime caps count attempts including unknown outcomes. At capacity the helper returnsrate_limited, not success. No silent pruning. Operator rotation/archive is explicit and must preserve duplicate policy; deleting state/changing HMAC key can enable repeat sends. Queue/failure counters are not a C4 evidence dataset. Low-level filtered/rate-limited/lock failures do not create unbounded records.
+- Partial/corrupt/unexpected files, symlink/hardlink/public mode, backward time relative to recorded intent, or disk failure refuse delivery. Same-UID malicious modification, ACLs and clock forward jumps remain operator risks. First deploy with a small cap; monitor Wazuh integration errors and filesystem capacity.
+- Outputs contain sanitized statuses. Exit0=preview/filtered/duplicate/sent, exit2=unknown/rate_limited, exit1=invalid input/config/storage, exit130=CLI cancellation. Never treat exit0 alone as successful delivery. `delivery_confirmed` is true only for the current acknowledged send.
+
+### Native ABI, testing and rollback
+
+Pinned Wazuh4.14.1 Integrator adds debug/options/timeout/retries after alert/key/hook and may leave literal redirection argv fields. The helper supports the restricted empty-key/empty-hook/empty-options form and ignores native retry advice in favour of its no-retry policy; no shell evaluation. Synthetic ABI tests are not proof of deployment on every Wazuh version.
+
+Acceptance: validate the merged manager configuration in its native environment, preview a private high-level test alert, then send one explicitly approved notification to a private test chat. Check both Telegram receipt and the private intent/terminal record. Reinvoke the same alert and verify no duplicate. Test denied transport/timeout/rate-limit/storage permissions without affecting manager collection. No external message was sent during repository tests. Disabling: setenabled=false privately and remove only thisintegrationblock through the normal change window; retain records for duplicate/audit policy. Do not revoke/delete unrelated credentials or alter VT/YARA.
+
+References consulted2026-09-18:
+- [Wazuh external integration guide](https://documentation.wazuh.com/current/user-manual/manager/integration-with-external-apis.html).
+- [Exact4.14.1 command construction](https://github.com/wazuh/wazuh/blob/v4.14.1/src/os_integrator/integrator.c), especially Integrator argv construction aroundlines431–447. Actual code adds fields beyond the simplified guide.
+- [Telegram Bot API](https://core.telegram.org/bots/api#sendmessage): HTTPS requests, JSON responses/ok flag and sendMessage. No claim of reviewing the entire API document.
+
+SSH/SQLi execution and guarded firewall-drop generation are documented in [attack-emulation README](../scripts/attack-emulation/README.md); the optionalSSHfilecollector is `agents/linux/ossec.conf.d/60-localfile-sshd.xml`. Do not blindly apply all snippets.
+
+
+### Static review adjudication — 2026-09-18
+
+The separate text-only [review](https://www.genspark.ai/agents?id=07d939f3-aab0-5d0e-8bbb-3160c80306d7) inspected four embedded source files from60d5bfe. Its title incorrectly says09e91e2 (an earlier runner review): that title is not the reviewed integration revision. It ran no tests and did not receive the XML/README files. Task completion is not security approval.
+
+| Finding | Adjudication |
+|---|---|
+| F1 fork inherits flock | Reproduced locally with a real forked offline worker. O_CLOEXEC does not close on fork. Worker now closes its inherited store descriptor before transport; never LOCK_UN because that unlocks the parent's shared open description. Two new tests verify descriptor plumbing, parent lock retention, and release after the parent's close while child remains alive. This models descriptor release, not a real SIGKILL/native Wazuh test. |
+| F2 alleged undocumented ABI | Rejected as a demonstrated bug: the existing README already cites pinned4.14.1 integrator.c lines431–447, re-read during adjudication. Empty options and restricted tails are intentional. Do not accept arbitrary option files/redirection tails to fit hypothetical versions; retain fail-closed and require native acceptance on the deployed version. |
+| F3 child survives kill/join | Deployment limitation, not solved by adding terminate before kill. A live Process cannot safely be closed/reaped as if exited, and D-state may outlast bounded waits/alarm. No extra descendants are created by the trusted transport. External init/supervision remains required; an OS-stuck process is not guaranteed bounded. The F1 fix removes its inherited store lock after child entry. No actual D-state experiment was performed. |
+| F4 white_list spelling/location | Re-read [v4.14.1 global-config.c](https://github.com/wazuh/wazuh/blob/v4.14.1/src/config/global-config.c): literal white_list at line153, parser branch around487. The generated global and active-response snippets belong in manager ossec.conf, as described in the scenario README. Do not rename to allowlist. Native parser and actual management-source exemption tests remain required; source review does not prove a firewall action. |
+| F5 XML absent from review payload | Review coverage limit, not files missing from repository. All three XML snippets are tracked and exercised by the full suite. |
+
+35 Telegram tests and434 total passed after F1. No Telegram sends, firewall changes or remote deployment occurred. Between fork and the child's first instruction, the inherited descriptor may briefly remain open; this is not a hard scheduling guarantee. If the parent is killed, do not delete its intent to retry: uncertain delivery remains suppressed after recovery.

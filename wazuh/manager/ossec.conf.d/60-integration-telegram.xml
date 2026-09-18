@@ -1,0 +1,14 @@
+<!--
+  UC-10 / AI / 2026-09-18. Merge only after installing the integration helper.
+  Default delivery is disabled in /etc/soc-telegram/config.json (enabled=false).
+  Never put api_key, hook_url or options here: Integrator exposes those in argv.
+  This sends advisory notifications only, not response commands or approvals.
+  Native validation/delivery remains a deployment gate; see wazuh/README.md.
+-->
+<ossec_config>
+  <integration>
+    <name>custom-telegram.py</name>
+    <level>12</level>
+    <alert_format>json</alert_format>
+  </integration>
+</ossec_config>

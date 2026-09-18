@@ -1,5 +1,147 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
+## استئناف M1/T-11 — الأحدث 2026-09-18 [AI]
+
+### المنجز القابل للفحص
+
+- base لهذه الجولة: `1cd6bc3b950697a75b084f01c03191ce85662f12`، PR28، فرع `genspark_ai_developer`. لا تمس تاريخ ما قبل base عند تجميع commits الجولة.
+- `scripts/measure/visibility_observer.py`: preview بلا شبكة؛ observe --lab بقراءة HTTPS لفهرس يومي صريح وهوية t2 معروفة؛ export offline إلى observers.jsonl. ملف config خاص لا ينسخ إلى الأدلة ولا تمرر أسراره في argv. المخزن جديد خاص لكل محاولة: intent قبل الشبكة، poll raw/meta، terminal، إعادة تحقق البايتات والكود والتوقيت قبل التصدير.
+- لا t3 عند أول فحص إيجابي (preexisting)، ولا عند فشل/التباس؛ السلبية تسبق الإيجابية المقبولة. توقيت العميل وقوس الرصد لا @timestamp أو insertion time. فترة1s، سماح100ms، socket0.5s ومؤقتPOSIXكلي0.75s، SIGALRM افتراضي غير محجوب بلا timer آخر. لا ضمان OS hard-real-time أو أصالة/دقة ساعة من hash.
+- جرى فحص template Wazuh4.14.1: الحقول الثلاثة keyword؛ بصمته ومرجعه في tests/README §M1. لا تحقق من mapping المنشور ولا استدعاء Indexer حي. late-start وتعدد replicas/الفهرس الواحد قيود معلنة؛ لا تحذف preexisting من مقام التجارب لتجميل الزمن.
+- `tests/test_visibility_observer.py`:31 اختباراً، بينها timer فعلي، privacy/tamper/failure/no-retry وCLI واستيراد عبر trial_runner.collect. HTTP مقلّد؛ لا credentials حقيقية.
+- عيب مرتبط كُشف وأعيد إنتاجه في `trial_runner.execute`: killpg بعد reap. أصلح في79ba0ef قبل تجميع الجولة بـWNOWAIT ثمkillpg ثمwait بحد2s، وفشل تنظيف صريح وتأجيلsignals. ثلاث اختبارات إضافية،127 في test_measure إجمالاً؛ الاختبار الرابع ربطclock_ref. لا تجربة PID reuse أوD-state فعلية.
+- **469 اختباراً محلياً وALL CHECKS PASSED**:434 خط أساس +31 مراقب +3 تنظيف +1 ربطclock_ref. كل كود committed/pushed؛ الرأس النهائي وCI في تعليقات PR28 بعد التجميع. T-11/M1 ليست native-approved.
+
+### خريطة الملفات والخطة
+
+| الملف | وظيفته الحالية |
+|---|---|
+| docs/03_ROADMAP.md §8 | حزم M1/M2/M3/A1/N1/D1/E1، التبعيات وبوابات الخروج |
+| tests/README.md §M1 | spec/config كاملان، CLI ونتائج الأعطال والاستيراد والخصوصية والحدود |
+| tests/TEST_PLAN.md | بروتوكول PILOT5/MEASURED≥30/baseline≥12h؛ تحديث M1 لا يلغي بوابة الساعة |
+| docs/TASKBOARD.md / docs/00_PROJECT_STATE.md | الحالة والمالك وما بقي؛ لا تحويل نجاح unit tests إلى DONE للمعمل |
+| docs/04_ISSUES_LOG.md | ISSUE-088..090 لهذه الجولة ومحددات القبول |
+| scripts/measure/trial_runner.py | استيراد observer والتحقق من هوية t2، وتنظيف المجموعة المصحح |
+
+### مراجعة منفصلة مكتملة ومحكّمة — لا تعاد
+
+المهمة [d21f2fcc](https://www.genspark.ai/agents?id=d21f2fcc-8a16-5d27-8e73-37253fbd1cde) مراجعة ساكنة نصية للقطةd850d4e، أرسلت observer/tests وrunner helpers وtrial_runner. المراجعة انتهت وحُكمت بالكامل في tests/README §تحكيمM1؛ ليست موافقة بشرية أو أصلية. لا clone/tools/tests/credentials عند المراجع. فشل أول submit لغياب حقلinstructions ثم صُحح؛ توجد مهمة فعلية واحدة بهذا المعرف.
+
+```bash
+cd /home/user/webapp && pwd
+ git status --short --branch
+ git fetch origin main genspark_ai_developer
+ gsk task status d21f2fcc-8a16-5d27-8e73-37253fbd1cde
+ gsk task info d21f2fcc-8a16-5d27-8e73-37253fbd1cde
+```
+
+لا تدمج result_content كله: قد يتضمن نص الطلب والمصادر المعادة؛ استخرج جواب المراجع فقط بعد فحص state/has_error. قارن النتائج بالتعديلات اللاحقة:28bd92d يمنع SIGALRM المحجوب وuserinfo الفارغ،79ba0ef أصلح trial cleanup. أسماء checkpoints قبل squash؛ حافظ على مصادرها عبر recovery ref/سجل PR. لا تقبل اقتراح تخفيف المقام/التوقيت/الخصوصية دون إعادة إنتاج.
+
+### أمر التحقق والخطوة التالية بالضبط
+
+```bash
+cd /home/user/webapp && pwd
+ TMPDIR=/home/user/webapp/.git PYTHONDONTWRITEBYTECODE=1 bash scripts/validate/validate_all.sh
+```
+
+1. اقرأ التحكيم المكتمل في tests/README؛ R2/R3/R5/R6 وملاحظةclock_ref عولجت، R1 وتوسيعمهلةR2 رُفضا، R4 عولج بخيارsummary دون كسرJSONL. لا تعاودطلبالمراجعة أو إعادةبناءM1/report.
+2. M2: مراقب مصدر/دليل فعل مستقل ثم instrumentation لـt4 وobserver لـt5. ابدأ بعقد السببية وهوية الملف/العملية وحدود السباق؛ اختفاء ملف وحده لا يثبت أن AR حذفه، ونجاح سكربت ليس t5. لا تجعل المراقب ينفذ الحذف بنفسه ثم يدعي استقلاله. عدّل AR فقط بمراجعة أمنية واختبارات مسارات/صلاحيات/تدخل Defender.
+3. اربط الحصول على هويةt2 الجارية بمراقبM1 لتقليل preexisting، دون اختلاق سلبية سابقة. ثم UC-01 ومقام نجاحAR الشامل. نطاق M1 الحالي مراقبة هوية معروفة فقط.
+4. بالتوازي حين تتوفر الموارد: الرسوم/المراجع/pipelineالتصدير والعرض D1؛ لا وصفها منفذة في هذه الجولة. تشغيل النموذج يتطلب موارد وجرداً معتمدين، والتحكيم البشري لا يُختلق. syslog يحتاج عينة جهاز حقيقية ونطاقاً معتمداً.
+5. native acceptance ثم PILOT/MEASURED/baseline؛ سياسة الجلسة تسمح بالكتابة داخلworkspace فقط، فلا تغييرات سحابية عبرSSHأوMesh أووكيل بديل. لا نقل تعليمات عبر المستخدم، ولا تسجيل أسرار فيGit.
+
+- بعد المراجعة: terminalمحمي منSIGINT/TERM، lateSIGALRMيصرّف، failurecodesمقيدة، principal/CAبصمات بلاhashكلمةمرور، وexport --summary لتمييزالحالاتدونكسرJSONL؛ clock_refالمقدميلزممطابقةmanifest. الاختباراتالجديدة6للمراقب و1للربط. تفاصيلالتحكيم فيtests/README، لا حاجةللاستئنافمنمرحلةrunning.
+
+## العمل المتوازي والتقرير والرسالة — 2026-09-18 [AI]
+
+- نُفذ `ai_agent/report.py` فعلياً: تقرير C4 خاص JSON/HTML من مخزن متحقق وملف تحكيم مربوط ببصمة أو غياب صريح؛ 16 اختباراً. دليل التشغيل UC-14 §13. جُرّبت معاينة HTML ببيانات اصطناعية فقط عبر webpage_capture؛ لم يرفع مخزن أو سجل حقيقي. التصيير الآلي ناجح، وليس مراجعة لكل جهاز/متصفح.
+- انتهت المهام النصية الثلاث (مراجعة التكاملات، الفصل4، الفصل5). صُححت النتائج قبل الدمج؛ عنوان المراجع09e91e2 خاطئ، والمدخل الفعلي لقطة60d5bfe. تحكيم F1..F5 في wazuh/README. F1 أُعيد إنتاجه ثم أُصلح بإغلاق fd الموروث في طفل Telegram، لا LOCK_UN؛ اختباران جديدان و35 اختبار Telegram. لا إعادة للمهمة المراجعية كأنها معلقة ولا اعتماد لها كمراجعة بشرية.
+- الفصول1–5 موجودة كمسودات: أضيف ch4/ch5 وصُحح ch3 §3.9/3.10 وفق ADR-014 وTEST_PLAN. PILOT5 ثم planned_n≥30 وbaseline≥12h؛ Wilson للنسب، Poisson upper لـFP/h، وأزمنة منفصلة عن C4. أزيلت الادعاءات غير المسندة عن غياب المكونات أو صحة الساعة أو اكتمال SOC.
+- **434 اختباراً محلياً وALL CHECKS PASSED** (416 سابقة +16 تقرير +2 قفل). CI النهائي لكلSHA فيPR28، ولا يُستعار نجاح رأس سابق. لم ينفذ نموذج حي أو Telegram أو probe أو تعديل على السحابة.
+- صُدرت نسخة مراجعة Word وPDF (43 صفحة، قياس Letter الافتراضي لا قالب الجامعة). تحقق ZIP/XML من العناوين الخمسة، وفحص بصري آلي لصفحتين فقط أظهر عربية مقروءة؛ لم تُراجع كل الصفحات. Mermaid ما زال نصاً مصدرياً، لا رسوم نهائية. تفاصيل التصدير وبصماته في thesis/README.
+- Mesh متاح وdevices=[]؛ لا تسجيل/serve/منح صلاحيات. مواد العمل الخاصة داخل .git لا تؤرشف أو ترفع؛ رُفعت ملفات المراجعة المولدة وحدها ومعاينة اصطناعية، لا مفاتيحSSH أو بيانات خام.
+- المتبقي المحدد: تدقيق الفصول1–3 والمراجع والرسوم، قالب الجامعة والتنسيق والعرض، native observers وقبول SSH/SQLi/Telegram/AR/Windows، تجربة نموذج/C4 وتحكيم بشري، PILOT/MEASURED/baseline، وبوابات reboot/daemon/current-state rollback. لا تعاود إنشاء runner/report أو مطالبة المستخدم بنقل تعليمات بين الوكلاء. قيد الكتابة إلى workspace ما زال قائماً؛ لا أدوات بديلة لتجاوز القيد.
+
+## التنفيذ الفعلي للتكاملات — الأحدث 2026-09-18 [AI]
+
+- بعد طلب استكمال المشروع لا تبادل رسائل: نُفذت T-13/T-12/T-14 محلياً فوق082b580. `scripts/attack-emulation/lab_scenarios.py`: preview افتراضي، --lab صريح، RFC1918، عميلSSH باسم اختبار دون credentials/remote commands معhost pin، وطلبSQLi ثابت؛ مولّدssh-response يطلباستثناءالإدارة ويطبعXMLفقط. مدخلSSH اختياري60-localfile-sshd.xml؛ ليس تفعيلauth.log تلقائياً علىالسحابة.
+- `wazuh/manager/integrations/custom-telegram.py` +60-integration-telegram.xml: config خاص/root0600 وstore0700، إخفاءالهويات بـHMAC، لاraw/free-text/IP، TLSثابت بلاproxy/redirect، worker محدود10ث، intentدائم قبلsend، dedupحتىالمحاولاتالمجهولة، حصصساعة/عمر، لاretryتلقائي. Previewلايرسل؛ native يتطلبenabled=true فيملفخاص. عتبة12 تعنيSSH5712 وSQLi31103 لايُرسلانافتراضياً.
+- فُحص مصدرWazuh4.14.1 الفعلي: Integrator يضيفdebug/options/timeout/retries وحقولredirectحرفية، فصُححABIقبلالتسليم. لاapi_key/hook_url/options فيXML/argv. ARselectors تعملOR، وdisabled=yes فيmanagerيعطلARعموماً؛ المولدلايستعملهماخاطئاً.31103SQLi،31104هجومعام،31106HTTP200ليسدليلنجاحاستغلال.
+- **416 اختباراً محلياً وvalidatorناجحة:366سابقة+17سيناريو+33Telegram.** لااتصالHTTP/SSHللاختبارات ولاTelegramحقيقي أوfirewallmutation. المراجعةذاتية ومصدررسمي، لااعتمادnativeأومراجعبشري.
+- READMEs الموجودة فيscripts/attack-emulation وwazuh تحملالأوامروالعقودوالقبولوالرجوع. لا تعاودبناءالتكاملات. T-12/13/14 IN-PROGRESS للقبولالحي؛ T-31/واجهةالأدلة/الفصولوالتقييمالأصلي باقية. لا تختزلإكمالالمشروع فيعددالاختبارات، ولا تطلبمنالمستخدمحلمهمةالبرمجة.
+- أرقامcheckpoints قبلتجميعالجولةفوق082b580فقط؛ تاريخالسحابةوالـAIمحفوظ. آخرHEAD وCIفيPR28. الأسرارلافيGitولاالمحادثة؛ لا ادعاءتشغيلالمعمل أوAIأوC4 من هذهالجولة.
+
+
+## السحابة بعد إصلاح المشغّل — الأحدث 2026-09-18 [AI]
+
+- **اسمDockerالجاري kali1-init؛ اسمWazuhالوكيلkali1/001 لم يتغير.** Genspark Claw نقلالحاوية إلىinit وvolumesetc/queue/logs وunless-stopped. kali1القديمةمتوقفة، لا تشغلها بالتوازي. اقرأCLOUD_ENV_ACCESS §11 قبلأيأمر؛ أقسام9/10 وصفقديمللعيب.
+- تحققناقراءةً: PID1=docker-init و0zombie و5خدمات؛عينتان06:42:54–06:43:59UTCتثبتانmsg_count125→128 وmsg_sent138→144 وprocess-list6→8،healthy/progress=true. Docker Healthcheckغيرمهيأ؛tail مازالعمليةتحتinit، فلاادعاءتعافيdaemonمنفرد.
+- المشغّلأبلغrestartوتعافيقتلPIDالمضيف وcanaryقبل/بعدالانهيار بوصولHITS=1لكلمنهما. قرئالسجل،لم نعدالتجاربأواستعلامالفهرس. استُخرجفهرسبصمات9logsوDECISIONSمنبايتاتها؛الأصولتبقىخاصةعلىالخادم.
+- النسخة~/lab/backup/kali1-identity-20260918_091623 قائمة؛35مدخلاًفيالأرشيفمعrids؛مفتاحالأرشيفوالجارييطابقانclient.keysللنسخةمقارنةًفيالذاكرة. لا رفعالمفتاحأومقتطفهأوبصمته. الصورةsoc-agent:pre-init-20260918 موجودة. لا نعيدإنشاءالنسخة.
+- **المتبقي:** نافذةrebootللمضيف ومسارعودةgateway،تعافيdaemonمنفرد،رجوعمتوافقبأحدثqueue/rids/الإعدادات. stopالجديدة/startالقديمةليسإثباتنجاحrollbackبعدتقدمحالةالمدير. لاحذفولاdown-vولانشرضمنيّلـagent_lifecycle؛ISSUE-068 يبقىقبلنشره.
+- صلاحياتSSH/sudoموجودة،لكنسياسةهذهالجلسةتقيدالكتابةداخل/home/user/webapp. تحديثPR28يتولاهcheckoutالحالي؛لااستنساخأوGitcredentialsإضافيةعلىالخادم. لم نعدلDECISIONSالبعيدأوننشئcanaryأوننفذreboot. لا تخلطإنجازالمشغّل بإنجازنا.
+- برمجياتAIعند7de4a52 و366اختباراًمحلياً/CIناجحاً؛هنااستلامأدلةلا تغييركود. T-60/T-62 تقدمتجزئياً،لااكتمالالمشروعأوتجربةC4/PILOT. تفاصيلالأدلةفي§11 وCIللتوثيقالنهائيفيPR28.
+
+
+## تحكيم المراجعة وإصلاحاتها — الأحدث 2026-09-18 [AI]
+
+- مراجعة6e1a4dd4 انتهت ساكنة فقط، لا clone/اختبارات لدى المراجع؛ ليست معلقة الآن. كل K/N والتحكيم فيUC-14 §12. K1/K2 وإلغاء/جرد عولجت سابقاً، لا تعاود إصلاحها. ادعاء أنrules/pack غير متتبعين رُفض بـgit ls-files.
+- ثبتN4 محلياً علىbe5160c: killpg بعدreap، وwait cleanup يفلت قبلclose.74ddb8f يستخدمwaitid(WNOWAIT) ثمkillpg ثمwait، SIGCHLD افتراضي ولاwaiter آخر؛ يؤجل أولSIGINT/TERM داخلcleanup ويغلقstdout حتى فشلwait. WORKER_CLEANUP_FAILED فشل بلاprediction، لا ادعاء انتهاءprocess أو native D-state test.
+- 2e316e3 يضيف terminal schema_version=2 وvalidation_code محدوداً مع إعادة احتسابه فيexport؛ لاexception/model text فيmetadata. الأرشيف القديم يحتاج كوده الأصلي، لا تعدل سجلاتv1 لتقبل فيv2. فشل التشغيل/completed/interrupted لهvalidation_code=null؛ الرفض يحمل أولخطأ فقط.
+- **366 اختباراً محلياً ناجحاً:307 سابقة+59runner**، منها13 جديدة بعد353؛ validator/diff ناجحان. سجلاتCI لآخرSHA فيPR28. checkpoints أعلاه قبل تجميع هذه الجولة فقط فوقbe5160c؛ لا مساس بالتاريخ السابق.
+- رفضنا partial acceptance/drop-invalid والتخمين بأن prose=abstained. socket30 حدidle إضافي لا وعدبانتظارdeadline120؛ DEADLINE_EXCEEDED فقط حين ينقضي سقفالعامل، فشلtransport ما زالWORKER_FAILED عاماً. التفاصيل والقيود في§12.
+- التالي ليس إعادةالمراجعة أوطلبscopeAI: تجربةtransport/model مصرح بها، جرد/هوية/رخصة/موارد، rubricو30labels بشرية وتحكيمC4. لاlive inference أوخدمةHTTP أوسحابة فيالجولة؛ init/ACL/retention/حصةالقرص وSIGKILL خارجالضمان المحلي. Q5/Q6 وWindows/config/restore/canary/PILOT باقية.
+
+## سجل تنفيذ سابق — 2026-09-18 [AI]
+
+- حزمة runner/importer والمهلة **منفذة**؛ راجع `ai_agent/runner.py` و`tests/test_ai_runner.py` وUC-14 §11. checkpoints: b01af8a أساس15 اختباراً،09e91e2 تشغيل/استيراد39،6a6d232 تقوية45،5423a6f إلغاء فعلي46؛353 إجمالاً وvalidator/diff ناجحان. الأرقام checkpoints قبل تجميع هذه الجولة فوقbf2fab0 فقط، لا فوق4f62a15.
+- prepare/export offline، run يحتاج --infer؛ store خاص0700 وأسلاف موثوقة، snapshots0600، manifest مجمد ومحاولة واحدة/دفعة، fsync(file+directory) للـintent قبل Popen. code.json hashes لا نسخ كود؛ الاحتفاظ بإصدار التجربة إلزامي لإعادة بناء السياق عند الاستيراد.
+- لا gold/rubric/هويات خام في سياق النموذج. model_sha256 بصمة descriptor معلن لا إثبات weights؛ output_sha256 بايتات محتوى الجواب لا HTTP envelope. latency من بدء worker إلى حصدها لا preflight/كتابة/التحقق النهائي ولا MTTD.
+- absent batch=missing؛ intact intent بلاterminal=failed بزمن/ردnull؛ orphan output معلن unverified؛ partial/corrupt/unknown artifacts ترفض export. لا retry أو overwrite. export يعيد تحقق الرد وإسقاطه لكلrefs ويحفظ المقام الكامل.
+- اختبارات subprocess فعلية للمهلة وSIGINT/SIGTERM ووقف نسل worker، لا قتل Ollama. SIGKILL للوالد/انقطاع الطاقة أو نسل يغادر المجموعة ليس مضمون التنظيف؛ تحتاج supervisor/init وحصص/ACL/retention وتجربة أصلية قبل خدمة دائمة. same-UID وصدق المصدر/البشر خارج التحقق المحلي.
+- مراجعة قراءة فقط منفصلة للقطة09e91e2: https://www.genspark.ai/agents?id=6e1a4dd4-5fe5-55a0-ab98-7637fd35d393 . راجع PR28 لمعرفة اكتمالها وتحكيم الملاحظات؛ لا تعتبرها اعتماداً لآخرHEAD. CI للرأس النهائي يثبت في PR منعاً لحلقة تعديل SHA.
+- التالي: استكمال أي ملاحظات مراجعة غير محسومة، ثم transport فعلي/مراجعة مختصة واختيار نموذج معتمد ورخصته وموارده، جرد مؤرخ و30labels بشرية وC4 أصلي. لا تنفيذ حي أو نشر سحابي في هذه الجولة؛ T-70 مستمر. Q5/Q6 وبوابات config/restore/canary/Windows/PILOT مستقلة.
+
+## سجل التدقيق السابق — 2026-09-18 [AI]
+
+- بدأت مراجعة PR28 من `4f62a15`، لا من main القديم. نجح خط الأساس: 301 اختبار. أُصلح تكرار مصدر C4 بتغيير أسماء الدفعات والعناقيد في checkpoint `a2ba875`، وحُجبت الفواصل عند اشتراك المصدر؛ وأُصلح تسرب أخطاء HTTP في `d13ff7f`.
+- **307 اختبارات ناجحة محلياً**: 145 سابقة +67 lifecycle +48 analyst +19 knowledge +28 evaluate؛ وvalidator/diff ناجحان. اختبارات الانحدار تكشف السلوك القديم أيضاً. ليست نتائج نموذج أو C4 أو معمل أصلي.
+- اكتملت مراجعة آلية ثانية؛ تحكيم ملاحظاتها في TAKEOVER_AUDIT §8.3. ادعاء فشل BOM أو القواعد الافتراضية رُفض بالتجربة. دعم XML declaration مسجل في ISSUE-077، وعقد سياق Python الناقص في ISSUE-078؛ لا fallback صامت.
+- [ROADMAP](docs/03_ROADMAP.md) هي خطة الاستكمال المحدثة: AI MUST، PILOT5 ثم≥30 وbaseline12h، وCI مفعّل. مسارا G2 للسحابة وG5 للـAI منفصلان. المصادر الرسمية ومدى قراءتها موثقان، دون شهادة امتثال. بقيت تناقضات وثائق/فصول في ISSUE-076.
+- **التالي محلياً:** ROADMAP §3: حسم عقد artifact/batch/output، ثم importer يتحقق من البايتات، journal دائم يحفظ الفشل، وdeadline شامل مع اختبارات الإلغاء وتنظيف الموارد. بعدها مراجعة وجرد معتمد ونموذج فعلي و30 تنبيهاً معلماً بشرياً. لا تعاود بناء knowledge/evaluate.
+- لم نتصل بالسحابة في هذه الجولة. جرد2026-09-11 ليس حالة اليوم؛ بوابات config/restore/canary وWindows/AR/PILOT باقية. Q5/Q6 وD1–D4/D6/D7 لازمة للتسليم؛ D5 محسوم.
+- تُجمع تغييرات هذه الجلسة فقط فوق `4f62a15` بعد فحص tree/lease؛ لا يُمس تاريخ المتعاونين. أرقام a2ba875/d13ff7f/1a0eba6 نقاط حفظ قبل التجميع، وليست بالضرورة أسلاف الرأس النهائي. آخر HEAD وCI وروابطهما في PR28.
+
+## تحديث سابق للاستئناف — 2026-09-11، [AI]
+
+هذا الملخص يعلو على السرد التاريخي2026-09-09 أدناه ولا يدّعي إعادة تدقيق كل الأصول:
+
+- المستودع MoTechSys/my-bro، فرع عمل مشترك `genspark_ai_developer` وPR28 مفتوح؛ افحص الريموت قبل أي عمل، لا reset أو force-push أو افتراض أنPR26 لا يزال مفتوحاً.
+- اتصال السحابة مثبت للقراءة؛ kali1 في جرد2026-09-11 يعمل بخمس خدمات حية وتقدم جمع مع19 zombies وPID1=tail وغيابinit/mounts/restart/healthcheck. ليس انقطاع جمع كلياً. وكيل السحابة حفظ backup؛ تحققgzip وهوية مطابقة وصورة موجودة، لكن الاستعادة العملية غير مجربة.
+- كود lifecycle/health واختباراته موجود؛ إصلاحprogress منشور، وحمايةconfig الحالية لا تتوافق مع صلاحيات الحاوية. ISSUE-068 مفتوح؛ لم ينشر المشرف. قيد الجلسة يجيز الكتابة تحت/home/user/webapp فقط، مستقل عنsudo؛ لا تجاوز إلىPILOT قبل حفظ/استعادة/تعافٍ/canary.
+- GitHub استعيد باعتماد مؤقت تحققAPI أنهMoTechSys؛ لا قيمة credential في هذا الملف أو Git. لا تعتمد على حسابgh الافتراضي المختلف. CI فعّل ونجح على3.12/3.13 فيإصدارات موثقة؛ كلHEAD جديد يحتاج تحققاً خاصاً وروابطه فيPR.
+- T-70 داخل النطاق بـADR-014. النواة7033616 وتقوية5da888b تتبعها حزمة MITRE v19.2 في01f3f94 ودمج المعرفة/الجرد فيdb1eab9؛ أداةC4 offline في120efba وتقوية اعتماد الدفعات في5744011. كلها منشورة فيPR28 دون إعادة كتابة التاريخ. CLI offline ولا سلطة تنفيذ. الكود الحالي: analyst.py + knowledge.py + mitre_subset.json + evaluate.py.
+- أحدث تحقق محلي للكود5744011: **301 اختباراً** (145 سابقة،67 lifecycle،46 analyst،19 knowledge،24 evaluate)، validator وdiff check ناجحان. الأعداد258/277/300 تاريخية. نتيجة CI الخاصة بآخر commit توثيق تُضاف إلىPR28 بعد نشره؛ لا تفترضها من رقم قديم.
+- الموجود فعلياً: exact retrieval لثلاث تقنيات رسمية مثبتة مع license/hashes، شروح قواعد مشروطة ببصمة XML، عقد جرد≤24ساعة اختياري دون هويات خام؛ evaluator بمقام كل الحالات وفشل/رفض/امتناع/مفقود، تصنيف/MITRE وتحكيم بشري وزمن وWilson مشروط بالاستقلال وفرديةbatch/cluster. البصمات فيC4 تصريحات مرتبطة وليست إثبات بايتات المصدر. لا importer/runner تلقائي من analyst إلى C4 بعد.
+- **غير المنفذ:** لا نموذج شُغّل حياً، لا جرد حقيقي لهذا العقد، لا30 labels بشرية، لا C4 أصلي، لا واجهة موافقة/نشرAI أو إصلاح سحابي جديد. ملفات الاختبارات synthetic وليست نتائج رسالة. acceptance_approved وsemantic_grounding_verified يبقيانfalse. محاولةadvisor السابقة غير متاحة، ولا مراجعة مستقلة جديدة.
+- **التالي للوكيل:** اقرأ UC-14 §9/§10 وعقود tests؛ راجع PR28 وCI/worktree، ثم حجز تنفيذ importer/runner محلي يحفظ محاولاتAI وفشلها وبصمات artifacts والتحقق من الإسقاط إلىC4 دون كشفraw logs أوlabels للنموذج. يحتاج اختبارات خطأ/تكرار/durable journal وwall-clock deadline، ثم مراجعة مختصة وجرد معتمد ونموذج فعلي و30 تنبيهاً بشرياً في سياق مصرح. لا تعاود إنشاء الحزمة/evaluator كأنهما غير موجودين. بوابات ISSUE-068/الاستعادة/canary مستقلة وتسبق تجارب السحابة. الفصلان4/5 والقبول النهائي باقيان.
+
+### خطوات الاستئناف الدقيقة بعد تبديل الوكيل
+
+```bash
+cd /home/user/webapp && pwd && git status --short
+# تحقق الحساب المصرح دون طباعة token؛ لا تعتمد gh الافتراضي.
+git fetch origin main genspark_ai_developer
+git log -8 --oneline
+python3 -B -m unittest discover -s tests -p 'test_ai_*.py' -v
+bash scripts/validate/validate_all.sh
+git diff --check
+```
+
+المسارات الحساسة والجرد الحقيقي خارج الملفات المتتبعة. `.git/soclab-private` يحمل SSH material، لا ترفعه أو تؤرشف `.git` ولا تبحث فيه عنPAT. الاعتماد الذي أذن به المستخدم استخدم فقط process-local للحسابMoTechSys؛ لا قيمة محفوظة فيgit config. إذا غاب التفويض استخدم إعادة ربط آمنة، ولا تزعم نشر ما لم يرتفع. Git author/email metadata ليس هوية authenticated push، ولا توقيعاً رقمياً؛ سجلPR يميز ذلك. هذه وثائق تسليم مؤرخة وموسومة[AI]، لا commits موقعة تشفيرياً.
+
+---
+
 > **اقرأ هذا الملف أولاً وكاملاً. بعده ستعرف كل ما يعرفه الوكيل السابق.**
 > كُتب 2026-09-09 ~08:30 UTC بواسطة CLAUDE (Claude Fable 5.1) بطلب المستخدم صراحةً: "كأنك تُرجع ذاكرتك للوكيل الثاني — لا تنسَ صغيرة ولا كبيرة".
 > **الترتيب بعد هذا الملف:** `AI_AGENT_START_HERE.md` → `docs/00_PROJECT_STATE.md` → `docs/TASKBOARD.md` → `docs/MASTER_PLAN_v3_DETAILED.md` → `docs/lab/CLOUD_ENV_ACCESS.md` → ثم حسب مهمتك.

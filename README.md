@@ -4,7 +4,7 @@
 
 > **مشروع تخرّج:** تصميم وتنفيذ مركز عمليات أمنية (SOC) يعتمد على أدوات مفتوحة المصدر — Wazuh 4.14.7 + Suricata 8.0.6 + YARA + VirusTotal + auditd — في معمل افتراضي يراقب Windows 10 وKali Linux.
 
-> CI: see `.github/workflows-pending/README.md` to enable the validation workflow.
+> CI: [validation workflow](.github/workflows/validate.yml) · [actual runs](https://github.com/MoTechSys/my-bro/actions/workflows/validate.yml) · [activation history](.github/workflows-pending/README.md). CI does not deploy or certify the SOC lab.
 
 ## 🤖 للوكلاء الآليين (AI agents)
 **ابدأ من [`AI_AGENT_START_HERE.md`](AI_AGENT_START_HERE.md)** ثم [`docs/00_PROJECT_STATE.md`](docs/00_PROJECT_STATE.md). لا تعمل قبل قراءتهما.
@@ -21,6 +21,29 @@
 | أنسخ إعدادات Wazuh النظيفة إلى السيرفر | [`wazuh/README.md`](wazuh/README.md) |
 | أكتب فصلاً من الرسالة | [`docs/thesis/README.md`](docs/thesis/README.md) |
 | أفهم رؤية التوسعة (أجهزة الشبكة/الهواتف) | [`extension/VISION_AND_FEASIBILITY.md`](extension/VISION_AND_FEASIBILITY.md) |
+
+## محلل التنبيهات الاستشاري — قيد التطوير
+
+مكونات [T-70 / UC-14](docs/lab/UC-14_ai_analyst.md): محللoffline افتراضياً مع Ollama باختيار صريح، معرفة MITRE v19.2 مثبتة لثلاث تقنيات وعقد جرد اختياري، وأداة `ai_agent/evaluate.py` لتقييم C4 offline بمقامات كاملة. `ai_agent/runner.py` يضيف سجل أدلة دائم وprepare/run/export ومهلة كلية للعامل واستيراداً يتحقق من بايتات artifacts. **366 اختباراً محلياً ناجحاً** عند checkpoint2e316e3 (59 runner)؛ دليل التشغيل وحدود الأعطال في UC-14 §11 وتحكيم المراجعة في §12. أُصلح ترتيب تنظيف العمليات وأضيف تشخيص رفض مقيد دون تسريب نص النموذج. لا تنفيذ استجابة، ولا inference أو جرد أو بيانات/نتائجC4 أصلية بعد. الدليل يحدد عقود التشغيل والخصوصية والتقييم، و[CONTEXT_RESUME](CONTEXT_RESUME.md) يحفظ الخطوة التالية وحدود الإنجاز.
+
+## أحدث تنفيذ قياس — 2026-09-18
+
+مراقب ظهور Indexer مستقل `scripts/measure/visibility_observer.py` يحفظ أدلة خاصة ويصدر t3 متحققاً، دون وقت مختلق عند بدء متأخر أو طلب فاشل. أضيف31 اختباراً، وأصلح تنظيف عامل التجربة وربطمرجعالساعة بأربعة أخرى؛ **469 اختباراً محلياً ناجحاً**. المراجعة الساكنة المنفصلة مكتملة ومحكّمة. [دليل التشغيل](tests/README.md) · [الخطة بالتبعيات](docs/03_ROADMAP.md) · [الاستئناف الدقيق](CONTEXT_RESUME.md). لا قبول حي أو t4/t5 أو قياسات أصلية بعد.
+
+## أحدث حزمة موثقة — 2026-09-18
+
+- تقرير C4 خاص offline بصيغتي JSON/HTML مرتبط بالمخزن والتحكيم: [دليل UC-14 §13](docs/lab/UC-14_ai_analyst.md).
+- إصلاح قفل Telegram الموروث إلى worker، وتحكيم المراجعة في [دليل Wazuh](wazuh/README.md).
+- [الفصول الخمسة](docs/thesis/README.md) موجودة كمسودات؛ أضيف4/5 وصححت منهجية3، وصُدرت نسخة مراجعة Word/PDF لا نسخة جامعية نهائية.
+- **434 اختباراً محلياً ناجحاً**؛ لا تُعد اختبارات الكود نتائج كشف أو تجربة C4 أصلية.
+
+## تكاملات جديدة منفذة برمجياً — القبول الحي متبقٍ
+
+- **SSH / UC-11:** عميل مختبر محدود بلا كلمات مرور، بصمة مضيف إلزامية، مصدر auth.log اختياري، ومولّد إعداد firewall-drop باستثناء الإدارة.
+- **SQLi / UC-09:** طلب توقيع ثابت إلى endpoint اختبار، دون أوامر SQL حرة؛ لا يساوي نجاح HTTP نجاح الاستغلال أو الكشف.
+- **Telegram / UC-10:** متكامل opt-in بمفاتيح خاصة، رسائل منقحة، مهلة كلية، منع تكرار وسجل محاولات وحصص إرسال.
+
+[تشغيل السيناريوهات](scripts/attack-emulation/README.md) · [إعداد الإشعارات](wazuh/README.md). **416 اختباراً محلياً ناجحاً** (50 جديدة لهذه التكاملات). لا probes أو إرسال Telegram أو تعديل firewall فعلي ضمن اختبارات التطوير.
 
 ## حالات الاستخدام الموثقة تاريخياً — تحتاج إعادة تحقق حي
 
