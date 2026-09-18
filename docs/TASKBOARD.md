@@ -5,6 +5,8 @@
 > **الحالات:** 🟢 FREE (متاح للحجز) | 🔒 [AGENT] yyyy-mm-dd (محجوز) | ◐ IN-PROGRESS (مع "المتبقي") | ✅ DONE (مع commit) | ⛔ BLOCKED (مع السبب)
 > **قاعدة:** احجز قبل أن تلمس. حدّث قبل أن تُغلق الجلسة. سطر واحد لكل مهمة. التفاصيل في `03_ROADMAP.md`.
 
+> **تسليم جولة2026-09-18 [AI]:** اكتملت حزمة التدقيق المحدودة محلياً، لا المشروع؛ T-16/T-70 IN-PROGRESS. إصلاح تكرار مصادر C4 وأخطاء HTTP مع307 اختبارات ناجحة. ROADMAP محدثة؛ تغطية المراجعة الثانية والملاحظات المرفوضة في TAKEOVER_AUDIT §8. التالي: importer/journal/deadline وفق ROADMAP §3. انتهى حجز هذه الجولة فقط؛ تبقى بوابات المعمل والأصول والفصول والتقييم الأصلي.
+
 | ID | المهمة | المالك الافتراضي | الحالة | ملفات المخرجات | ملاحظات |
 |----|--------|:---:|--------|----------------|---------|
 | T-01 | تأسيس المستودع (P0 كامل) | CLAUDE | ✅ DONE `859aa03` | كل المستودع | — |
@@ -36,4 +38,4 @@
 | T-51 | **Coverage Matrix** (مصدر × يُرى × لا يُرى × دليل) لكل الأجهزة | ASTRA | 🟢 FREE (بعد G4) | `docs/lab/COVERAGE_MATRIX.md` | MASTER_PLAN_v3 §6 G4 |
 | T-52 | **ADR-013**: اعتماد قرارات D1–D7 + تحديث docs/05 §5 MoSCoW (UC-12→SHOULD، M0→SHOULD) | CLAUDE | 🟢 FREE (ينتظر المستخدم) | `docs/DECISIONS.md`, `docs/05_*` | INTENT_STUDY §11 |
 | S-01 | [جانبية] مكتبة مراجع 30–40 IEEE مُتحقَّقة عبر Crossref | وكيل ثالث | 🟢 FREE — برومبت جاهز | `docs/thesis/REFERENCES_LIBRARY.md` | `docs/prompts/SIDE_TASK_01_references.md` |
-| T-70 | محلل AI استشاري وفق ADR-014: L1/L2/L3 وRAG وC4 | AI بتوجيه المستخدم | IN-PROGRESS [AI] 2026-09-11 — معرفةdb1eab9 وC4 في120efba/5744011 منشورة؛301 اختباراً محلياً | `ai_agent/{analyst,knowledge,evaluate}.py`, `ai_agent/mitre_subset.json`, `tests/test_ai_*.py`, `docs/lab/UC-14_ai_analyst.md` | نواةoffline بلا تنفيذ، MITRE v19.2 مثبت لثلاث تقنيات وشروح مشروطة ببصمةXML، عقد جرد اختياري، evaluator بمقام كامل وتحكيم بشري وWilson مشروط. تحديث CONTEXT_RESUME/STATE/SESSIONS يحفظ الاستئناف. المتبقي بالضبط: حجز importer/runner للتحقق من artifacts وحفظ المحاولات/الفشل وwall-clock deadline، مراجعة مختصة وجرد حقيقي ونموذج حي و30 labels بشرية ونتائجC4 وتكامل/واجهة؛ لا dataset أو inference أصلي ولا إغلاقT-70. آخرCI لكلSHA فيPR28 |
+| T-70 | محلل AI استشاري وفق ADR-014: L1/L2/L3 وRAG وC4 | AI بتوجيه المستخدم | IN-PROGRESS [AI] 2026-09-18 — معرفة/C4 موجودة وإصلاحا تدقيق C4/HTTP محليان؛307 اختبارات ناجحة، دون تجربة أصلية | `ai_agent/{analyst,knowledge,evaluate}.py`, `ai_agent/mitre_subset.json`, `tests/test_ai_*.py`, `docs/lab/UC-14_ai_analyst.md` | نواةoffline بلا تنفيذ، MITRE v19.2 مثبت لثلاث تقنيات وشروح مشروطة ببصمةXML، عقد جرد اختياري، evaluator بمقام كامل وتحكيم بشري وWilson مشروط. تحديث CONTEXT_RESUME/STATE/SESSIONS يحفظ الاستئناف. المتبقي بالضبط: حجز importer/runner للتحقق من artifacts وحفظ المحاولات/الفشل وwall-clock deadline، مراجعة مختصة وجرد حقيقي ونموذج حي و30 labels بشرية ونتائجC4 وتكامل/واجهة؛ لا dataset أو inference أصلي ولا إغلاقT-70. آخرCI لكلSHA فيPR28 |

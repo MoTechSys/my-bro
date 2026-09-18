@@ -4,6 +4,7 @@ Inputs are artificial. Fixtures stay under the repository .git directory.
 """
 import contextlib
 import copy
+import http.client
 import importlib.util
 import io
 import json
@@ -316,6 +317,19 @@ class Provider(unittest.TestCase):
         client.opener.open.side_effect = urllib.error.HTTPError('private-url', 500, 'secret-server-body', {}, None)
         with self.assertRaisesRegex(a.AnalystError, '^MODEL_REQUEST_FAILED$'): client(context())
 
+    def test_protocol_errors_are_sanitized_during_open_and_read(self):
+        errors = (http.client.BadStatusLine('PRIVATE-UPSTREAM-MARKER'),
+                  http.client.IncompleteRead(b'PRIVATE-UPSTREAM-MARKER', 100),
+                  http.client.LineTooLong('PRIVATE-UPSTREAM-MARKER'))
+        for stage in ('open', 'read'):
+            for error in errors:
+                client, stream = self.make()
+                target = client.opener.open if stage == 'open' else stream.read
+                target.side_effect = error
+                with self.subTest(stage=stage, error=type(error).__name__):
+                    with self.assertRaisesRegex(a.AnalystError, '^MODEL_REQUEST_FAILED$'):
+                        client(context())
+
     def test_partial_or_tool_model_response_rejected(self):
         payloads = [[], {'done': False, 'message': {'role': 'assistant', 'content': '{}'}},
                     {'done': True, 'message': {'role': 'tool', 'content': '{}'}},
@@ -363,6 +377,19 @@ class FilesAndCLI(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertEqual(json.loads(output.getvalue())['execution_authority'], 'none')
         self.assertNotIn(str(self.base), output.getvalue())
+
+    def test_cli_protocol_failure_has_no_traceback_private_body_or_partial_result(self):
+        client, _ = Provider().make()
+        client.opener.open.side_effect = http.client.BadStatusLine('PRIVATE-UPSTREAM-MARKER')
+        out, err = io.StringIO(), io.StringIO()
+        with patch.object(a, 'Ollama', return_value=client), \
+             contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = a.main(['--alerts', str(self.alerts), '--rules', str(self.rules),
+                           '--infer', '--model', 'fixture'])
+        self.assertEqual(code, 1)
+        self.assertEqual(out.getvalue(), '')
+        self.assertEqual(json.loads(err.getvalue()), {'status': 'rejected', 'execution_authority': 'none'})
+        self.assertNotIn('PRIVATE-UPSTREAM-MARKER', err.getvalue())
 
     def test_cli_explicit_provider_and_invalid_file(self):
         with patch.object(a, 'Ollama', return_value=lambda ctx: json.dumps(response())) as model, \

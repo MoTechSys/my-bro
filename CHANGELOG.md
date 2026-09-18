@@ -2,6 +2,19 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-18 — [AI] Evidence-based audit and remediation
+
+### Fixed
+- C4 rejects duplicate declared `(input_sha256, alert_ref)` observations under renamed batches; shared source exports suppress Wilson even with distinct cluster/batch labels. Reports source count. Four regressions; source declarations are still not authenticated artifacts.
+- Ollama catches `http.client.HTTPException` and keeps CLI failures generic with no partial stdout. Two regressions cover open/read protocol errors and CLI privacy.
+
+### Verified and planned
+- Reproduced 301-test baseline at4f62a15 and 307 passing tests after fixes (48 analyst,19 knowledge,28 evaluation,67 lifecycle,145 previous). New regressions also detect old source in memory.
+- Completed a separate read-only automated review and independently adjudicated its claims; rejected incorrect BOM/default-parser and temperature-zero determinism claims. Not a human review or final-head approval.
+- Reconciled delivery roadmap with ADR-014, PILOT5/planned_n>=30/baseline12h and active CI; explicit native recovery and AI artifact/journal/deadline gates. Dated official-source references with reading limits; no compliance certification.
+- Added audit coverage and accepted/rejected findings, ISSUE-074..078, current resume/state and UC-14 contract updates. XML-declaration compatibility and malformed internal Python-context contracts remain low-priority open items.
+- No cloud access/mutation, live inference, original C4/PILOT, source-document modification or final project acceptance. Only this session's commits are eligible for consolidation above4f62a15; collaborator history is preserved. Final-head CI evidence belongs in PR28 comments.
+
 ## [Unreleased] — 2026-09-11 — [AI] Pinned knowledge and offline C4 evaluator
 
 ### Implemented and published

@@ -5,6 +5,7 @@ Experimental, not native acceptance. No response executor, shell, model download
 raw-log forwarding, external API, or autonomous approval. Default CLI is offline.
 """
 import argparse
+import http.client
 import importlib.util
 from datetime import datetime, timezone
 import ipaddress
@@ -353,7 +354,8 @@ class Ollama:
                     or message.get('tool_calls') or not isinstance(message.get('content'), str)):
                 raise AnalystError('INCOMPLETE_OR_TOOL_MODEL_RESPONSE')
             return message['content']
-        except (OSError, urllib.error.URLError, UnicodeError, KeyError, TypeError, AttributeError):
+        except (OSError, urllib.error.URLError, http.client.HTTPException,
+                UnicodeError, KeyError, TypeError, AttributeError):
             raise AnalystError('MODEL_REQUEST_FAILED') from None
 
 

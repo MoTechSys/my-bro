@@ -2,6 +2,7 @@
 import contextlib
 import copy
 import importlib.util
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -25,11 +26,12 @@ def fixture(n=3):
     attempts, reviews = [], []
     for i in range(n):
         cid = 'case-' + str(i)
+        source_hash = hashlib.sha256(('synthetic-export-' + str(i)).encode()).hexdigest()
         pred = {'classification': 'suspicious', 'mitre_ids': ['T1059']}
         manifest['cases'].append({'case_id': cid, 'batch_id': 'batch-' + str(i), 'alert_ref': 'A1',
-                                  'cluster_id': 'cluster-' + str(i), 'input_sha256': HASH,
+                                  'cluster_id': 'cluster-' + str(i), 'input_sha256': source_hash,
                                   'labeler_ref': 'synthetic-labeler', 'gold': copy.deepcopy(pred)})
-        attempts.append({'case_id': cid, 'input_sha256': HASH, 'provenance': dict(manifest['provenance']),
+        attempts.append({'case_id': cid, 'input_sha256': source_hash, 'provenance': dict(manifest['provenance']),
                          'status': 'completed', 'prediction': copy.deepcopy(pred), 'output_sha256': HASH,
                          'latency_seconds': i + 1.})
         reviews.append({'case_id': cid, 'output_sha256': HASH, 'reviewer_ref': 'synthetic-reviewer',
@@ -118,12 +120,48 @@ class Evaluation(unittest.TestCase):
 
     def test_shared_batch_suppresses_intervals_despite_distinct_clusters(self):
         m, attempts, reviews = fixture(2)
-        m['cases'][1].update(batch_id='batch-0', alert_ref='A2')
+        m['cases'][1].update(batch_id='batch-0', alert_ref='A2', input_sha256=m['cases'][0]['input_sha256'])
+        attempts[1]['input_sha256'] = m['cases'][0]['input_sha256']
         result = e.evaluate(m, attempts, reviews)
         self.assertEqual(result['intervals']['batch_count'], 1)
         self.assertEqual(result['intervals']['cluster_count'], 2)
         self.assertEqual(result['intervals']['method'], 'suppressed')
         self.assertIsNone(result['classification_all_planned']['wilson_95'])
+
+    def test_renamed_batches_cannot_repeat_one_source_alert(self):
+        m, attempts, reviews = fixture(30)
+        for case, attempt in zip(m['cases'], attempts):
+            case['input_sha256'] = attempt['input_sha256'] = HASH
+        with self.assertRaisesRegex(ValueError, '^DUPLICATE_SOURCE_ALERT$'):
+            e.evaluate(m, attempts, reviews)
+
+    def test_duplicate_sources_rejected_even_without_attempts_or_independence(self):
+        m, _, _ = fixture(2)
+        m['independent_cases'] = False
+        m['cases'][1]['input_sha256'] = m['cases'][0]['input_sha256']
+        with self.assertRaisesRegex(ValueError, '^DUPLICATE_SOURCE_ALERT$'):
+            e.evaluate(m, [], [])
+
+    def test_distinct_refs_in_same_export_suppress_renamed_batch_intervals(self):
+        m, attempts, reviews = fixture(2)
+        m['cases'][1].update(alert_ref='A2', input_sha256=m['cases'][0]['input_sha256'])
+        attempts[1]['input_sha256'] = m['cases'][0]['input_sha256']
+        r = e.evaluate(m, attempts, reviews)
+        self.assertEqual(r['planned_cases'], 2)
+        self.assertEqual(r['intervals']['batch_count'], 2)
+        self.assertEqual(r['intervals']['source_count'], 1)
+        self.assertEqual(r['intervals']['method'], 'suppressed')
+        for field in ('classification_all_planned', 'classification_completed_only',
+                      'completion_rate', 'mitre_exact_all_planned', 'mitre_exact_completed_only'):
+            self.assertIsNone(r[field]['wilson_95'])
+        self.assertIsNone(r['human_review'][
+            'cases_with_unsupported_claims_reviewed_positive_claims_only']['wilson_95'])
+
+    def test_distinct_sources_keep_conditional_intervals(self):
+        r = e.evaluate(*fixture(3))
+        self.assertEqual(r['intervals']['source_count'], 3)
+        self.assertEqual(r['intervals']['method'], 'wilson_95')
+        self.assertFalse(r['artifact_contents_verified'])
 
     def test_wilson_known_values_and_zero(self):
         self.assertIsNone(e.wilson(0, 0))

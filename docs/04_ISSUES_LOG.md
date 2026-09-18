@@ -197,3 +197,18 @@ ISSUE-038/T-40: CLOSED/DONE على `095cd869f08a23d88f7ed3d9d434db816c04fb37`. �
 | ISSUE-073 | evaluator يربط normalized predictions وhash declarations ولا يقرأ artifacts الأصلية للتحقق من الإسقاط أوحفظ attempt journal؛ تزييف تصريحات real/human/hash يظل ممكناً خارج حد الأداة | OPEN — flags التحقق/القبولfalse وعقدUC-14 §10 يطلب تدقيقاً خارجياً. التالي importer/runner durable ومثبت artifacts، عدم تمريرgold للمزود، حفظ الفشل والمهل، ثم مراجعة مستقلة وتجربة فعلية |
 
 لا نتائجC4 أوغياب هلاوس مثبتاً من301 اختباراً؛ لا إغلاقT-70 أوبواباتالسحابة. رموز reviewers/labelers والـhashes قد تسمح بالربط؛ لا حفظraw exports أوinventory خاص أوPAT فيGit.
+
+
+## تدقيق 2026-09-18 [AI] — PR28
+
+التفاصيل وإعادة الإنتاج والتحكيم في TAKEOVER_AUDIT §8. أرقام commits أدناه checkpoints قبل جمع تغييرات الجلسة؛ الرأس النهائي في PR28.
+
+| ID | الخطورة والدليل | الإجراء والحالة |
+|---|---|---|
+| ISSUE-074 | عالية لصلاحية التقييم: نفس input_sha256 وalert_ref تحت أسماء batch/cluster جديدة تقبل n=30 وWilson رغم مصدر واحد؛ أُعيد إنتاجها على4f62a15 | FIXED-IN-REPO فيa2ba875: رفض DUPLICATE_SOURCE_ALERT وحجب الفواصل للمصدر المشترك ولو اختلفت refs؛ أربعة اختبارات جديدة. لا تحقق artifacts أو إثبات استقلال |
+| ISSUE-075 | متوسطة للمتانة والخصوصية: HTTPException مثل BadStatusLine تخرج من Ollama وقد تعرض traceback بنص الخادم؛ إثبات mock | FIXED-IN-REPO فيd13ff7f: خطأ عام دون stdout جزئي؛ اختبارات open/read بثلاثة أنواع وCLI. لا يغلق deadline ضمن070 |
+| ISSUE-076 | متوسطة: ROADMAP القديمة تقول AI مستقبلي وعينة10/baseline ساعة وCI غير مفعّل؛ MASTER_PLAN/docs02/docs05 وبعض الفصول غير متسقة | PARTIAL: ROADMAP مصححة في1a0eba6، وتنبيه تاريخي في MASTER_PLAN/docs02. docs05 والفصول وFR/NFR تحتاج مراجعة وADR عند تغيير متطلب. لا اعتماد OVA أو V5 أو دقة الساعة من أمثلة قديمة |
+| ISSUE-077 | منخفضة، توافق: load_rules يرفض ملفاً بتعريف XML بسبب لفه كمقاطع؛ القواعد الافتراضية وBOM وحده يعملان | OPEN: حسم دعم full XML بجانب fragments مع اختبارات DTD/encoding؛ ادعاء فشل BOM أو تعطل الافتراضي مرفوض |
+| ISSUE-078 | منخفضة، عقد Python داخلي: analyze({}) يرفع KeyError؛ ليس مسار CLI الحالي الذي يبني context | OPEN: تحقق صريح عند توسيع API؛ لا fallback يصنف سياقاً تالفاً كدفعة فارغة سليمة |
+
+ISSUE-070/073: تبقى مهلة wall-clock والمستورد وسجل المحاولات والتجربة الأصلية مفتوحة. مراجعة Wazuh4.14.7 لا تعني ترقية السحابة4.14.1 أو إثبات صحة جردها اليوم. نجاح307 اختبارات أو CI لا يغلق T-15/11/60/62/70.
