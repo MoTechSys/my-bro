@@ -303,9 +303,9 @@ python3 -I -B ai_agent/runner.py run \
 - قبل إطلاق العملية: فحص manifest/provenance/coverage، تجميد manifest.json حرفياً، إنشاء directory دفعة مشتق SHA256 من evaluation_id/batch_id، نسخ المدخلات والمعرفة المثبتة وcode.json/prompt.json/context.json، ثم intent.json. كل كتابة fsync للملف **وللدليل** قبل استدعاء المزود. code.json يحمل بصمات أربعة ملفات Python لا نسخها؛ احتفظ بإصدار الكود الأصلي.
 - العملية `python -I -B` ببيئة دنيا، دون shell أو أسرار موروثة؛ argv يحوي مسارات config/context فقط، لا محتوياتها أو gold/manifest/rubric. ليست sandbox تمنع شفرة Python خبيثة بنفسUID؛ worker شفرة موثوقة.
 - مهلة monotonic كلية تغطي العملية/الاتصال/القراءة، فلا يمددها dripping stdout. سقف captured output هو128KiB+1 لإثبات تجاوز الحد. stdout هنا **محتوى جواب النموذج UTF-8** بعد تحقق Ollama من envelope، وليس HTTP body الأصلي؛ فشل النقل قد يترك output.bin فارغاً ولا يحتفظ بنص خطأ خاص.
-- output.bin ثم terminal.json يحوي intent hash، status/reason، returncode، latency_seconds، output hash. completed يعني فقط مخططاً ومراجع صحيحة؛ failed لأخطاء التشغيل/المهلة، rejected لجواب غير صالح. insufficient_evidence صالح يبقى completed حسب §10.
+- output.bin ثم terminal.json بإصدار schema_version=2 يحوي intent hash، status/reason، returncode، latency_seconds، output hash، وvalidation_code. الأخير كود من قائمة ثابتة لأول خطأ تحقق أو INVALID_MODEL_RESPONSE للخطأ غير المعروف؛ null للمكتمل/فشل التشغيل. لا نص exception حر في metadata؛ export يعيد احتساب الكود ويرفض اختلافه. ملفات terminal v1 تُقرأ بإصدار الكود الأصلي فقط، لا تحويل الأرشيف الصامت. completed يعني فقط مخططاً ومراجع صحيحة؛ failed لأخطاء التشغيل/المهلة، rejected لجواب غير صالح. insufficient_evidence صالح يبقى completed حسب §10.
 - الزمن من بدء worker إلى نهايته وتنظيفه، مشترك بين حالات batch؛ لا يشمل preflight/fsync/التحقق النهائي، ولا يثبت دقة الساعة. يوجد socket timeout30ث أيضاً؛ deadline ليس ضمان hard-real-time ولا يُلزم الخادم بوقف computation بعد قطع العميل.
-- SIGTERM/SIGINT ينهيان worker group ويحصدان worker المباشر، لا Ollama server. إشارة ثانية لا تقطع التنظيف. لا يمكن للبرنامج ضمان التنظيف عند SIGKILL للوالد أو انقطاع الطاقة؛ يلزم إشراف عمليات خارجي قبل نشر دائم. نسل يغادر process group ليس sandboxed، وreaping الأحفاد مسؤولية init/subreaper.
+- يستخدم Linux waitid مع WNOWAIT لملاحظة الخروج دون تحرير PID قبل إرسال killpg؛ يُحصد العامل بعد إرسال الإشارة لمجموعته، لا Ollama server. يجب أن يكون SIGCHLD افتراضياً ولا يوجد waiter آخر للعامل؛ Python embedding ليس sandbox ضد كود موازٍ يحصد أبناءه. SIGTERM/SIGINT أثناء العمل يؤديان إلى التنظيف؛ حتى الإشارة الأولى أثناء التنظيف تؤجل بقناع pthread_sigmask حتى إغلاق stdout واستعادة القناع. فشل kill/wait المحدود يسجل WORKER_CLEANUP_FAILED بلا prediction ولو كان الرد صالحاً؛ ليس إثباتاً أن العملية انتهت. إشارة ثانية لا تقطع التنظيف. لا يمكن للبرنامج ضمان التنظيف عند SIGKILL للوالد أو انقطاع الطاقة؛ يلزم إشراف عمليات خارجي قبل نشر دائم. نسل يغادر process group ليس sandboxed، وreaping الأحفاد مسؤولية init/subreaper.
 
 ### 11.3 الاستيراد والتعافي دون إعادة تشغيل
 
@@ -333,3 +333,23 @@ python3 -I -B ai_agent/runner.py export \
 ### 11.4 ما بقي قبل تجربة أصلية
 
 مراجعة تقنية/إحصائية مختصة، اختيار نموذج ورخصة وموارد وهوية تشغيلية، اختبار transport فعلي وخصوصية/حقن تعليمات، جرد معتمد، rubric و30 labels بشرية مستقلة، ثم C4 مع المخرجات والفشل والتحكيم. SIGKILL/انقطاع الطاقة وحصة التخزين وinit/ACL والاحتفاظ مسؤوليات نشر تحتاج اختباراً أصلياً. المسار المباشر analyst.py لا يكتسب مهلة runner تلقائياً. لا إغلاق T-70 أو بوابات السحابة/Windows/PILOT من اختبارات هذا القسم.
+
+
+## 12. تحكيم المراجعة الإضافية — 2026-09-18
+
+[تقرير المراجع الآلي](https://www.genspark.ai/agents?id=6e1a4dd4-5fe5-55a0-ab98-7637fd35d393) للقطة09e91e2 (وصول خاص للمالك). انتهى التقرير؛ **مراجعة ساكنة للنص المرفق فقط**، لا clone ولا اختبار شُغّل عند المراجع. اختبارات وإعادة إنتاج هذا القسم أجريت هنا علىbe5160c ثم الإصلاحات74ddb8f/2e316e3 (checkpoints قبل تجميع الجولة). لا موافقة بشرية أو شهادة أمان. لا تُستعمل عبارة finished/succeeded للمهمة الآلية كدليل صحة كل ادعاء فيها.
+
+| بند المراجع | التحكيم والدليل المحلي |
+|---|---|
+| K1 ملفات إضافية داخل batch | صحيح للقطة القديمة؛ أصلح بالفعل قبل التقرير فيbe5160c؛ اختبار UNEXPECTED_BATCH_ENTRY ناجح. |
+| K2 output يتيم وعلم verified | صحيح للأثر اليتيم في09e91e2؛ عولج قبل التقرير بعلمfalse وقائمةunverified_artifacts وفحص الملف. لا تعهد مسبق بنتيجة لم تُولد بعد داخلintent؛ terminal يربطها لاحقاً. متجر بلا محاولات ليس ادعاء اكتمال: attempts=[] وmissing من manifest؛ العلم عن البايتات الموجودة فقط. |
+| K3 إلغاء/جرد دون اختبارات | أصاب غياب اختبار signal فعلي في09e91e2؛ أصبح موجوداً فيbe5160c. ادعاء غياب اختباراتload_inventory عامة غير صحيح: tests/test_ai_knowledge.py يحوي freshness/hash/duplicates/unmatched؛ لم يرفق للمراجع. أضيف أيضاً تأجيل أول إشارة تقع أثناء cleanup. |
+| N1 رفض الدفعة وغياب سبب الرفض | قبلنا التشخيص: validation_code مقيد داخلterminal v2 وإعادة تحقق عندexport، مع اختباراتprivacy/tamper. رفض الدفعة كاملة مقصود لمنع انتقاء الجزئيات، لا قبول كلfinding منفرداً أو حذف الحالات المتعثرة. الترابط الحالي لنفسmanager/agent لا ادعاء L2 متعدد الأجهزة. |
+| N2 socket30 مقابل deadline حتى120 | حقيقتان منفصلتان، لا خرق سقف المهلة: socket timeout30 قد ينهي محاولة مبكراً، بينما سقف العملية يمنع التنقيط من تمديدها إلى ما لا نهاية. ادعاء أن كل محاولة تنتهي عند30 أو أن deadline يعد بانتظار120 غير صحيح. timeout نقل يُسجل حالياً WORKER_FAILED ولا يُميز عن بقية أخطاء النقل؛ هذا قيد تشخيص موثق، لا DEADLINE_EXCEEDED ملفق. لا تعديل العقد لزيادة timeout بلا حاجة. |
+| N3 abstained غير صادر منrunner | صحيح ومقصود: evaluator العام يدعم سجلاتabstained، لكن runner يقبل insufficient_evidence صالحاً كـcompleted؛ prose/empty findings مرفوضة ولا يُخمّن قصد الامتناع. اختبار الإسقاط يؤكد counts؛ لا حذف حالة evaluator أو تغيير schema خفية. |
+| N4 killpg بعدreap وفشلwait | أُعيد إنتاجهما: returncode مسجل قبلkillpg فيمسار النجاح؛ wait ثانٍ مصطنع يرفعTimeoutExpired وstdout لم يغلق. أصلح بـWNOWAIT ثمkillpg ثمwait، مع finally لإغلاقstdout، وتأجيلsignals وحالةcleanup_failed. اختبارات حقيقية لترتيب الخروج والنسل وخروجsignal؛ اختبارwait الفاشل حقن خطأ، لا جهاز D-state فعلي. لم نجبر PID reuse فعلياً. اقتراحpoll guard وحده رُفض لأنه يحصد القائد ويترك نسل المجموعة. |
+| N5 سجل منخفض المستوى لكنه تالف | fail-closed مقصود للتصدير المحدود المجمد. لا skip صامت ولا تغيير المقام؛ صحح التصدير قبل تجميدmanifest. لا نطلب prefilter≥7 كي نخفي مدخلات غير سليمة. |
+| refinement غيابintent | الرفض العام آمن ومقصود؛ لا ضرورة لإدخال اسم مسار خاص فيرسالة الخطأ. غيابterminal بعدintent مختلف فيالعقد ولا نساويهما. |
+| الادعاء بأن rules.xml وmitre_subset.json غير متتبعين | رُفض: git ls-files يثبت الملفين متتبعين. لا حاجة للوصول إلى ملفات مختبر خاصة لإعادة اختباراتrunner. |
+
+التحقق بعد الإصلاح: **59 runner و366 اختباراً إجمالاً محلياً ناجحاً** وALL CHECKS PASSED. 13 اختباراً إضافياً بعد353. آخرHEAD وCI الخاص به فيPR28، لا إعادة استخدام CI التاريخي. بقيت تجربةtransport/model فعلية وقياس الموارد والخصوصية والتحكيم البشري وC4، ونشر تحتinit/ACL/حصص/retention؛ لا تنفيذ حي أو نموذج في هذه الجولة.

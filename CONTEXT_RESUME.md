@@ -1,6 +1,15 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
-## تحديث تنفيذ حاكم للاستئناف — 2026-09-18 [AI]
+## تحكيم المراجعة وإصلاحاتها — الأحدث 2026-09-18 [AI]
+
+- مراجعة6e1a4dd4 انتهت ساكنة فقط، لا clone/اختبارات لدى المراجع؛ ليست معلقة الآن. كل K/N والتحكيم فيUC-14 §12. K1/K2 وإلغاء/جرد عولجت سابقاً، لا تعاود إصلاحها. ادعاء أنrules/pack غير متتبعين رُفض بـgit ls-files.
+- ثبتN4 محلياً علىbe5160c: killpg بعدreap، وwait cleanup يفلت قبلclose.74ddb8f يستخدمwaitid(WNOWAIT) ثمkillpg ثمwait، SIGCHLD افتراضي ولاwaiter آخر؛ يؤجل أولSIGINT/TERM داخلcleanup ويغلقstdout حتى فشلwait. WORKER_CLEANUP_FAILED فشل بلاprediction، لا ادعاء انتهاءprocess أو native D-state test.
+- 2e316e3 يضيف terminal schema_version=2 وvalidation_code محدوداً مع إعادة احتسابه فيexport؛ لاexception/model text فيmetadata. الأرشيف القديم يحتاج كوده الأصلي، لا تعدل سجلاتv1 لتقبل فيv2. فشل التشغيل/completed/interrupted لهvalidation_code=null؛ الرفض يحمل أولخطأ فقط.
+- **366 اختباراً محلياً ناجحاً:307 سابقة+59runner**، منها13 جديدة بعد353؛ validator/diff ناجحان. سجلاتCI لآخرSHA فيPR28. checkpoints أعلاه قبل تجميع هذه الجولة فقط فوقbe5160c؛ لا مساس بالتاريخ السابق.
+- رفضنا partial acceptance/drop-invalid والتخمين بأن prose=abstained. socket30 حدidle إضافي لا وعدبانتظارdeadline120؛ DEADLINE_EXCEEDED فقط حين ينقضي سقفالعامل، فشلtransport ما زالWORKER_FAILED عاماً. التفاصيل والقيود في§12.
+- التالي ليس إعادةالمراجعة أوطلبscopeAI: تجربةtransport/model مصرح بها، جرد/هوية/رخصة/موارد، rubricو30labels بشرية وتحكيمC4. لاlive inference أوخدمةHTTP أوسحابة فيالجولة؛ init/ACL/retention/حصةالقرص وSIGKILL خارجالضمان المحلي. Q5/Q6 وWindows/config/restore/canary/PILOT باقية.
+
+## سجل تنفيذ سابق — 2026-09-18 [AI]
 
 - حزمة runner/importer والمهلة **منفذة**؛ راجع `ai_agent/runner.py` و`tests/test_ai_runner.py` وUC-14 §11. checkpoints: b01af8a أساس15 اختباراً،09e91e2 تشغيل/استيراد39،6a6d232 تقوية45،5423a6f إلغاء فعلي46؛353 إجمالاً وvalidator/diff ناجحان. الأرقام checkpoints قبل تجميع هذه الجولة فوقbf2fab0 فقط، لا فوق4f62a15.
 - prepare/export offline، run يحتاج --infer؛ store خاص0700 وأسلاف موثوقة، snapshots0600، manifest مجمد ومحاولة واحدة/دفعة، fsync(file+directory) للـintent قبل Popen. code.json hashes لا نسخ كود؛ الاحتفاظ بإصدار التجربة إلزامي لإعادة بناء السياق عند الاستيراد.

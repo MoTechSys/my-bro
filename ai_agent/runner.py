@@ -146,11 +146,15 @@ def store_lock(path):
 def bounded_process(command, seconds):
     """Fixed trusted argv supplied by run_batch; bounded stdout and monotonic wall time.
 
-    Kill/reap our worker group on all paths, never the Ollama server. Startup and
-    OS scheduling/kill latency are not hard real-time guarantees. No automatic retry.
+    Signal the worker group before reaping its leader; never kill Ollama. This
+    caller must exclusively own child reaping (no SIGCHLD handler/other waiter).
+    Cleanup failure is recorded, not a claim that every process terminated.
+    Startup and OS scheduling/kill latency are not hard real-time guarantees.
     """
     if type(seconds) not in (int, float) or not math.isfinite(seconds) or not 0 < seconds <= 120:
         raise ValueError('INVALID_DEADLINE')
+    if signal.getsignal(signal.SIGCHLD) != signal.SIG_DFL:
+        raise ValueError('DEFAULT_SIGCHLD_REQUIRED')
     start = time.monotonic()
     deadline = start + seconds
     output = bytearray()
@@ -179,22 +183,39 @@ def bounded_process(command, seconds):
                         reason = 'OUTPUT_LIMIT'
                         break
                 else:
-                    try:
-                        returncode = proc.wait(timeout=max(.001, deadline - time.monotonic()))
-                        reason = 'OK' if returncode == 0 else 'WORKER_FAILED'
-                    except subprocess.TimeoutExpired:
-                        reason = 'DEADLINE_EXCEEDED'
+                    # Observe exit without reaping: reserve the leader PID/PGID
+                    # until group cleanup, even when descendants closed stdout.
+                    reason = 'DEADLINE_EXCEEDED'
+                    while time.monotonic() < deadline:
+                        ended = os.waitid(os.P_PID, proc.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+                        if ended is not None:
+                            returncode = ended.si_status if ended.si_code == os.CLD_EXITED else -ended.si_status
+                            reason = 'OK' if returncode == 0 else 'WORKER_FAILED'
+                            break
+                        time.sleep(min(.01, max(0, deadline - time.monotonic())))
                     break
     except OSError:
         reason = 'WORKER_START_OR_IO_FAILED'
     finally:
         if proc is not None:
+            # Defer cancellation arriving for the first time DURING cleanup too.
+            previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
             try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            proc.wait(timeout=2)
-            proc.stdout.close()
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                except OSError:
+                    reason = 'WORKER_CLEANUP_FAILED'
+                try:
+                    proc.wait(timeout=2)
+                except (OSError, subprocess.TimeoutExpired):
+                    reason = 'WORKER_CLEANUP_FAILED'
+            finally:
+                try:
+                    proc.stdout.close()
+                finally:
+                    signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
     return {'reason': reason, 'returncode': returncode,
             'latency_seconds': time.monotonic() - start, 'output': bytes(output)}
 
@@ -202,7 +223,17 @@ def bounded_process(command, seconds):
 SOURCE_NAMES = ('analyst.py', 'knowledge.py', 'evaluate.py', 'runner.py')
 INPUT_NAMES = {'alerts.jsonl', 'rules.xml', 'configuration.json', 'model.json', 'rubric.txt'}
 GENERATED_NAMES = {'knowledge.json', 'code.json', 'prompt.json', 'context.json'}
-REASONS = {'OK', 'WORKER_FAILED', 'WORKER_START_OR_IO_FAILED', 'DEADLINE_EXCEEDED', 'OUTPUT_LIMIT'}
+REASONS = {'OK', 'WORKER_FAILED', 'WORKER_START_OR_IO_FAILED', 'DEADLINE_EXCEEDED',
+           'OUTPUT_LIMIT', 'WORKER_CLEANUP_FAILED'}
+# Only reviewed public codes may enter metadata, never arbitrary exception text.
+VALIDATION_CODES = frozenset({
+    'INVALID_JSON', 'DUPLICATE_JSON_KEY', 'NONFINITE_JSON', 'INTEGER_TOO_LARGE',
+    'MODEL_RESPONSE_TOO_LARGE_OR_INVALID', 'INVALID_MODEL_SCHEMA', 'INVALID_FINDING_COUNT',
+    'INVALID_FINDING_SCHEMA', 'INVALID_REFERENCE_LIST', 'UNKNOWN_EVIDENCE_REFERENCE',
+    'REPEATED_ALERT_FINDING', 'UNSUPPORTED_CROSS_ALERT_LINK',
+    'UNAPPROVED_CLASSIFICATION_OR_RECOMMENDATION', 'INVALID_TEXT',
+    'UNSUPPORTED_MITRE_MAPPING', 'UNCOVERED_ALERTS',
+})
 
 
 def code_snapshot():
@@ -260,12 +291,15 @@ def batch_cases(manifest, batch_id, context, input_hash, provenance):
 
 def classify_output(output, reason, context):
     if reason != 'OK':
-        return 'failed', []
+        return 'failed', [], None
     try:
         findings = a.validate_response(output.decode('utf-8'), context)
-    except (ValueError, UnicodeError):
-        return 'rejected', []
-    return 'completed', findings
+    except UnicodeError:
+        return 'rejected', [], 'INVALID_UTF8'
+    except ValueError as exc:
+        code = exc.args[0] if len(exc.args) == 1 and isinstance(exc.args[0], str) else None
+        return 'rejected', [], code if code in VALIDATION_CODES else 'INVALID_MODEL_RESPONSE'
+    return 'completed', findings, None
 
 
 def run_batch(store, manifest_bytes, batch_id, inputs, *, infer=False):
@@ -308,13 +342,15 @@ def run_batch(store, manifest_bytes, batch_id, inputs, *, infer=False):
                        str(base/'configuration.json'), str(base/'context.json')]
             result = bounded_process(command, cfg['deadline_seconds'])
             output = result['output']
-            status, _ = classify_output(output, result['reason'], context)
+            status, _, validation_code = classify_output(output, result['reason'], context)
             write_once(batch_fd, 'output.bin', output)
-            terminal = {'schema_version': 1, 'intent_sha256': digest(intent_bytes), 'status': status,
+            terminal = {'schema_version': 2, 'intent_sha256': digest(intent_bytes), 'status': status,
+                        'validation_code': validation_code,
                         'reason': result['reason'], 'returncode': result['returncode'],
                         'latency_seconds': result['latency_seconds'], 'output_sha256': digest(output)}
             write_once(batch_fd, 'terminal.json', json_bytes(terminal))
             return {'batch_id': batch_id, 'status': status, 'case_count': len(cases),
+                    'validation_code': validation_code,
                     'execution_authority': 'none', 'acceptance_approved': False}
         finally:
             os.close(batch_fd)
@@ -354,6 +390,7 @@ def import_batch(batch_fd, manifest, manifest_hash, batch_id):
         terminal_bytes = read_at(batch_fd, 'terminal.json')
     except FileNotFoundError:
         status, findings, seconds, output_hash = 'failed', [], None, None
+        validation_code = None
         reason = 'INTERRUPTED_AFTER_INTENT'
         if 'output.bin' in entries:
             # Check type/permissions/size, but no terminal exists to bind these bytes.
@@ -362,8 +399,8 @@ def import_batch(batch_fd, manifest, manifest_hash, batch_id):
     else:
         terminal = a.strict_json(terminal_bytes)
         e.exact(terminal, {'schema_version', 'intent_sha256', 'status', 'reason',
-                          'returncode', 'latency_seconds', 'output_sha256'})
-        if (type(terminal['schema_version']) is not int or terminal['schema_version'] != 1
+                          'returncode', 'latency_seconds', 'output_sha256', 'validation_code'})
+        if (type(terminal['schema_version']) is not int or terminal['schema_version'] != 2
                 or terminal['intent_sha256'] != digest(intent_bytes)):
             raise ValueError('TERMINAL_BINDING_MISMATCH')
         reason = terminal['reason']
@@ -383,7 +420,9 @@ def import_batch(batch_fd, manifest, manifest_hash, batch_id):
             raise ValueError('OUTPUT_HASH_MISMATCH')
         if reason == 'OK' and len(output) > MAX_WORKER_OUTPUT:
             raise ValueError('SUCCESS_OUTPUT_TOO_LARGE')
-        status, findings = classify_output(output, reason, context)
+        status, findings, validation_code = classify_output(output, reason, context)
+        if validation_code != terminal['validation_code']:
+            raise ValueError('TERMINAL_VALIDATION_CODE_MISMATCH')
         if status != terminal['status']:
             raise ValueError('TERMINAL_STATUS_MISMATCH')
     by_ref = {ref: {'classification': finding['classification'], 'mitre_ids': finding['mitre_ids']}
@@ -392,6 +431,7 @@ def import_batch(batch_fd, manifest, manifest_hash, batch_id):
                  'provenance': provenance, 'status': status, 'prediction': by_ref.get(case['alert_ref']),
                  'output_sha256': output_hash, 'latency_seconds': seconds} for case in cases]
     return attempts, {'batch_id': batch_id, 'reason': reason, 'status': status,
+                      'validation_code': validation_code,
                       'intent_sha256': digest(intent_bytes), 'unverified_artifacts': unverified}
 
 

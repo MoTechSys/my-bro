@@ -2,6 +2,13 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-18 — [AI] Runner review adjudication
+
+- Completed adjudication of the separate static review of09e91e2; no reviewer tests/clone or human certification. Reproduced post-reap group signaling and cleanup timeout leaving stdout open on be5160c. Known unknown/orphan artifacts were already fixed; rejected silent drops, partial response acceptance and incorrect tracked-file/timeout claims.
+- Linux waitid(WNOWAIT) now observes exit without reaping before group signaling; default SIGCHLD and exclusive child reaping required. First cancellation during cleanup is deferred; bounded cleanup failure is recorded and stdout closes. Not a guarantee against SIGKILL, D-state or external reapers.
+- Added terminal schema v2 with allowlisted validation_code and import-time recomputation; arbitrary exception text never enters metadata. Whole-batch validation and C4 denominator semantics unchanged; old evidence requires original code revision.
+- 13 additional runner regressions; 59 runner /366 total local tests and validator pass at2e316e3. Exact final-head CI linked in PR28. No live transport, HTTP service, model, cloud operation or original C4 results.
+
 ## [Unreleased] — 2026-09-18 — [AI] Durable AI evidence runner
 
 - Added offline prepare/export and explicit-opt-in batch execution; immutable-by-convention private snapshots, exclusive directory lock, file/directory fsync before worker launch, frozen manifest and one attempt per batch.

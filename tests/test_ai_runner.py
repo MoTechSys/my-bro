@@ -101,6 +101,94 @@ class Deadline(unittest.TestCase):
         self.assertEqual(out['output'], b'synthetic\n')
         self.assertEqual(self.run_python('raise SystemExit(2)')['reason'], 'WORKER_FAILED')
 
+    def test_success_signals_group_before_reaping_leader(self):
+        real_start, real_kill = r.subprocess.Popen, r.os.killpg
+        processes, observed = [], []
+        def start(*args, **kwargs):
+            proc = real_start(*args, **kwargs); processes.append(proc); return proc
+        def kill(pid, sig):
+            proc = processes[-1]
+            observed.append(proc.returncode is None)
+            self.assertIsNotNone(os.waitid(os.P_PID, pid, os.WEXITED | os.WNOHANG | os.WNOWAIT))
+            return real_kill(pid, sig)
+        with patch.object(r.subprocess, 'Popen', side_effect=start), patch.object(r.os, 'killpg', side_effect=kill):
+            result = self.run_python('print("synthetic")')
+        self.assertEqual(result['reason'], 'OK')
+        self.assertEqual(observed, [True])
+        self.assertEqual(processes[0].returncode, 0)
+        self.assertTrue(processes[0].stdout.closed)
+
+    def test_cleanup_timeout_is_recorded_and_closes_stdout(self):
+        real_start = r.subprocess.Popen
+        processes, waits = [], []
+        def start(*args, **kwargs):
+            proc = real_start(*args, **kwargs); processes.append(proc); waits.append(proc.wait)
+            proc.wait = lambda timeout=None: (_ for _ in ()).throw(subprocess.TimeoutExpired('synthetic', timeout))
+            return proc
+        try:
+            with patch.object(r.subprocess, 'Popen', side_effect=start):
+                result = self.run_python('print("synthetic")')
+            self.assertEqual(result['reason'], 'WORKER_CLEANUP_FAILED')
+            self.assertEqual(result['output'], b'synthetic\n')
+            self.assertTrue(processes[0].stdout.closed)
+        finally:
+            for wait in waits: wait(timeout=2)
+
+    def test_first_cancellation_during_cleanup_is_deferred(self):
+        real_start, real_kill = r.subprocess.Popen, r.os.killpg
+        processes, closed_at_signal = [], []
+        previous = signal.getsignal(signal.SIGINT)
+        def start(*args, **kwargs):
+            proc = real_start(*args, **kwargs); processes.append(proc); return proc
+        def handler(*_):
+            closed_at_signal.append(processes[0].stdout.closed)
+            raise KeyboardInterrupt()
+        def kill(pid, sig):
+            os.kill(os.getpid(), signal.SIGINT)
+            return real_kill(pid, sig)
+        signal.signal(signal.SIGINT, handler)
+        try:
+            with patch.object(r.subprocess, 'Popen', side_effect=start), patch.object(r.os, 'killpg', side_effect=kill):
+                with self.assertRaises(KeyboardInterrupt): self.run_python('pass')
+            self.assertEqual(closed_at_signal, [True])
+            self.assertEqual(processes[0].returncode, 0)
+        finally:
+            signal.signal(signal.SIGINT, previous)
+            for proc in processes:
+                if proc.returncode is None:
+                    try: real_kill(proc.pid, signal.SIGKILL)
+                    except ProcessLookupError: pass
+                    proc.wait(timeout=2)
+                proc.stdout.close()
+
+    def test_custom_sigchld_reaper_is_refused_before_launch(self):
+        with patch.object(r.signal, 'getsignal', return_value=signal.SIG_IGN), patch.object(r.subprocess, 'Popen') as start:
+            with self.assertRaisesRegex(ValueError, 'DEFAULT_SIGCHLD_REQUIRED'): self.run_python('pass')
+            start.assert_not_called()
+
+    def test_signaled_exit_preserves_negative_return_code(self):
+        result = self.run_python('import os,signal; os.kill(os.getpid(),signal.SIGTERM)')
+        self.assertEqual(result['reason'], 'WORKER_FAILED')
+        self.assertEqual(result['returncode'], -signal.SIGTERM)
+
+    def test_success_still_terminates_descendants_that_closed_stdout(self):
+        result = self.run_python('import subprocess,sys\np=subprocess.Popen([sys.executable,"-I","-B","-c",'
+                                 '"import time; time.sleep(30)"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)\n'
+                                 'print(p.pid,flush=True)')
+        self.assertEqual(result['reason'], 'OK')
+        pid = int(result['output'])
+        end = time.monotonic() + 2
+        try:
+            while True:
+                try: state = Path(f'/proc/{pid}/stat').read_text().split(') ', 1)[1].split()[0]
+                except FileNotFoundError: break
+                if state == 'Z': break
+                self.assertLess(time.monotonic(), end, 'worker descendant still running')
+                time.sleep(.01)
+        finally:
+            try: os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError: pass
+
     def test_silent_stall_has_total_deadline(self):
         result=self.run_python('import time; time.sleep(20)', .15)
         self.assertEqual(result['reason'], 'DEADLINE_EXCEEDED')
@@ -284,9 +372,61 @@ class Evidence(unittest.TestCase):
         self.assertIsNone(row['prediction'])
         self.assertEqual(row['output_sha256'],r.digest((self.batch/'output.bin').read_bytes()))
 
+    def test_rejection_code_preserves_whole_batch_failure(self):
+        response = json.loads(self.response)
+        response['findings'][0]['evidence_refs'] = ['A99']
+        self.run_batch(response=r.json_bytes(response))
+        terminal = json.loads((self.batch/'terminal.json').read_bytes())
+        self.assertEqual(terminal['schema_version'], 2)
+        self.assertEqual(terminal['reason'], 'OK')  # process success is not schema success
+        self.assertEqual(terminal['validation_code'], 'UNKNOWN_EVIDENCE_REFERENCE')
+        imported = self.export()
+        self.assertEqual(imported['batches'][0]['validation_code'], 'UNKNOWN_EVIDENCE_REFERENCE')
+        self.assertTrue(all(row['status'] == 'rejected' and row['prediction'] is None for row in imported['attempts']))
+
+    def test_rejection_code_tampering_is_detected_by_revalidation(self):
+        self.run_batch(response=b'{broken')
+        self.alter(self.batch/'terminal.json', lambda value: value.update(validation_code='UNCOVERED_ALERTS'))
+        with self.assertRaisesRegex(ValueError, 'TERMINAL_VALIDATION_CODE_MISMATCH'): self.export()
+
+    def test_diagnostic_whitelist_never_copies_exception_text(self):
+        for exc in (ValueError('PRIVATE-MODEL-TEXT'), ValueError({'private': 'data'}),
+                    ValueError('INVALID_JSON', 'PRIVATE-MODEL-TEXT')):
+            with self.subTest(error_type=type(exc).__name__), patch.object(r.a, 'validate_response', side_effect=exc):
+                status, findings, code = r.classify_output(b'{}', 'OK', {})
+            self.assertEqual((status, findings, code), ('rejected', [], 'INVALID_MODEL_RESPONSE'))
+
+    def test_invalid_utf8_has_bounded_diagnostic(self):
+        self.run_batch(response=b'\xff')
+        self.assertEqual(self.export()['batches'][0]['validation_code'], 'INVALID_UTF8')
+
+    def test_completed_failed_and_interrupted_have_no_validation_code(self):
+        context = r.build_bundle(self.inputs, '2026-09-18T01:00:00Z')[1]
+        self.assertIsNone(r.classify_output(self.response, 'OK', context)[2])
+        self.assertIsNone(r.classify_output(b'bad', 'DEADLINE_EXCEEDED', context)[2])
+        with patch.object(r, 'bounded_process', side_effect=KeyboardInterrupt):
+            with self.assertRaises(KeyboardInterrupt):
+                r.run_batch(self.base, self.manifest_bytes, 'batch-1', self.inputs, infer=True)
+        self.assertIsNone(self.export()['batches'][0]['validation_code'])
+
+    def test_insufficient_evidence_is_completed_not_operational_abstention(self):
+        response = json.loads(self.response)
+        response['findings'][0]['classification'] = 'insufficient_evidence'
+        self.run_batch(response=r.json_bytes(response))
+        report = r.e.evaluate(self.manifest, self.export()['attempts'], [])
+        self.assertEqual(report['counts']['completed'], 2)
+        self.assertEqual(report['counts']['abstained'], 0)
+
     def test_offline_analyst_output_cannot_be_imported_as_completed(self):
         self.run_batch(response=r.json_bytes({'status':'offline_context_only','findings':[]}))
         self.assertEqual(self.export()['attempts'][0]['status'],'rejected')
+
+    def test_cleanup_failure_remains_failed_even_with_valid_output(self):
+        self.run_batch(reason='WORKER_CLEANUP_FAILED', code=0)
+        result = self.export()
+        self.assertEqual(result['batches'][0]['reason'], 'WORKER_CLEANUP_FAILED')
+        self.assertEqual(result['attempts'][0]['status'], 'failed')
+        self.assertIsNone(result['attempts'][0]['prediction'])
 
     def test_timeouts_and_partial_output_remain_failures(self):
         self.run_batch(reason='DEADLINE_EXCEEDED', response=b'{partial', code=None)
