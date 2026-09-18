@@ -2,6 +2,14 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-18 — [AI] Verified reporting, parallel review and thesis drafts
+
+- Added private offline JSON/Arabic RTL HTML C4 reporting with explicit hash-bound review input, missing/failure denominators, orphan warnings and16 regressions. No live model/network or raw records in HTML; source-byte verification is not authenticity or approval.
+- Reproduced Telegram fork/flock inheritance and closed the child descriptor without unlocking the parent. Two real-worker regressions;434 total tests pass. Adjudicated all five static-review findings against code/pinned sources; OS-stuck cleanup/native acceptance remain limits.
+- Integrated corrected Arabic chapters4/5 and updated chapter3 sampling, timing, statistics and ADR-014 scope. Exported a five-chapter Word/PDF review draft (43 pages); university formatting, rendered diagrams and original evaluation are not complete.
+- Discovered Mesh/devices=[] without enrollment; three text-only parallel tasks completed and reviewed. Synthetic HTML browser capture and two PDF-page visual samples checked; no private evidence or secrets uploaded.
+- Operational docs, taskboard, issues and handoff updated. Full native SOC and C4 acceptance remain open; no remote writes or messaging/lab probes performed.
+
 ## [Unreleased] — 2026-09-18 — [AI] SSH, SQLi and Telegram implementations
 
 - Added bounded offline-preview/explicit-lab SSH and fixed SQLi signature clients, literal RFC1918 destinations, pinned SSH host files with no credentials/remote commands, per-client and total deadlines, and explicit non-acceptance outcomes.

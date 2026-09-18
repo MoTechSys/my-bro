@@ -111,7 +111,8 @@ class Notification(unittest.TestCase):
         send.assert_not_called(); self.assertEqual(list(self.store.iterdir()), [])
 
     def test_durable_intent_precedes_network_and_is_private(self):
-        def send(cfg, message):
+        def send(cfg, message, store_fd):
+            self.assertEqual(os.fstat(store_fd).st_ino, self.store.stat().st_ino)
             files = list(self.store.glob('*.intent.json'))
             self.assertEqual(len(files), 1)
             self.assertEqual(files[0].stat().st_mode & 0o777, 0o600)
@@ -273,6 +274,52 @@ class Transport(unittest.TestCase):
             started = time.monotonic()
             self.assertEqual(t.bounded_send(config(), 'synthetic'), 'unknown')
         self.assertLess(time.monotonic() - started, 3)
+
+    def test_worker_closes_inherited_store_fd_without_unlocking_parent(self):
+        with tempfile.TemporaryDirectory(dir=ROOT/'.git', prefix='telegram-fork-') as directory:
+            fd = t.private_dir(directory)
+            t.fcntl.flock(fd, t.fcntl.LOCK_EX | t.fcntl.LOCK_NB)
+            ctx = t.multiprocessing.get_context('fork')
+            ready, finish = ctx.Event(), ctx.Event()
+            receiver, sender = ctx.Pipe(duplex=False)
+            def transport(*_):
+                ready.set()
+                finish.wait(5)
+                return 'unknown'
+            with patch.object(t, 'send_http', side_effect=transport):
+                proc = ctx.Process(target=t.child_send, args=(sender, config(), 'synthetic', fd))
+                proc.start()
+            try:
+                self.assertTrue(ready.wait(3))
+                other = t.private_dir(directory)
+                try:
+                    # Child must close, not LOCK_UN the shared open description.
+                    with self.assertRaises(BlockingIOError):
+                        t.fcntl.flock(other, t.fcntl.LOCK_EX | t.fcntl.LOCK_NB)
+                    os.close(fd); fd = None
+                    # Same descriptor-release effect as parent exit, without orphaning a child.
+                    self.assertTrue(proc.is_alive())
+                    t.fcntl.flock(other, t.fcntl.LOCK_EX | t.fcntl.LOCK_NB)
+                finally:
+                    os.close(other)
+            finally:
+                finish.set(); proc.join(3)
+                if proc.is_alive(): proc.kill(); proc.join(2)
+                proc.close(); receiver.close(); sender.close()
+                if fd is not None: os.close(fd)
+
+    def test_bounded_send_passes_store_fd_to_worker(self):
+        with tempfile.TemporaryDirectory(dir=ROOT/'.git', prefix='telegram-fd-') as directory:
+            fd = t.private_dir(directory)
+            def transport(*_):
+                try: os.fstat(fd)
+                except OSError: return 'sent'
+                return 'unknown'
+            try:
+                with patch.object(t, 'send_http', side_effect=transport):
+                    self.assertEqual(t.bounded_send(config(), 'synthetic', fd), 'sent')
+                self.assertTrue(os.fstat(fd))  # parent's descriptor remains valid
+            finally: os.close(fd)
 
     def test_real_worker_accepts_only_confirmation(self):
         with patch.object(t, 'send_http', return_value='sent'):

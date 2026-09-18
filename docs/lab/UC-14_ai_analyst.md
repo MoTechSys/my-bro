@@ -353,3 +353,37 @@ python3 -I -B ai_agent/runner.py export \
 | الادعاء بأن rules.xml وmitre_subset.json غير متتبعين | رُفض: git ls-files يثبت الملفين متتبعين. لا حاجة للوصول إلى ملفات مختبر خاصة لإعادة اختباراتrunner. |
 
 التحقق بعد الإصلاح: **59 runner و366 اختباراً إجمالاً محلياً ناجحاً** وALL CHECKS PASSED. 13 اختباراً إضافياً بعد353. آخرHEAD وCI الخاص به فيPR28، لا إعادة استخدام CI التاريخي. بقيت تجربةtransport/model فعلية وقياس الموارد والخصوصية والتحكيم البشري وC4، ونشر تحتinit/ACL/حصص/retention؛ لا تنفيذ حي أو نموذج في هذه الجولة.
+
+
+## 13. التقرير الخاص المرتبط بالأدلة — report.py
+
+`ai_agent/report.py` أداة قراءة offline: تستدعي export والتحقق من المخزن (§11.3)، ثم evaluator (§10)، لا نموذج أو شبكة أو تنفيذ AR. تشترط بصمة manifest المسجلة خارج المخزن، وملف تحكيم خاص ببصمة مستقلة **أو** تصريحاً صريحاً بغياب التحكيم. استخدم إصدار الكود الموافق للأدلة؛ reporter له بصمة منفصلة ولا يغير قائمة كود runner المجمدة.
+
+من جذر المستودع، عيّن المسارات والبصمات من سجل التجربة المعتمد. الأمثلة لا تنشئ دليلاً أصلياً:
+
+```bash
+# Without reviews: absence remains visible, never zero hallucinations.
+python3 -I -B ai_agent/report.py \
+  --store /approved/private/evidence_store \
+  --manifest-sha256 INDEPENDENTLY_RECORDED_MANIFEST_SHA256 \
+  --no-reviews --format json
+
+# With independent review-file byte binding:
+python3 -I -B ai_agent/report.py \
+  --store /approved/private/evidence_store \
+  --manifest-sha256 INDEPENDENTLY_RECORDED_MANIFEST_SHA256 \
+  --reviews /approved/private/reviews.json \
+  --reviews-sha256 INDEPENDENTLY_RECORDED_REVIEWS_SHA256 \
+  --format html
+```
+
+ملف reviews هو مصفوفة عقد §10: case_id/output_sha256/reviewer_ref/independent/claims/unsupported_claims. يجب أن يطابق الجواب المستورد وأن يكون ملفاً عادياً خاصاً أحادي الرابط في مسار موثوق، بلا symlink. لا تضع هوية بشرية حقيقية في أمثلة Git. قبول hash أو independent=true لا يثبت هوية المحكم أو استقلاله.
+
+المخرج إلى stdout؛ احفظه فقط في مجلد خاص موجود وخارج FIM وGit. عند إعادة التوجيه استخدم `umask 077` و`set -C` لمنع استبدال ملف موجود، ثم افحص exit status قبل اعتماد الملف (قد يترك shell ملفاً فارغاً عند الرفض). لا تحفظ فوق ملفات store ولا ترسل JSON أو HTML إلى خادم عام تلقائياً. الملفات القديمة ذات صلاحيات عامة لا تصبح خاصة بمجرد umask.
+
+- exit0: تقرير مكتمل حسابياً؛ ليس نجاح C4 أو اعتماد SOC. exit1: خطأ تحقق برسالة عامة وبدون تقرير جزئي؛ أخطاء argparse ترجع2.
+- JSON يحتفظ بمخرجات evaluator، ويفصل `evidence_verification` عنها؛ علم `artifact_contents_verified=false` في evaluator لا يُحوّل خفية إلى true.
+- HTML عربي RTL بلا JavaScript أو خطوط/صور/روابط/نماذج خارجية، وCSP يمنع المصادر الخارجية. تُهرب القيم الديناميكية. يعرض المقامات والفشل والرفض والمفقود، ونقص التحكيم، والأزمنة المجهولة، وشروط Wilson والمرفقات اليتيمة.
+- لا يحتوي العرض على raw logs أو gold أو أسماء المحكمين أو نص تحليل النموذج؛ ليس واجهة L1 كاملة أو نظام موافقة. معرفات الحالات والتوقيت والبصمات قابلة للربط، لذا التقرير خاص حتى بعد التنقيح.
+- `stored_artifact_bytes_verified` يصف المرفقات الموجودة المرتبطة بالبصمات، لا اكتمال العينة أو أصالة المصدر أو ساعة موثوقة أو تشغيل الأوزان المعلنة. تبقى أعلام القبول واستقلال البشر وهوية النموذج false.
+- 16 اختبار تقرير اصطناعياً: فساد المخزن، مراجعات hash-bound، خصوصية الملفات، missing/unknown latency/orphan، escaping/CSP وCLI بلا نموذج. اجتاز التحقق الكلي 434 اختباراً بعد إصلاح Telegram في2026-09-18؛ نتائج كل HEAD فيPR28. لا استدلال أو C4 أصلي ضمن هذا التحقق.

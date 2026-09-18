@@ -169,7 +169,11 @@ def send_http(cfg, message):
     return 'unknown'  # may have arrived before timeout/lost acknowledgement; never retry automatically
 
 
-def child_send(conn, cfg, message):
+def child_send(conn, cfg, message, store_fd=None):
+    # fork inherits the open file description and its flock despite O_CLOEXEC.
+    # Close only our duplicate: LOCK_UN would also release the parent's lock.
+    if store_fd is not None:
+        os.close(store_fd)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
     signal.signal(signal.SIGALRM, lambda *_: os._exit(124))
@@ -189,11 +193,11 @@ def child_send(conn, cfg, message):
         conn.close()
 
 
-def bounded_send(cfg, message):
+def bounded_send(cfg, message, store_fd=None):
     # Forked child receives secrets in memory, never argv. Trusted single-thread CLI only.
     context = multiprocessing.get_context('fork')
     receiver, sender = context.Pipe(duplex=False)
-    proc = context.Process(target=child_send, args=(sender, cfg, message))
+    proc = context.Process(target=child_send, args=(sender, cfg, message, store_fd))
     started = False
     try:
         proc.start(); started = True; sender.close()
@@ -255,7 +259,7 @@ def deliver(alert, cfg, store, *, send=False):
         if len(intents) >= cfg['max_total_attempts'] or sum(now - r['at'] < 3600 for r in intents.values()) >= cfg['max_per_hour']:
             return {'status': 'rate_limited', 'delivery_confirmed': False}
         write_once(fd, item['event'] + '.intent.json', {'at': now, 'fingerprint': item['fingerprint']})
-        status = bounded_send(cfg, item['message'])
+        status = bounded_send(cfg, item['message'], fd)
         if status not in ('sent', 'unknown'): status = 'unknown'
         write_once(fd, item['event'] + '.terminal.json', {'status': status})
         return {'status': status, 'delivery_confirmed': status == 'sent'}

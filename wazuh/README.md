@@ -95,3 +95,18 @@ References consulted2026-09-18:
 - [Telegram Bot API](https://core.telegram.org/bots/api#sendmessage): HTTPS requests, JSON responses/ok flag and sendMessage. No claim of reviewing the entire API document.
 
 SSH/SQLi execution and guarded firewall-drop generation are documented in [attack-emulation README](../scripts/attack-emulation/README.md); the optionalSSHfilecollector is `agents/linux/ossec.conf.d/60-localfile-sshd.xml`. Do not blindly apply all snippets.
+
+
+### Static review adjudication — 2026-09-18
+
+The separate text-only [review](https://www.genspark.ai/agents?id=07d939f3-aab0-5d0e-8bbb-3160c80306d7) inspected four embedded source files from60d5bfe. Its title incorrectly says09e91e2 (an earlier runner review): that title is not the reviewed integration revision. It ran no tests and did not receive the XML/README files. Task completion is not security approval.
+
+| Finding | Adjudication |
+|---|---|
+| F1 fork inherits flock | Reproduced locally with a real forked offline worker. O_CLOEXEC does not close on fork. Worker now closes its inherited store descriptor before transport; never LOCK_UN because that unlocks the parent's shared open description. Two new tests verify descriptor plumbing, parent lock retention, and release after the parent's close while child remains alive. This models descriptor release, not a real SIGKILL/native Wazuh test. |
+| F2 alleged undocumented ABI | Rejected as a demonstrated bug: the existing README already cites pinned4.14.1 integrator.c lines431–447, re-read during adjudication. Empty options and restricted tails are intentional. Do not accept arbitrary option files/redirection tails to fit hypothetical versions; retain fail-closed and require native acceptance on the deployed version. |
+| F3 child survives kill/join | Deployment limitation, not solved by adding terminate before kill. A live Process cannot safely be closed/reaped as if exited, and D-state may outlast bounded waits/alarm. No extra descendants are created by the trusted transport. External init/supervision remains required; an OS-stuck process is not guaranteed bounded. The F1 fix removes its inherited store lock after child entry. No actual D-state experiment was performed. |
+| F4 white_list spelling/location | Re-read [v4.14.1 global-config.c](https://github.com/wazuh/wazuh/blob/v4.14.1/src/config/global-config.c): literal white_list at line153, parser branch around487. The generated global and active-response snippets belong in manager ossec.conf, as described in the scenario README. Do not rename to allowlist. Native parser and actual management-source exemption tests remain required; source review does not prove a firewall action. |
+| F5 XML absent from review payload | Review coverage limit, not files missing from repository. All three XML snippets are tracked and exercised by the full suite. |
+
+35 Telegram tests and434 total passed after F1. No Telegram sends, firewall changes or remote deployment occurred. Between fork and the child's first instruction, the inherited descriptor may briefly remain open; this is not a hard scheduling guarantee. If the parent is killed, do not delete its intent to retry: uncertain delivery remains suppressed after recovery.
