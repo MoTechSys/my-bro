@@ -257,3 +257,16 @@ ISSUE-070/073: تبقى مهلة wall-clock والمستورد وسجل المح
 - ISSUE-086 — FIXED-IN-DRAFT: ch3 §3.10 حمل10 محاولات/ساعة baseline ومعنى AR قديم؛ استبدل بـTEST_PLAN الجاري (PILOT5،floor30،12h،t0..t6 وVT،Wilson/Poisson منفصلان)، وصحح نطاقAI/التكاملات في§3.9. المسودتان4/5 تميزان الأدلة الأصلية عن الكود؛ لا إغلاق ISSUE-019 أوتدقيقكل ch1–3 والمراجع.
 - ISSUE-087 — OPEN-FINAL-FORMAT: تصدير Word/PDF مراجعة ناجح، لكن قالبجامعة/خط/هوامش/رسومMermaid ومراجعةجميع43صفحة غيرمكتملة. فحصتالعناوينالخمس وXML وصفحتي1/43 بصرياً فقط. لا تدّعِ T-25 DONE.
 -434 اختباراً محلياً وvalidator ناجحان؛ تقريرC4 يثبت بايتات موجودة لا أصالة أو نموذجاً أوتحكيماًبشرياً. لا صور اصطناعية أو أرقام اختبار تدخل النتائج الأصلية.
+
+
+## M1 والقياس — 2026-09-18 [AI]
+
+- ISSUE-088 — PARTIAL/NEEDS-NATIVE: كانت ملفات observers تستورد دون مولّد t3. أضيف visibility_observer: هويةt2معروفة، سلبية سابقة، فحص1s، مهلة كلية، private evidence/export متحقق.25 اختباراً؛ القبول الأصلي وmapping/CA والساعة وربطهويةt2الجارية متبقية. preexisting لا يصبح وقتاً مفبركاً أو صفاً محذوفاً.
+- ISSUE-089 — FIXED-IN-REPO/NEEDS-NATIVE: trial_runner.execute كان يحصد القائد قبلkillpg، أُعيد إنتاج returncode=0 عند الإشارة. أصلح في79ba0ef بـWNOWAIT والحصد بعد الإشارة وانتظارcleanup محدود معmask؛ ثلاث اختبارات. no native PID-reuse/D-state claim؛ SIGCHLDافتراضي وإشراف خارجي مطلوبان.
+- ISSUE-090 — FIXED-IN-REPO: self-review لـM1 صحح نافذة الرصد لتشملclosing poll عندseconds، ومنعSIGALRMالمحجوب وuserinfoالفارغ.25 اختبارمراقب ناجح؛ ليست ساعة موثوقة أو ضمانة hard-real-time. مراجعة d21f2fcc للقطةd850d4e أقدم منبعضالإصلاحات وما زالت جارية عندالتسجيل؛ يلزمتحكيمها لا إعادةمهمة.
+- T-11 غير مكتمل: source/t4/t5/UC01 ومقامAR الأصلي وPILOT/MEASURED/baseline متبقية.462 اختباراً ناجحاً لا تغلقISSUE-019.
+
+
+## تحكيمM1 مكتمل — 2026-09-18 [AI]
+
+ISSUE-091 — FIXED-IN-REPO/NEEDS-NATIVE: مراجعةd21f2fcc انتهت ساكنة فقط. قُبلت معالجةpendingSIGALRM وحمايةterminal وأكوادالفشل وبصماتprincipal/CA وclock_ref؛31اختبارمراقب و127قياس،469 إجمالاً. رُفض تعديلسماحالجدولة/المهلةليخفيبطءالحفظ، وحُفظJSONLمعإضافةsummaryاختياري. لا passwordhash أوإثباتهويةمنالبصمات، ولا إغلاقبواباتالساعة/Indexer. التفصيللكلبند فيtests/README؛ حالةrunningالسابقةتاريخية.

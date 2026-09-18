@@ -1,5 +1,57 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
+## استئناف M1/T-11 — الأحدث 2026-09-18 [AI]
+
+### المنجز القابل للفحص
+
+- base لهذه الجولة: `1cd6bc3b950697a75b084f01c03191ce85662f12`، PR28، فرع `genspark_ai_developer`. لا تمس تاريخ ما قبل base عند تجميع commits الجولة.
+- `scripts/measure/visibility_observer.py`: preview بلا شبكة؛ observe --lab بقراءة HTTPS لفهرس يومي صريح وهوية t2 معروفة؛ export offline إلى observers.jsonl. ملف config خاص لا ينسخ إلى الأدلة ولا تمرر أسراره في argv. المخزن جديد خاص لكل محاولة: intent قبل الشبكة، poll raw/meta، terminal، إعادة تحقق البايتات والكود والتوقيت قبل التصدير.
+- لا t3 عند أول فحص إيجابي (preexisting)، ولا عند فشل/التباس؛ السلبية تسبق الإيجابية المقبولة. توقيت العميل وقوس الرصد لا @timestamp أو insertion time. فترة1s، سماح100ms، socket0.5s ومؤقتPOSIXكلي0.75s، SIGALRM افتراضي غير محجوب بلا timer آخر. لا ضمان OS hard-real-time أو أصالة/دقة ساعة من hash.
+- جرى فحص template Wazuh4.14.1: الحقول الثلاثة keyword؛ بصمته ومرجعه في tests/README §M1. لا تحقق من mapping المنشور ولا استدعاء Indexer حي. late-start وتعدد replicas/الفهرس الواحد قيود معلنة؛ لا تحذف preexisting من مقام التجارب لتجميل الزمن.
+- `tests/test_visibility_observer.py`:31 اختباراً، بينها timer فعلي، privacy/tamper/failure/no-retry وCLI واستيراد عبر trial_runner.collect. HTTP مقلّد؛ لا credentials حقيقية.
+- عيب مرتبط كُشف وأعيد إنتاجه في `trial_runner.execute`: killpg بعد reap. أصلح في79ba0ef قبل تجميع الجولة بـWNOWAIT ثمkillpg ثمwait بحد2s، وفشل تنظيف صريح وتأجيلsignals. ثلاث اختبارات إضافية،127 في test_measure إجمالاً؛ الاختبار الرابع ربطclock_ref. لا تجربة PID reuse أوD-state فعلية.
+- **469 اختباراً محلياً وALL CHECKS PASSED**:434 خط أساس +31 مراقب +3 تنظيف +1 ربطclock_ref. كل كود committed/pushed؛ الرأس النهائي وCI في تعليقات PR28 بعد التجميع. T-11/M1 ليست native-approved.
+
+### خريطة الملفات والخطة
+
+| الملف | وظيفته الحالية |
+|---|---|
+| docs/03_ROADMAP.md §8 | حزم M1/M2/M3/A1/N1/D1/E1، التبعيات وبوابات الخروج |
+| tests/README.md §M1 | spec/config كاملان، CLI ونتائج الأعطال والاستيراد والخصوصية والحدود |
+| tests/TEST_PLAN.md | بروتوكول PILOT5/MEASURED≥30/baseline≥12h؛ تحديث M1 لا يلغي بوابة الساعة |
+| docs/TASKBOARD.md / docs/00_PROJECT_STATE.md | الحالة والمالك وما بقي؛ لا تحويل نجاح unit tests إلى DONE للمعمل |
+| docs/04_ISSUES_LOG.md | ISSUE-088..090 لهذه الجولة ومحددات القبول |
+| scripts/measure/trial_runner.py | استيراد observer والتحقق من هوية t2، وتنظيف المجموعة المصحح |
+
+### مراجعة منفصلة مكتملة ومحكّمة — لا تعاد
+
+المهمة [d21f2fcc](https://www.genspark.ai/agents?id=d21f2fcc-8a16-5d27-8e73-37253fbd1cde) مراجعة ساكنة نصية للقطةd850d4e، أرسلت observer/tests وrunner helpers وtrial_runner. المراجعة انتهت وحُكمت بالكامل في tests/README §تحكيمM1؛ ليست موافقة بشرية أو أصلية. لا clone/tools/tests/credentials عند المراجع. فشل أول submit لغياب حقلinstructions ثم صُحح؛ توجد مهمة فعلية واحدة بهذا المعرف.
+
+```bash
+cd /home/user/webapp && pwd
+ git status --short --branch
+ git fetch origin main genspark_ai_developer
+ gsk task status d21f2fcc-8a16-5d27-8e73-37253fbd1cde
+ gsk task info d21f2fcc-8a16-5d27-8e73-37253fbd1cde
+```
+
+لا تدمج result_content كله: قد يتضمن نص الطلب والمصادر المعادة؛ استخرج جواب المراجع فقط بعد فحص state/has_error. قارن النتائج بالتعديلات اللاحقة:28bd92d يمنع SIGALRM المحجوب وuserinfo الفارغ،79ba0ef أصلح trial cleanup. أسماء checkpoints قبل squash؛ حافظ على مصادرها عبر recovery ref/سجل PR. لا تقبل اقتراح تخفيف المقام/التوقيت/الخصوصية دون إعادة إنتاج.
+
+### أمر التحقق والخطوة التالية بالضبط
+
+```bash
+cd /home/user/webapp && pwd
+ TMPDIR=/home/user/webapp/.git PYTHONDONTWRITEBYTECODE=1 bash scripts/validate/validate_all.sh
+```
+
+1. اقرأ التحكيم المكتمل في tests/README؛ R2/R3/R5/R6 وملاحظةclock_ref عولجت، R1 وتوسيعمهلةR2 رُفضا، R4 عولج بخيارsummary دون كسرJSONL. لا تعاودطلبالمراجعة أو إعادةبناءM1/report.
+2. M2: مراقب مصدر/دليل فعل مستقل ثم instrumentation لـt4 وobserver لـt5. ابدأ بعقد السببية وهوية الملف/العملية وحدود السباق؛ اختفاء ملف وحده لا يثبت أن AR حذفه، ونجاح سكربت ليس t5. لا تجعل المراقب ينفذ الحذف بنفسه ثم يدعي استقلاله. عدّل AR فقط بمراجعة أمنية واختبارات مسارات/صلاحيات/تدخل Defender.
+3. اربط الحصول على هويةt2 الجارية بمراقبM1 لتقليل preexisting، دون اختلاق سلبية سابقة. ثم UC-01 ومقام نجاحAR الشامل. نطاق M1 الحالي مراقبة هوية معروفة فقط.
+4. بالتوازي حين تتوفر الموارد: الرسوم/المراجع/pipelineالتصدير والعرض D1؛ لا وصفها منفذة في هذه الجولة. تشغيل النموذج يتطلب موارد وجرداً معتمدين، والتحكيم البشري لا يُختلق. syslog يحتاج عينة جهاز حقيقية ونطاقاً معتمداً.
+5. native acceptance ثم PILOT/MEASURED/baseline؛ سياسة الجلسة تسمح بالكتابة داخلworkspace فقط، فلا تغييرات سحابية عبرSSHأوMesh أووكيل بديل. لا نقل تعليمات عبر المستخدم، ولا تسجيل أسرار فيGit.
+
+- بعد المراجعة: terminalمحمي منSIGINT/TERM، lateSIGALRMيصرّف، failurecodesمقيدة، principal/CAبصمات بلاhashكلمةمرور، وexport --summary لتمييزالحالاتدونكسرJSONL؛ clock_refالمقدميلزممطابقةmanifest. الاختباراتالجديدة6للمراقب و1للربط. تفاصيلالتحكيم فيtests/README، لا حاجةللاستئنافمنمرحلةrunning.
+
 ## العمل المتوازي والتقرير والرسالة — 2026-09-18 [AI]
 
 - نُفذ `ai_agent/report.py` فعلياً: تقرير C4 خاص JSON/HTML من مخزن متحقق وملف تحكيم مربوط ببصمة أو غياب صريح؛ 16 اختباراً. دليل التشغيل UC-14 §13. جُرّبت معاينة HTML ببيانات اصطناعية فقط عبر webpage_capture؛ لم يرفع مخزن أو سجل حقيقي. التصيير الآلي ناجح، وليس مراجعة لكل جهاز/متصفح.

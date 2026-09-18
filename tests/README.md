@@ -137,6 +137,111 @@ python3 -B scripts/measure/mttd.py --inspect-alert-timestamps --alerts native-al
 
 لا journal/manifest مع وضع الفحص؛ تقرير hash/أمثلة خام وعدد الخانات لكل manager. هذه أداة فحص **صيغة** لا إثبات accuracy/resolution أو NTP. `.000` لا يثبت ساعة ms ولا ساعة ثانية. اتبع G2-0 في TEST_PLAN: مراجعة native timestamp والإصدار، حفظ الدليل، وتقييد عرض t2/t2_prime/t6 والمقاييس المشتقة عند دقة ثانية أو دقة غير محسومة. لا PILOT أو نتائج أصلية في هذا التسليم (ISSUE-061).
 
+## M1 — مراقب ظهور Indexer مستقل (2026-09-18)
+
+التنفيذ `scripts/measure/visibility_observer.py`، الاختبارات `tests/test_visibility_observer.py`. قراءة HTTPS فقط، لا تشغيل هجمة أو AR أو تغيير الإعداد. يعيد استخدام حماية المخزن من `ai_agent/runner.py`؛ لا يستدعي نموذجاً. **هذا مراقب t3 لهوية t2 معروفة، وليس مكتشف t2 تلقائياً أو مراقب t4/t5.** يجب الحصول على manager.name وagent.id وid لتنبيه t2 المختار من دليل المدير الأصلي. قد يصل التنبيه للفهرس قبل بدء هذا المراقب؛ عندئذ يسجل preexisting دون زمن، ولا تُخفى هذه الحالات من نتائج القياس. يلزم مستقبلاً ربط اكتشاف t2 الجاري بالمراقب لتقليل التأخر، دون تزوير سلبية سابقة.
+
+### عقد الإعداد والملفات
+
+أنشئ spec/config خاصين0600 ومجلد عمل جديد0700 خارج FIM وGit في بيئة تشغيل مصرح بها؛ أسلافه مملوكةroot/UIDالحالي وغير قابلة لكتابة المجموعة/الآخرين، بلاsymlink أوhardlink. لا chmod شامل على Wazuh. المفاتيح أدناه **أمثلة بنيوية تستبدل من الدليل**، وليست قياسات/صلاحيات فعلية:
+
+```json
+{
+  "schema_version": 1,
+  "run_id": "RUN_FROM_MANIFEST",
+  "trial_id": "TRIAL_FROM_JOURNAL",
+  "device": "observer",
+  "manager_name": "ACTUAL_MANAGER",
+  "agent_id": "ACTUAL_AGENT_ID",
+  "alert_id": "ACTUAL_SELECTED_T2_ID",
+  "index": "wazuh-alerts-4.x-2026.09.18",
+  "seconds": 30,
+  "precision_ms": 1,
+  "clock_ref": "REPLACE_WITH_ACTUAL_CLOCK_EVIDENCE"
+}
+```
+
+`seconds` عدد ثوانٍ صحيح2..120؛ فحص أول عند0 وآخر عندseconds (حتى121 طلباً). ينتهي مبكراً عند أول إيجابية أو خطأ، وليس مراقب تعرض baseline. `precision_ms` دقة معلنة لساعة المراقب1..100 وليست دقة تثبتها الأداة؛ لا تنسخ1 بلا دليل. run/trial/device يجب أن تطابق سجل المحاولة وclock_map.t3؛ يتولى trial_runner تحقق الهوية والنافذة. index يومي صريح واحد، لا wildcard أوalias أوauto-discovery؛ **تحقق من اسم الفهرس والإصدار الحقيقي قبل الرصد، ولا تختَر index اعتماداً على ساعة العميل فقط**. عبور منتصف الليل/تغير فهرس/تعدد مجموعات خارج هذا العقد.
+
+ملف config المنفصل، لا يُنسخ إلى مخزن الأدلة:
+
+```json
+{
+  "schema_version": 1,
+  "endpoint": "https://127.0.0.1:9200",
+  "username": "PRIVATE_READ_ONLY_USER",
+  "password": "PRIVATE_PASSWORD",
+  "ca_pem": null
+}
+```
+
+endpoint أصلHTTPS بعنوانIPv4 حرفي loopback أوRFC1918؛ لاDNS/روابط عامة/userinfo/query/fragment/path. المثال ليس وعداً بوجود Indexer محلي. استخدم حساباً مقيداً للبحث والقراءة في الفهرس المعتمد فقط، **لا admin**. ca_pem إماnull لجذورTLSالافتراضية أوPEMلشهادةCAالمعتمدة داخل configالخاص. يجب أن تطابقSANعنوانIP؛ لا verify=false أوتعطيلفحصالمضيف. لا بيانات اعتماد فيargv أوenv أوURL أوGit. لا proxy أوredirect، والطلبPOST إلى `_search` للقراءة فقط؛ راجع سياسة وصولIndex قبل اعتمادها.
+
+### أوامر التشغيل والاستيراد
+
+```bash
+# Offline preview: no config/credentials or network needed.
+python3 -I -B scripts/measure/visibility_observer.py preview \
+  --spec /approved/private/visibility-spec.json
+
+# Authorized read-only native observation; new empty store only.
+python3 -I -B scripts/measure/visibility_observer.py observe --lab \
+  --spec /approved/private/visibility-spec.json \
+  --config /approved/private/indexer-readonly.json \
+  --store /approved/private/visibility-store
+
+# Save the emitted intent_sha256 independently, then export offline.
+python3 -I -B scripts/measure/visibility_observer.py export \
+  --store /approved/private/visibility-store \
+  --intent-sha256 INDEPENDENTLY_RECORDED_INTENT_SHA256
+```
+
+احفظJSONLالمصدر إلى ملف جديد خاص (umask077 ومنعoverwrite)، ثم مرره إلى `trial_runner.sh --replay ... --observers FILE` مع دليل المصدر وتنبيهات المدير وبقية spec/manifest. مثال replay الكامل في §trial_runner أعلاه. لا تجمع JSONملخصobserve معobserverJSONL؛ exportفقط يعطي سطرstage=t3. لا تسجل stdoutفيملفداخلstore (مدخلغيرمتوقعيرفضexport). يقبل الاستيراد t3فقط إذاطابقت(manager_name,alert_id) تنبيهt2المختار، وبقيتنافذتهوجهازساعتهصحيحين. لا يراجع trial_runner ملفاتstoreبنفسه؛ **exportالمتحقق هو الحد الفاصل**، وإدخالJSONLمنمصدرآخر يحتاجتدقيقاًمستقلاً.
+
+| الحالة | تصدير t3 | المعنى |
+|---|---|---|
+| observed | سطر واحد | صفر نتائج صحيح سابق ثم نتيجة واحدة مطابقة |
+| preexisting | لا سطر | أول فحص إيجابي؛ أول الظهور سابق/مجهول، لا زمن مختلق |
+| not_observed | لا سطر | اكتملت فحوص0..seconds دون نتيجة، لا دليل أن الهجمة MISSED |
+| failed أوانقطاع/فساد | رفضexport | احتفظبالنيةوالسجلات؛ سجلt3مفقوداًوالسببفيالمحاولة |
+
+observe exit0للرصدobserved، exit2لـpreexisting/not_observed/failedالمحفوظ. export/preview exit0لنجاحالعملية (قديكونexportفارغاً)، exit1للرفضبرسالةعامة، argparse2، والإلغاء130. لا تعيد المحاولة بنفسstore، ولا تحذفالفاشلةأوتستبدلهابناجحة. عندفشلحفظterminalقديبقىintentجزئياً؛ ممنوع استئناف تلقائي. نسق فقدان الدليل مع سجل المحاولة كي يبقى المقام كاملاً.
+
+### ضمانات الرصد وحدوده
+
+- الاستعلام ثابت: `size=2` و`track_total_hits=true`، وحقول `term` هي id/manager.name/agent.id. يطلب `_source` هذه الحقول فقط. يجب أن تكون total.relation=eq والنتائج صفرًا أو واحدة، وكل shards ناجحة؛ يفشل عند مهلة أو نتيجة ناقصة أو ملتبسة. لا يفسر HTTP403/404 أو JSON تالفاً كسلبية.
+- الجدولة كل ثانية على monotonic، بسماح انحراف100ms؛ الفجوة ترفض الرصد. مهلة socket للخمول0.5s، ومؤقت POSIX كلي0.75s يغطي TLS والرؤوس والجسم. يلزم Linux وخيط التنفيذ الرئيسي وSIGALRM افتراضي غير محجوب بلا مؤقت موروث. لا ضمان hard-real-time ضد D-state/SIGKILL أو fsync عالق. لا ينشئ المراقب عمليات تابعة أو خدمة مستمرة.
+- timestamp_ms هو وقت ساعة العميل عند اكتمال قراءة أول جواب إيجابي، **ليس @timestamp ولا وقت إدخال الخادم**. يحتفظ بقوس من بداية آخر طلب سلبي إلى نهاية الجواب الإيجابي؛ precision_ms يشمل عرض القوس ودقة الساعة المعلنة. اختلاف wall/monotonic بأكثر من100ms يرفض، لكنه لا يثبت NTP أو دقة المولد. لا تنشر دقة ms لمجرد تمثيلها عددياً.
+- النتيجة رؤية هذا العميل لهذا الفهرس؛ replication/cache وفلترة الصلاحيات قد تؤثر. السلبية ليست غياباً مطلقاً من كل replica. يجب تثبيت ظروف التجربة، وعرض حالات preexisting بجانب العينة الموقوتة لأنها قد تسبب انحيازاً عند حذفها من المناقشة.
+- يحفظ intent مع fsync قبل الشبكة، ثم رد كل poll (حتى64KiB) وmetadata وبصمته، ثم terminal. الحد الأقصى121 طلباً: نحو7.6MiB للردود دون metadata. ضع حصة كلية لكل التجارب؛ لا يدير السكربت retention بين المخازن.
+- يعيد export التحقق من بايتات الردود، والتوقيت، وهوية الاستعلام، وبصمات الكود، وterminal وقائمة الملفات، دون config سري. احتفظ بإصدار الكود الأصلي لاستيراد أدلته؛ لا تعيد كتابة الأرشيف لتقبله نسخة أحدث. نفس UID قد يزوّر حزمة متسقة؛ البصمات ليست توقيعاً أو إثبات هوية خادم أو ساعة.
+- لا يطبع الردود أو نصوص أخطاء HTTP أو الأسرار. المخزن خاص لأن الهوية والردود قد تكون حساسة رغم تصغير `_source`. لا ترفع الخام أو الإعدادات أو بيانات الاعتماد إلى Git أو مهام المراجعة.
+- يعتمد الملف على ترتيب المستودع `scripts/measure/` و`ai_agent/`؛ ليس ملفاً منفرداً قابلاً للنسخ دون تبعياته. نشره لا يحتاج نسخ `.git` أو الأسرار. هذه الجلسة لم تنشره على مضيف آخر.
+
+مصدر عقد المفاتيح: [Wazuh v4.14.1 template](https://github.com/wazuh/wazuh/blob/v4.14.1/extensions/elasticsearch/7.x/wazuh-template.json)، قرئ في2026-09-18، SHA256 `31a60d5812fb0b5cd7c2d58556b88f57f7fc2f2221dd7b6b32f2256b13ea2886`. الحقول id وmanager.name وagent.id من نوع keyword. هذا لا يتحقق من mapping المنشور. الاختبارات مصطنعة محلياً؛ لا قبول Indexer أو T-11 أو قياس SOC أصلي من نجاحها.
+
+### إصلاح تنظيف عامل التجربة المرتبط — 2026-09-18
+
+أثناء ربط M1 أُعيد إنتاج خطأ في `trial_runner.execute`: كانت `wait` تحصد القائد قبل `killpg`، ما يحرر PID مبكراً. أصبح يستخدم Linux `waitid(WNOWAIT)` ثم يرسل الإشارة للمجموعة قبل الحصد، وينتظر التنظيف حتى ثانيتين مع تأجيل SIGINT/SIGTERM خلاله. فشل التنظيف يرفع WORKER_CLEANUP_FAILED ويسجل مسار المحاولة INVALID؛ لا يدعي نجاح الاستجابة. يلزم SIGCHLD افتراضي وعدم وجود waiter آخر. تظل العمليات التي تغادر المجموعة، وD-state وSIGKILL للوالد، وإعادة حصاد الأحفاد مسؤولية إشراف خارجي. ثلاث regressions إضافية؛ لم نجبر إعادة استخدام PID أو D-state فعلياً.
+
+
+
+### تحكيم مراجعة M1 المنفصلة — 2026-09-18
+
+[المهمة d21f2fcc](https://www.genspark.ai/agents?id=d21f2fcc-8a16-5d27-8e73-37253fbd1cde) انتهت: تفتيش ساكن لأربعة ملفات مرفقة عندd850d4e، لا clone أو اختبارات لدى المراجع ولا قبول بشري. نُفذت الاختبارات والتعديلات التالية هنا. لا تُعامل أرقام الخطورة المقترحة كأحكام نهائية دون هذا التحكيم.
+
+| البند | الحكم وما تغير |
+|---|---|
+| R1 بطء fsync يسبب فجوة | السلوك صحيح: شرط1s/100ms يشمل تكلفة الحفظ؛ الفجوة ليست قياساً صالحاً تحت هذا العقد. رُفض توسيع السماح تعويضاً لبطء التخزين. لا تُحذف الأدلة عند الرفض؛ يحتفظ بها وتبقى المحاولة في المقام. اختيار تخزين مناسب أو تغيير بروتوكول معلن قبل تجربة جديدة، لا قبول انتقائي بعد النتائج. |
+| R2 حافة مؤقت الطلب | قُبل إصلاح تنظيف المؤقت: تعطيل أثر handler عند الانتهاء، حجبSIGALRM، disarm وتصريف pending ثم استعادة handler/mask. اختبار يرسلSIGALRM فعلياً عندdisarm تحقق من الاستعادة. رُفض توسيع REQUEST_OVERRUN: الحد المقاس الكلي يظل750ms ولو خرج النقل قبلها بقليل؛ هذا رفض محافظ موثق لا ادعاء أن كل نقل ينتهي عند نفس اللحظة. |
+| R3 إشارة أثناءterminal | قُبل حجبSIGINT/SIGTERM خلال حفظterminal/fsync ثم استعادةmask. اختبار فعلي يرسلSIGTERM مرتين داخل الحفظ، ويتحقق من سجل كامل قبل تسليم الإلغاء. الانقطاع أثناء ملفاتpoll أوSIGKILL/انقطاع الطاقة ما زال قد يترك حزمة جزئية مرفوضة، لا تعهد crash-proof. |
+| R4 export فارغ لحالتين | لا نغير JSONL الافتراضي لأن trial_runner يستورد صفوفمراقب لاenvelopes. أضيف `export --summary` لإظهار status/observer والبصمات؛ الافتراضي بلاصف عندpreexisting/not_observed. لا يُعتبرexit0 وحده قياسt3. |
+| R5 سبب فشل عام | أضيف REQUEST_DEADLINE وقائمة ثابتة لأخطاء الجدولة/الساعة/هويةالجواب/اكتمالالبحث/الحجم. النصوص غير المعروفة تبقى OBSERVATION_FAILED بلا تسريبexception؛ فشل الرصد ليس حكم MISSED علىالهجمة. |
+| R6 حسابالقراءةوCA | أضيف principal_sha256 لاسمحسابالقراءة وca_sha256 للشهادةالصريحة وtrust_mode. لا password أوhashلها. البصمات مربوطة بintentالمتوقع وتظهر فيsummary؛ بصمةاسم حساب قابلة للتخمين وليست إخفاءهوية قوياً. system_default لا يجمد حزمةجذورالنظام؛ سجّل إصدارها/سياسةRBAC ضمنmanifestالنشر. لا تحققهويةحسابأوخادممنالبصماتوحدها. |
+| ملاحظةclock_refفيالمستهلك | عندما يوجدclock_refفيصفobserver، يجب أن يطابقdevice.clock_refفيmanifest. M1يرسلهدائماً؛ الصفوفالخارجيةالقديمةبدونالحقلتبقىعلىعقدهاالأقدم. اختباررفضالمخالفةواستيرادM1الصحيحناجحان. precisionيشملقوسالرصد، لذا لا نساويهبرقمNTPوحده. |
+
+31 اختباراً للمراقب،127 للقياس،469 إجمالاً ناجحة محلياً. ربط--summary اختياري، لا تمررخرجهإلى--observers. أعلامacceptance تبقىfalse. تمييزالمحاولاتالفاشلةوحفظالمدخلاتلاتغنيانعنمعمل/مزامنة/تحكيمبشري؛ لا تجربةIndexerأصليةفيهذهالجولة.
+
 ## المتبقي قبل قبول T-11
 
 اعتماد native collectors ودليل الساعة/المصدر/بدء AR/الاكتمال/رؤية API على المعمل؛ UC-01 اتصال؛ مراجعة تقنية وإحصائية مستقلة؛ PILOT n=5، ثم measured وbaseline وفق النتائج؛ مقام نجاح AR الشامل وتصدير النتائج للرسالة من أدلة حقيقية. لا تغيير لسكربتات الأمن ولا ادعاء قبول Windows/Wazuh/YARA بهذه الاختبارات.

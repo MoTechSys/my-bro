@@ -882,6 +882,50 @@ class Runner(unittest.TestCase):
                                  'import sys; sys.exit(0 if sys.argv[1] == "a; b" else 1)', 'a; b'], 5)
         self.assertEqual(result['exit_code'], 0)
 
+    def test_child_group_signaled_before_leader_reaped(self):
+        spawn, kill = self.r.subprocess.Popen, self.r.os.killpg
+        children, states = [], []
+        def launch(*args, **kwargs):
+            child = spawn(*args, **kwargs); children.append(child); return child
+        def signal_group(pid, signum):
+            states.append(children[0].returncode)
+            return kill(pid, signum)
+        with patch.object(self.r.subprocess, 'Popen', side_effect=launch), \
+             patch.object(self.r.os, 'killpg', side_effect=signal_group):
+            result = self.r.execute([sys.executable, '-I', '-B', '-c', 'pass'], 5)
+        self.assertEqual(result['exit_code'], 0)
+        self.assertEqual(states, [None])
+        self.assertEqual(children[0].returncode, 0)
+
+    def test_child_requires_default_sigchld_before_launch(self):
+        with patch.object(self.r.signal, 'getsignal', return_value=self.r.signal.SIG_IGN), \
+             patch.object(self.r.subprocess, 'Popen') as launch:
+            with self.assertRaisesRegex(self.r.m.InputError, 'DEFAULT_SIGCHLD_REQUIRED'):
+                self.r.execute(['/never-launched'], 1)
+        launch.assert_not_called()
+
+    def test_child_cleanup_failure_is_explicit_and_mask_restored(self):
+        spawn = self.r.subprocess.Popen
+        def launch(*args, **kwargs):
+            child = spawn(*args, **kwargs); wait = child.wait
+            def failed_wait(*a, **k):
+                wait(*a, **k)  # reap the real test child before injecting error
+                raise self.r.subprocess.TimeoutExpired('synthetic', 2)
+            child.wait = failed_wait
+            return child
+        before = self.r.signal.pthread_sigmask(self.r.signal.SIG_BLOCK, set())
+        with patch.object(self.r.subprocess, 'Popen', side_effect=launch):
+            with self.assertRaisesRegex(self.r.m.InputError, 'WORKER_CLEANUP_FAILED'):
+                self.r.execute([sys.executable, '-I', '-B', '-c', 'pass'], 5)
+        self.assertEqual(self.r.signal.pthread_sigmask(self.r.signal.SIG_BLOCK, set()), before)
+
+    def test_supplied_observer_clock_ref_must_match_manifest(self):
+        row = self.observer('t4', 'endpoint_start', '2026-09-09T01:00:04Z', 'endpoint',
+                            clock_ref='different clock evidence')
+        path = self.write('clock-mismatch.jsonl', json.dumps(row)+'\n')
+        self.assertEqual(self.invoke(self.args()+['--observers', path]), 2)
+        self.assertIn('observer clock_ref disagrees', self.result()['reason'])
+
     def test_prior_session_clock_rejection_prevents_launch(self):
         previous = trial_v2(trial_id='previous', exclusion_reason='INVALID', reason='clock')
         previous['ntp_offset_ms']['observer'] = -101

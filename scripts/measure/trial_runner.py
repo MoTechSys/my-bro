@@ -136,6 +136,9 @@ def collect(trial, run, source, sources, alerts, observers):
             m.require(device in run['devices'], 'unknown observer clock')
             if stage != 'event':
                 m.require(device == run['clock_map'][stage], 'observer clock disagrees with clock_map')
+                if 'clock_ref' in row:
+                    m.require(row['clock_ref'] == run['devices'][device]['clock_ref'],
+                              'observer clock_ref disagrees with manifest')
             at = m.epoch_ms(row.get('timestamp_ms'))
             m.text(row.get('evidence_ref'), 'observer evidence_ref')
             m.number(row.get('precision_ms'), 'observer precision', 0)
@@ -208,19 +211,42 @@ def encoded(value):
 
 
 def execute(command, timeout):
-    """No shell/eval. Bound the direct child and clean its entire process group."""
+    """No shell; observe exit without reaping until group signaling is complete.
+
+    Linux/default SIGCHLD and exclusive child ownership required. External init
+    must reap orphan descendants; D-state/SIGKILL are not hard-time guarantees.
+    """
+    m.number(timeout, 'child timeout', 0)
+    m.require(timeout <= 3600, 'child timeout exceeds bound')
+    m.require(signal.getsignal(signal.SIGCHLD) == signal.SIG_DFL, 'DEFAULT_SIGCHLD_REQUIRED')
+    deadline = time.monotonic() + timeout
     child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL, start_new_session=True)
     try:
-        return {'exit_code': child.wait(timeout=timeout), 'timed_out': False}
-    except subprocess.TimeoutExpired:
+        while time.monotonic() < deadline:
+            ended = os.waitid(os.P_PID, child.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+            if ended is not None:
+                code = ended.si_status if ended.si_code == os.CLD_EXITED else -ended.si_status
+                return {'exit_code': code, 'timed_out': False}
+            time.sleep(min(.01, max(0, deadline - time.monotonic())))
         return {'exit_code': None, 'timed_out': True}
     finally:
+        previous = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM, signal.SIGINT})
+        failed = False
         try:
-            os.killpg(child.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        child.wait()
+            try:
+                os.killpg(child.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            except OSError:
+                failed = True
+            try:
+                child.wait(timeout=2)
+            except (OSError, subprocess.TimeoutExpired):
+                failed = True
+            m.require(not failed, 'WORKER_CLEANUP_FAILED')
+        finally:
+            signal.pthread_sigmask(signal.SIG_SETMASK, previous)
 
 
 def prepare_eicar(trial, directory, source=None):

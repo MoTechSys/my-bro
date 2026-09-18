@@ -2,6 +2,20 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-18 — [AI] M1 review adjudication
+
+- Completed source-only review adjudication in tests/README. Retained strict timing/cadence and default JSONL contract; added optional status summary rather than fabricating missing t3.
+- Added late SIGALRM cleanup/draining, protected terminal finalization, allowlisted failure diagnostics, principal/explicit-CA fingerprints without password hashes, and supplied clock_ref consistency with manifest.
+- Six additional observer tests plus one importer binding test;31 observer/127 measurement/469 total local tests pass. Updated current handoff: review is completed, next is M2 source/start/completion causality. Native acceptance remains open.
+
+## [Unreleased] — 2026-09-18 — [AI] M1 visibility evidence and resumable plan
+
+- Implemented private read-only HTTPS Indexer observer for a known selected t2 identity, prior-negative requirement, left-censored/no-observation/failure outcomes, fixed cadence, total POSIX request timer and byte-verified offline observer export.
+- Added25 synthetic regressions including real timer interruption, TLS/query contract, private storage, tampering/failures and integration into existing trial_runner.collect. Verified pinned Wazuh keyword field mappings, not deployed mapping or native timings.
+- Reproduced and fixed related trial worker kill-after-reap hazard using WNOWAIT, bounded cleanup and signal masking;3 additional regressions.462 full-suite local tests pass.
+- Recorded whole-project dependency plan in ROADMAP section8, operating contracts in tests/README, and exact cross-session handoff/review task/next steps in CONTEXT_RESUME. Separate static review d21f2fcc remains pending adjudication at this checkpoint.
+- No native Indexer calls, attacks, model inference, remote writes or original measured results. M2 source/start/completion causality and native gates remain open.
+
 ## [Unreleased] — 2026-09-18 — [AI] Verified reporting, parallel review and thesis drafts
 
 - Added private offline JSON/Arabic RTL HTML C4 reporting with explicit hash-bound review input, missing/failure denominators, orphan warnings and16 regressions. No live model/network or raw records in HTML; source-byte verification is not authenticity or approval.
