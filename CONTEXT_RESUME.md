@@ -1,5 +1,15 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
+## التنفيذ الفعلي للتكاملات — الأحدث 2026-09-18 [AI]
+
+- بعد طلب استكمال المشروع لا تبادل رسائل: نُفذت T-13/T-12/T-14 محلياً فوق082b580. `scripts/attack-emulation/lab_scenarios.py`: preview افتراضي، --lab صريح، RFC1918، عميلSSH باسم اختبار دون credentials/remote commands معhost pin، وطلبSQLi ثابت؛ مولّدssh-response يطلباستثناءالإدارة ويطبعXMLفقط. مدخلSSH اختياري60-localfile-sshd.xml؛ ليس تفعيلauth.log تلقائياً علىالسحابة.
+- `wazuh/manager/integrations/custom-telegram.py` +60-integration-telegram.xml: config خاص/root0600 وstore0700، إخفاءالهويات بـHMAC، لاraw/free-text/IP، TLSثابت بلاproxy/redirect، worker محدود10ث، intentدائم قبلsend، dedupحتىالمحاولاتالمجهولة، حصصساعة/عمر، لاretryتلقائي. Previewلايرسل؛ native يتطلبenabled=true فيملفخاص. عتبة12 تعنيSSH5712 وSQLi31103 لايُرسلانافتراضياً.
+- فُحص مصدرWazuh4.14.1 الفعلي: Integrator يضيفdebug/options/timeout/retries وحقولredirectحرفية، فصُححABIقبلالتسليم. لاapi_key/hook_url/options فيXML/argv. ARselectors تعملOR، وdisabled=yes فيmanagerيعطلARعموماً؛ المولدلايستعملهماخاطئاً.31103SQLi،31104هجومعام،31106HTTP200ليسدليلنجاحاستغلال.
+- **416 اختباراً محلياً وvalidatorناجحة:366سابقة+17سيناريو+33Telegram.** لااتصالHTTP/SSHللاختبارات ولاTelegramحقيقي أوfirewallmutation. المراجعةذاتية ومصدررسمي، لااعتمادnativeأومراجعبشري.
+- READMEs الموجودة فيscripts/attack-emulation وwazuh تحملالأوامروالعقودوالقبولوالرجوع. لا تعاودبناءالتكاملات. T-12/13/14 IN-PROGRESS للقبولالحي؛ T-31/واجهةالأدلة/الفصولوالتقييمالأصلي باقية. لا تختزلإكمالالمشروع فيعددالاختبارات، ولا تطلبمنالمستخدمحلمهمةالبرمجة.
+- أرقامcheckpoints قبلتجميعالجولةفوق082b580فقط؛ تاريخالسحابةوالـAIمحفوظ. آخرHEAD وCIفيPR28. الأسرارلافيGitولاالمحادثة؛ لا ادعاءتشغيلالمعمل أوAIأوC4 من هذهالجولة.
+
+
 ## السحابة بعد إصلاح المشغّل — الأحدث 2026-09-18 [AI]
 
 - **اسمDockerالجاري kali1-init؛ اسمWazuhالوكيلkali1/001 لم يتغير.** Genspark Claw نقلالحاوية إلىinit وvolumesetc/queue/logs وunless-stopped. kali1القديمةمتوقفة، لا تشغلها بالتوازي. اقرأCLOUD_ENV_ACCESS §11 قبلأيأمر؛ أقسام9/10 وصفقديمللعيب.

@@ -1,0 +1,13 @@
+<!--
+  UC-11 / AI / 2026-09-18. Optional Debian/Ubuntu file-based SSH collection.
+  Merge only on the dedicated SSH lab endpoint if sshd actually writes auth.log.
+  Do not duplicate an existing localfile or journal subscription. A container
+  without sshd/syslog will not generate SSH alerts merely by adding this block.
+  For journal-only systems use the native journald source after version validation.
+-->
+<ossec_config>
+  <localfile>
+    <log_format>syslog</log_format>
+    <location>/var/log/auth.log</location>
+  </localfile>
+</ossec_config>

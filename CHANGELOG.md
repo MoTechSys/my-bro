@@ -2,6 +2,14 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## [Unreleased] — 2026-09-18 — [AI] SSH, SQLi and Telegram implementations
+
+- Added bounded offline-preview/explicit-lab SSH and fixed SQLi signature clients, literal RFC1918 destinations, pinned SSH host files with no credentials/remote commands, per-client and total deadlines, and explicit non-acceptance outcomes.
+- Added management-excluded firewall-drop XML generation (native rule IDs only, no OR-broadened filters or global AR disable) and optional file-based SSH input. Existing Apache input retained; documented31103/31104/31106 distinction from pinned Wazuh4.14.1 source.
+- Added private opt-in Telegram helper and credential-free integration XML: minimal HMAC-pseudonymized messages, fixed TLS API/no proxies or redirects, bounded fork worker, durable private intent, uncertain-delivery/no-retry semantics, deduplication and hourly/lifetime caps.
+- Corrected native Integrator ABI against4.14.1 C source, which appends debug/options/timeout/retries beyond the simplified prose documentation. Added17 scenario and33 notification tests;416 total local tests and full validator pass.
+- Updated existing operational READMEs and T-12/13/14 state from planned to implemented/pending native acceptance. No SSH/HTTP lab probes, Telegram messages, firewall/config deployment or original measurement results performed by this session. No secrets committed; independent security/native review remains required before deployment.
+
 ## [Unreleased] — 2026-09-18 — [AI] Cloud operator evidence handoff
 
 - Recorded Genspark Claw's migration to kali1-init with init, three persistent volumes and unless-stopped; preserved attribution for its crash/restart and two indexed canary reports.
