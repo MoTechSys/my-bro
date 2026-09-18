@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="520" viewBox="0 0 1300 520" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial">
+<title>Six-stage pipeline</title>
+<defs>
+  <marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker>
+  <marker id="arr_red" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/></marker>
+  <marker id="arr_blue" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8"/></marker>
+  <marker id="arr_grey" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#9ca3af"/></marker>
+</defs>
+<rect width="1300" height="520" fill="#ffffff"/>
+<text x="650.0" y="40" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="20" fill="#1f2937" text-anchor="middle" font-weight="bold" >الشكل (1.2): النموذج المرجعي الست المراحل لخط أنابيب المنصة — كشف → قرار → استجابة → عرض</text>
+<rect x="35.0" y="90" width="180" height="250" rx="14" fill="#d1fae5" stroke="#047857" stroke-width="3"/>
+<text x="125.0" y="122" font-family="DejaVu Sans, Arial, Helvetica" font-size="18" fill="#047857" text-anchor="middle" font-weight="bold" >SENSE</text>
+<text x="125.0" y="148" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="16" fill="#1f2937" text-anchor="middle" font-weight="bold" >الاستشعار</text>
+<text x="125.0" y="190" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >Endpoints (Win/Linux)</text>
+<text x="125.0" y="224" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >Network traffic</text>
+<text x="125.0" y="258" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >Web/audit logs</text>
+<text x="125.0" y="292" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >[Infra: syslog]*</text>
+<line x1="217.0" y1="215.0" x2="243.0" y2="215.0" stroke="#374151" stroke-width="3" marker-end="url(#arr)"/>
+<rect x="245.0" y="90" width="180" height="250" rx="14" fill="#dbeafe" stroke="#1d4ed8" stroke-width="3"/>
+<text x="335.0" y="122" font-family="DejaVu Sans, Arial, Helvetica" font-size="18" fill="#1d4ed8" text-anchor="middle" font-weight="bold" >COLLECT</text>
+<text x="335.0" y="148" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="16" fill="#1f2937" text-anchor="middle" font-weight="bold" >الجمع</text>
+<text x="335.0" y="190" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >Wazuh Agent 4.14.7</text>
+<text x="335.0" y="224" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >FIM / logcollector / command</text>
+<text x="335.0" y="258" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >Suricata eve.json</text>
+<text x="335.0" y="292" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >[Syslog 514]*</text>
+<line x1="427.0" y1="215.0" x2="453.0" y2="215.0" stroke="#374151" stroke-width="3" marker-end="url(#arr)"/>
+<rect x="455.0" y="90" width="180" height="250" rx="14" fill="#fef3c7" stroke="#b45309" stroke-width="3"/>
+<text x="545.0" y="122" font-family="DejaVu Sans, Arial, Helvetica" font-size="18" fill="#b45309" text-anchor="middle" font-weight="bold" >DETECT</text>
+<text x="545.0" y="148" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="16" fill="#1f2937" text-anchor="middle" font-weight="bold" >الكشف</text>
+<text x="545.0" y="190" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >decoders → rules</text>
+<text x="545.0" y="224" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >CDB lists</text>
+<text x="545.0" y="258" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >MITRE ATT&amp;CK tags</text>
+<text x="545.0" y="292" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >100050–108001</text>
+<line x1="637.0" y1="215.0" x2="663.0" y2="215.0" stroke="#374151" stroke-width="3" marker-end="url(#arr)"/>
+<rect x="665.0" y="90" width="180" height="250" rx="14" fill="#ede9fe" stroke="#7c3aed" stroke-width="3"/>
+<text x="755.0" y="122" font-family="DejaVu Sans, Arial, Helvetica" font-size="18" fill="#7c3aed" text-anchor="middle" font-weight="bold" >DECIDE</text>
+<text x="755.0" y="148" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="16" fill="#1f2937" text-anchor="middle" font-weight="bold" >القرار</text>
+<text x="755.0" y="190" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >rule level (3/7/12/15)</text>
+<text x="755.0" y="224" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >thresholds / frequency</text>
+<text x="755.0" y="258" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >VirusTotal verdict</text>
+<text x="755.0" y="292" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >policy (soc_ar.py)</text>
+<line x1="847.0" y1="215.0" x2="873.0" y2="215.0" stroke="#374151" stroke-width="3" marker-end="url(#arr)"/>
+<rect x="875.0" y="90" width="180" height="250" rx="14" fill="#fee2e2" stroke="#b91c1c" stroke-width="3"/>
+<text x="965.0" y="122" font-family="DejaVu Sans, Arial, Helvetica" font-size="18" fill="#b91c1c" text-anchor="middle" font-weight="bold" >RESPOND</text>
+<text x="965.0" y="148" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="16" fill="#1f2937" text-anchor="middle" font-weight="bold" >الاستجابة</text>
+<text x="965.0" y="190" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >Active Response</text>
+<text x="965.0" y="224" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >remove-threat (VT)</text>
+<text x="965.0" y="258" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >yara.sh scan</text>
+<text x="965.0" y="292" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >[firewall-drop]*</text>
+<line x1="1057.0" y1="215.0" x2="1083.0" y2="215.0" stroke="#374151" stroke-width="3" marker-end="url(#arr)"/>
+<rect x="1085.0" y="90" width="180" height="250" rx="14" fill="#cffafe" stroke="#0e7490" stroke-width="3"/>
+<text x="1175.0" y="122" font-family="DejaVu Sans, Arial, Helvetica" font-size="18" fill="#0e7490" text-anchor="middle" font-weight="bold" >PRESENT</text>
+<text x="1175.0" y="148" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="16" fill="#1f2937" text-anchor="middle" font-weight="bold" >العرض</text>
+<text x="1175.0" y="190" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >Wazuh Dashboard</text>
+<text x="1175.0" y="224" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >MITRE / Threat Hunting</text>
+<text x="1175.0" y="258" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >alerts.json (JSONL)</text>
+<text x="1175.0" y="292" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >[Telegram]* / AI advisor†</text>
+<path d="M 965.0 346 C 965.0 400, 125.0 400, 125.0 346" fill="none" stroke="#6b7280" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arr_grey)"/>
+<text x="650.0" y="398" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="13" fill="#6b7280" text-anchor="middle" font-weight="normal" >حلقة مغلقة: نتيجة الاستجابة تعود كحدث جديد (قاعدة 657 → 100092/100093) وتُقاس زمنياً</text>
+<text x="650.0" y="430" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#6b7280" text-anchor="middle" font-weight="normal" >* بين معقوفتين = توسعة مخطَّطة (UC-10/11/12) — لم تُعتمد معملياً حتى تاريخ هذا الفصل.   † AI advisor: مساعد تحليل استشاري بلا سلطة تنفيذ (ADR-014).</text>
+<text x="650.0" y="460" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#6b7280" text-anchor="middle" font-weight="normal" >المصدر: docs/05_PROJECT_INTENT_UNIFIED_VISION.md §3 — النموذج الذهني الواحد الذي يُقرأ عليه كل حالة استخدام</text>
+</svg>

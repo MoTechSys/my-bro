@@ -1,0 +1,226 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="660" viewBox="0 0 1300 660" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial">
+<title>Use-case coverage</title>
+<defs>
+  <marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker>
+  <marker id="arr_red" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/></marker>
+  <marker id="arr_blue" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8"/></marker>
+  <marker id="arr_grey" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#9ca3af"/></marker>
+</defs>
+<rect width="1300" height="660" fill="#ffffff"/>
+<text x="650.0" y="40" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="20" fill="#1f2937" text-anchor="middle" font-weight="bold" >الشكل (1.5): خريطة حالات الاستخدام على مراحل الخط الستّي — المنفَّذ (مُثبَت بلقطات) والمخطَّط</text>
+<rect x="30.0" y="80" width="70" height="34" rx="4" fill="#e5e7eb" stroke="#6b7280" stroke-width="1"/>
+<text x="65.0" y="103" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="bold" >UC</text>
+<rect x="100.0" y="80" width="260" height="34" rx="4" fill="#e5e7eb" stroke="#6b7280" stroke-width="1"/>
+<text x="230.0" y="103" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="bold" >الوصف</text>
+<rect x="360.0" y="80" width="120" height="34" rx="4" fill="#e5e7eb" stroke="#6b7280" stroke-width="1"/>
+<text x="420.0" y="103" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="bold" >SENSE</text>
+<rect x="480.0" y="80" width="150" height="34" rx="4" fill="#e5e7eb" stroke="#6b7280" stroke-width="1"/>
+<text x="555.0" y="103" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="bold" >COLLECT</text>
+<rect x="630.0" y="80" width="170" height="34" rx="4" fill="#e5e7eb" stroke="#6b7280" stroke-width="1"/>
+<text x="715.0" y="103" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="bold" >DETECT (rule)</text>
+<rect x="800.0" y="80" width="130" height="34" rx="4" fill="#e5e7eb" stroke="#6b7280" stroke-width="1"/>
+<text x="865.0" y="103" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="bold" >DECIDE (level)</text>
+<rect x="930.0" y="80" width="190" height="34" rx="4" fill="#e5e7eb" stroke="#6b7280" stroke-width="1"/>
+<text x="1025.0" y="103" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="bold" >RESPOND</text>
+<rect x="1120.0" y="80" width="150" height="34" rx="4" fill="#e5e7eb" stroke="#6b7280" stroke-width="1"/>
+<text x="1195.0" y="103" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="bold" >الحالة</text>
+<rect x="30.0" y="114" width="70" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="65.0" y="137" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >01</text>
+<rect x="100.0" y="114" width="260" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="230.0" y="137" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >نشر الوكلاء Win/Linux</text>
+<rect x="360.0" y="114" width="120" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="420.0" y="137" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="480.0" y="114" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="555.0" y="137" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >agent 4.14.7</text>
+<rect x="630.0" y="114" width="170" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="715.0" y="137" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="800.0" y="114" width="130" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="865.0" y="137" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="930.0" y="114" width="190" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1025.0" y="137" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="1120.0" y="114" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1195.0" y="137" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#15803d" text-anchor="middle" font-weight="normal" >✅ مُثبَت</text>
+<rect x="30.0" y="148" width="70" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="65.0" y="171" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >02</text>
+<rect x="100.0" y="148" width="260" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="230.0" y="171" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >FIM لحظي</text>
+<rect x="360.0" y="148" width="120" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="420.0" y="171" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >ملف</text>
+<rect x="480.0" y="148" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="555.0" y="171" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >syscheck</text>
+<rect x="630.0" y="148" width="170" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="715.0" y="171" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >550/553/554</text>
+<rect x="800.0" y="148" width="130" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="865.0" y="171" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >L5–7</text>
+<rect x="930.0" y="148" width="190" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1025.0" y="171" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="1120.0" y="148" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1195.0" y="171" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#15803d" text-anchor="middle" font-weight="normal" >✅ مُثبَت</text>
+<rect x="30.0" y="182" width="70" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="65.0" y="205" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >03</text>
+<rect x="100.0" y="182" width="260" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="230.0" y="205" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >VirusTotal + حذف آلي</text>
+<rect x="360.0" y="182" width="120" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="420.0" y="205" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >ملف</text>
+<rect x="480.0" y="182" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="555.0" y="205" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >syscheck</text>
+<rect x="630.0" y="182" width="170" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="715.0" y="205" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >100200/1→87105</text>
+<rect x="800.0" y="182" width="130" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="865.0" y="205" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >L12</text>
+<rect x="930.0" y="182" width="190" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1025.0" y="205" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >حذف الملف (AR)</text>
+<rect x="1120.0" y="182" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1195.0" y="205" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#15803d" text-anchor="middle" font-weight="normal" >✅ مُثبَت</text>
+<rect x="30.0" y="216" width="70" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="65.0" y="239" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >04</text>
+<rect x="100.0" y="216" width="260" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="230.0" y="239" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >Suricata NIDS</text>
+<rect x="360.0" y="216" width="120" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="420.0" y="239" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >ترافيك</text>
+<rect x="480.0" y="216" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="555.0" y="239" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >eve.json</text>
+<rect x="630.0" y="216" width="170" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="715.0" y="239" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >86601</text>
+<rect x="800.0" y="216" width="130" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="865.0" y="239" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >L3+</text>
+<rect x="930.0" y="216" width="190" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1025.0" y="239" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="1120.0" y="216" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1195.0" y="239" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#15803d" text-anchor="middle" font-weight="normal" >✅ مُثبَت</text>
+<rect x="30.0" y="250" width="70" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="65.0" y="273" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >05</text>
+<rect x="100.0" y="250" width="260" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="230.0" y="273" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >auditd + CDB أوامر خبيثة</text>
+<rect x="360.0" y="250" width="120" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="420.0" y="273" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >أمر مُنفَّذ</text>
+<rect x="480.0" y="250" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="555.0" y="273" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >audit.log</text>
+<rect x="630.0" y="250" width="170" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="715.0" y="273" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >80792+CDB→100210</text>
+<rect x="800.0" y="250" width="130" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="865.0" y="273" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >L12</text>
+<rect x="930.0" y="250" width="190" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1025.0" y="273" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="1120.0" y="250" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1195.0" y="273" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#15803d" text-anchor="middle" font-weight="normal" >✅ مُثبَت</text>
+<rect x="30.0" y="284" width="70" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="65.0" y="307" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >06</text>
+<rect x="100.0" y="284" width="260" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="230.0" y="307" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >Shellshock عبر Apache</text>
+<rect x="360.0" y="284" width="120" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="420.0" y="307" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >HTTP</text>
+<rect x="480.0" y="284" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="555.0" y="307" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >access.log</text>
+<rect x="630.0" y="284" width="170" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="715.0" y="307" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >31168</text>
+<rect x="800.0" y="284" width="130" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="865.0" y="307" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >L15</text>
+<rect x="930.0" y="284" width="190" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1025.0" y="307" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="1120.0" y="284" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1195.0" y="307" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#15803d" text-anchor="middle" font-weight="normal" >✅ مُثبَت</text>
+<rect x="30.0" y="318" width="70" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="65.0" y="341" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >07</text>
+<rect x="100.0" y="318" width="260" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="230.0" y="341" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >YARA + فحص آلي</text>
+<rect x="360.0" y="318" width="120" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="420.0" y="341" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >ملف</text>
+<rect x="480.0" y="318" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="555.0" y="341" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >syscheck</text>
+<rect x="630.0" y="318" width="170" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="715.0" y="341" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >100300/1→108001</text>
+<rect x="800.0" y="318" width="130" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="865.0" y="341" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >L12</text>
+<rect x="930.0" y="318" width="190" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1025.0" y="341" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >فحص YARA (AR)</text>
+<rect x="1120.0" y="318" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1195.0" y="341" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#15803d" text-anchor="middle" font-weight="normal" >✅ مُثبَت</text>
+<rect x="30.0" y="352" width="70" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="65.0" y="375" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >08</text>
+<rect x="100.0" y="352" width="260" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="230.0" y="375" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >مراقبة العمليات — Netcat</text>
+<rect x="360.0" y="352" width="120" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="420.0" y="375" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >عملية</text>
+<rect x="480.0" y="352" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="555.0" y="375" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >ps كل 30 ث</text>
+<rect x="630.0" y="352" width="170" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="715.0" y="375" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >100050→100051</text>
+<rect x="800.0" y="352" width="130" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="865.0" y="375" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >L7</text>
+<rect x="930.0" y="352" width="190" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1025.0" y="375" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="1120.0" y="352" width="150" height="34" rx="0" fill="#f0fdf4" stroke="#d1d5db" stroke-width="1"/>
+<text x="1195.0" y="375" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#15803d" text-anchor="middle" font-weight="normal" >✅ مُثبَت</text>
+<rect x="30.0" y="386" width="70" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="65.0" y="409" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >09</text>
+<rect x="100.0" y="386" width="260" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="230.0" y="409" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >SQL Injection</text>
+<rect x="360.0" y="386" width="120" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="420.0" y="409" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >HTTP</text>
+<rect x="480.0" y="386" width="150" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="555.0" y="409" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >access.log</text>
+<rect x="630.0" y="386" width="170" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="715.0" y="409" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >31103/31106</text>
+<rect x="800.0" y="386" width="130" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="865.0" y="409" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >L6+</text>
+<rect x="930.0" y="386" width="190" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="1025.0" y="409" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="1120.0" y="386" width="150" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="1195.0" y="409" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#b45309" text-anchor="middle" font-weight="normal" >◐ كود جاهز</text>
+<rect x="30.0" y="420" width="70" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="65.0" y="443" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >10</text>
+<rect x="100.0" y="420" width="260" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="230.0" y="443" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >إشعار Telegram</text>
+<rect x="360.0" y="420" width="120" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="420.0" y="443" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="480.0" y="420" width="150" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="555.0" y="443" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="630.0" y="420" width="170" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="715.0" y="443" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >L≥12</text>
+<rect x="800.0" y="420" width="130" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="865.0" y="443" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="930.0" y="420" width="190" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="1025.0" y="443" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >إشعار</text>
+<rect x="1120.0" y="420" width="150" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="1195.0" y="443" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#b45309" text-anchor="middle" font-weight="normal" >◐ كود جاهز</text>
+<rect x="30.0" y="454" width="70" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="65.0" y="477" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >11</text>
+<rect x="100.0" y="454" width="260" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="230.0" y="477" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >SSH brute-force</text>
+<rect x="360.0" y="454" width="120" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="420.0" y="477" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >auth</text>
+<rect x="480.0" y="454" width="150" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="555.0" y="477" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >auth.log</text>
+<rect x="630.0" y="454" width="170" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="715.0" y="477" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >5763</text>
+<rect x="800.0" y="454" width="130" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="865.0" y="477" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >L10</text>
+<rect x="930.0" y="454" width="190" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="1025.0" y="477" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >firewall-drop (AR)</text>
+<rect x="1120.0" y="454" width="150" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="1195.0" y="477" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#b45309" text-anchor="middle" font-weight="normal" >◐ كود جاهز</text>
+<rect x="30.0" y="488" width="70" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="65.0" y="511" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >14</text>
+<rect x="100.0" y="488" width="260" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="230.0" y="511" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >مساعد AI استشاري</text>
+<rect x="360.0" y="488" width="120" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="420.0" y="511" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >alerts.json</text>
+<rect x="480.0" y="488" width="150" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="555.0" y="511" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="630.0" y="488" width="170" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="715.0" y="511" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >RAG/MITRE</text>
+<rect x="800.0" y="488" width="130" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="865.0" y="511" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >—</text>
+<rect x="930.0" y="488" width="190" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="1025.0" y="511" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="normal" >اقتراح فقط</text>
+<rect x="1120.0" y="488" width="150" height="34" rx="0" fill="#fffbeb" stroke="#d1d5db" stroke-width="1"/>
+<text x="1195.0" y="511" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#b45309" text-anchor="middle" font-weight="normal" >◐ كود جاهز</text>
+<text x="650.0" y="562" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#6b7280" text-anchor="middle" font-weight="normal" >✅ مُثبَت = نُفِّذ في معمل 2026-08 وموثَّق بلقطات شاشة (docs/sources/screenshots)</text>
+<text x="650.0" y="586" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#6b7280" text-anchor="middle" font-weight="normal" >◐ كود جاهز = مُنفَّذ برمجياً باختبارات آلية، والقبول المعملي الحي متبقٍّ</text>
+<text x="650.0" y="610" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#6b7280" text-anchor="middle" font-weight="normal" >عمود RESPOND فارغ في 5 من 8 حالات مُثبَتة → محور التعميق الأول للمشروع (docs/05 §6)</text>
+</svg>
