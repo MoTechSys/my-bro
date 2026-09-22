@@ -442,7 +442,8 @@ def main(argv=None):
                     trial['t0'] = time.time_ns() // 1000000
                     trial['time_refs']['t0'] = str(output) + '#' + trial['run_id'] + '/' + trial['trial_id'] + '/t0'
                 trial['runner'] = {'mode': 'lab' if args.lab else 'replay', 'command': command,
-                                   'state': 'PREPARED_NOT_COMPLETED'}
+                                   'state': 'PREPARED_NOT_COMPLETED',
+                                   'manifest_sha256': so.r.digest(so.r.json_bytes(manifest))}
                 write_all(pfd, encoded(trial))
                 sync_parent(pending)  # output + launch-intent names durable BEFORE command
             try:
