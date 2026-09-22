@@ -1,0 +1,116 @@
+# تقرير المراجعة الأمنية/الصحية الساكنة — اللقطة `2a50f77872ca26da931957f2581a6a1c6e0f710e`
+
+**نطاق المراجعة:** النص المُقدَّم فقط (`source_observer.py`, `trial_runner.py`, `test_source_observer.py`, `visibility_observer.py`, `analyst.py`, و`runner.py` الأسطر 1–190). مراجعة ساكنة قراءة فقط — **لم أشغّل الاختبارات ولا أي كود**؛ وجود 33 اختبار مصدر و499 اختبار أساس في النص لا يعني أنها نُفذت أو نجحت. هذه ليست موافقة على SOC وليست قبولاً معملياً.
+
+---
+
+## أولًا: النتائج مرتبة بالأولوية
+
+### F1 — عالي (تشغيلي): غياب حارس إلغاء الإطلاق حول `Popen` في `trial_runner.execute` → عملية تابعة يتيمة تكمل التنفيذ
+
+**المرساة:** `scripts/measure/trial_runner.py:execute` (سطر `child = subprocess.Popen(...)`) مقابل `ai_agent/runner.py:launch_cancellation_guard` (المعرّف لكنه غير مستورد ولا مستخدم في `trial_runner` — الملف يستورد `mttd.py` و`source_observer.py` فقط).
+
+**مثال مضاد قابل للإعادة:**
+1. شغّل `trial_runner --lab --timeout 60 ... <attack-command>`.
+2. أرسل `SIGTERM` في نافذة السباق أثناء تنفيذ الجملة `child = subprocess.Popen(...)` (بعد fork داخل Popen وقبل عودة الكائن وإسناده، أو بين الإسناد ودخول `try:`).
+3. معالج `interrupted` يرفع `KeyboardInterrupt` قبل أن يُربط `child` وقبل دخول `try/finally` الذي يضمّن `killpg` → لا تنظيف للمجموعة التابعة إطلاقًا.
+
+**الأثر الملاحظ:** أمر المعمل (EICAR/SSH/أمر محاكاة) يبقى حيًا في جلسة جديدة (`start_new_session=True`) بعيدًا عن مجموعة العملية، بينما يسجّل `main` الالتفاط الداخلي `RUNNER_ERROR:termination requested` ويخرج. أي: إلغاء مطلوب، سجل يقول فشل، والأمر يواصل العمل — خرق فعلي لافتراض "الإيقاف الآمن للعملية التابعة" الذي يوفره الحارس الموجود في `runner.py` ويُستخدم في واجهة AI فقط.
+
+---
+
+### F2 — متوسط: ملف `.pending` اليتيم يعلق كل التشغيلات اللاحقة على نفس ملف المخرجات، ومسار `KeyboardInterrupt` خارج الالتقاط
+
+**المرساة:** `trial_runner.main` — `pfd = secure_open(pending, os.O_CREAT | os.O_EXCL | os.O_WRONLY)`، و`except (OSError, ValueError, KeyError, TypeError, OverflowError, StopIteration)` الخارجي (بلا `KeyboardInterrupt`).
+
+**مثالان مضادان:**
+- **(أ)** `kill -9` (أو انقطاع طاقة) أثناء `execute` → لا يُكتب صف في journal، ويبقى `output.pending` على القرص. أي تشغيل لاحق بنفس `--output` يفشل دائمًا في `O_EXCL` (`FileExistsError` → الخروج 2) — **يُعلَّق كل trial قادم وليس نفس الهوية فقط**، بلا آلية كشف بيات أو استرجاع موثقة في النص.
+- **(ب)** `SIGTERM` يصل بين `write_all(pfd, encoded(trial))` ودخول `try:` الداخلي: `KeyboardInterrupt` ليس ضمن tuple الاستثناء الخارجي → يهرب من `main` بأثر (traceback) وخروج 1: لا صف journal، لا `pending.unlink()`، ولا تنظيف.
+
+**الأثر:** انتهاك جزئي لهدف "سجل محاولات دائم يحفظ الانقطاع دون استبدال" — القصد يوجد (`pending` نية إطلاق دائمة) لكن استرجاعه غير محدد وسلوك الخروج غير نظيف.
+
+---
+
+### F3 — متوسط (دقة أدلة): سباق رمز الخروج عند الحد الزمني في `execute` يُسجّل `timed_out` لعملية خرجت بنجاح
+
+**المرساة:** `trial_runner.execute` — حلقة `while time.monotonic() < deadline:` مع `waitid(...WNOHANG...)` ثم `return {'exit_code': None, 'timed_out': True}`، وفّينالي `child.wait(timeout=2)` **يهمل رمز الخروج الفعلي** (لا يُستخدم).
+
+**مثال مضاد:** أمر ينتهي برمز 0 بعد انطلاق آخر `waitid` (أعدت None) بـ~ملي ثانية وقبل فحص شرط الحلقة → يُسجَّل في `trial['runner']` حالة `timed_out=True` رغم أن العملية أنهت نفسها قبل المهلة. نافذة السباق ≈ دورة الاستطلاع (≤10ms). **الأثر:** تشويه دليل تجريبي (فidelity) — يُحسب انقطاعًا زمنيًا لما هو إكمال طبيعي؛ ليس ثغرة أمنية.
+
+---
+
+### F4 — منخفض–متوسط: فحصا `SOURCE_EVENT_CONFLICT` و`producer` يُطبَّقان على كل أسطر `observers` قبل فلترة `run_id/trial_id`
+
+**المرساة:** `trial_runner.collect` — الحلقة الأولى:
+```python
+m.require(... value['producer'] != so.PRODUCER, 'SOURCE_STORE_REQUIRED')
+if verified_source is not None:
+    m.require(... value.get('stage') != 'event', 'SOURCE_EVENT_CONFLICT')
+```
+تُنفَّذ على **كل** سطر JSONL، بينما فلترة الهوية `(run_id, trial_id)` تجري لاحقًا في الحلقة الثانية.
+
+**مثال مضاد:** ملف `observers.jsonl` دوراني مشترك يحوي صف `stage:'event'` لتجربة A ومحتوى تجربة B؛ تشغيل `collect` للتجربة B بمخزن مقيد → سطر A يرفض المجموعة كلها بـ`SOURCE_EVENT_CONFLICT` رغم أن التجربتين منفصلتان.
+
+**الأثر:** فشل مغلق (آمن) لكنه مفرط الاتساع — يمنع مشاركة ملفات مراقبين بين التجارب دون سبب حقيقي لخلط الهويات. نفس النمط لفحص `producer` مع أسطر تجارب أخرى.
+
+---
+
+### F5 — منخفض: فقدان سبب الاستبعاد الأصلي لمحاولة مُستبعدة مسبقًا في وضع `--lab`
+
+**المرساة:** `trial_runner.main` — يُضبط `exclusion_reason='INVALID', reason='SESSION_CLOCK_LIMIT_EXCEEDED'` قبل التنفيذ؛ ثم يُتخطى `execute` (شرط `exclusion_reason is None`) لكن `collect` يُستدعى دائمًا، وفيه `start = m.to_ms(trial.get('match_start', trial['window_start']))` → `KeyError('window_start')` لأن `match_start/window_start` يُضبطان فقط داخل فرع التنفيذ.
+
+**الأثر:** الالتقاط الداخلي يستبدل السبب الدلالي بـ`RUNNER_ERROR:'window_start'` — تُفقد معلومة الرفض الحقيقية، ويبقى `t0` مسجلًا فيوحي ببدء محاولة لم تبدأ. الإصلاح البسيط: تخطي `collect` حين يكون الاستبعاد مسبقًا.
+
+---
+
+### F6 — منخفض: لا `fsync` لدليل ملفات المخرجات
+
+**المرساة:** `trial_runner.write_all` يفعل `os.fsync(fd)` للملف فقط؛ لا `fsync` لدليل `--output` بعد الإنشاء الأول ولا بعد `pending.unlink()`.
+
+**الأثر:** بعد انقطاع طاقة، قد تختفي مدخلة attempts جديدة من نظام الملفات رغم مزامنة بايتاتها، بينما `intent/pending` (اللذان يكتبان عبر `write_once` مع `fsync` للدليل في `runner.py`) يبقيان — تعارض حالة استرجاع. توثيق الحد كافٍ.
+
+---
+
+### F7 — منخفض: مهلة `Ollama` في `analyst` هي socket timeout وليست سقفًا زمنيًا كليًا
+
+**المرساة:** `analyst.py:Ollama.__call__` — `self.opener.open(request, timeout=self.timeout)`؛ مهلة urllib هي لكل عملية قراءة/اتصال، لا للجسم الكلي. مسار `--infer` المباشر في `main` لا يمر عبر `runner` (ذي `deadline_seconds ≤ 120`).
+
+**مثال مضاد:** مزود محلي يرسل بايتًا كل 20 ثانية → لا تنتهي المهلة أبدًا رغم تجاوز أي مدة معقولة. **الأثر:** تعليق جلسة استشارية؛ لا فساد أدلة (التحقق لاحق صارم). ملاحظة توثيق لا أكثر.
+
+---
+
+### F8 — منخفض (تباين عقدي): `visibility_observer.export` يرفض المخازن الفاشلة كليًا بينما `source_observer.export` يوفر `summary` للفشل
+
+**المرساة:** `visibility_observer.export`: `require(... terminal['reason'] is None ..., 'INCOMPLETE_OBSERVATION')` بلا مسار summary-failure؛ مقابل `source_observer.export` الذي يُعيد `dict(terminal, artifacts_verified=False)` مع `--summary`. سلوكان مغلقان صحّا، لكن الاختلاف يجب أن يكون موثقًا في `tests/README` لتجنب افتراض تناظر الواجهتين.
+
+---
+
+## ثانيًا: المتطلبات — خلاصة "لا مشكلة" مع التسويغ
+
+| المتطلب | الحكم | التسويق المُرسى في النص |
+|---|---|---|
+| لا كتابة في المصدر | ✅ لا مشكلة | `read_source` يفتح `O_RDONLY\|O_NOFOLLOW\|O_CLOEXEC` بـ`dir_fd` مثبت؛ كل الكتابات إلى المخزن عبر `write_once` فقط. |
+| الغياب قبل ظهور البايتات | ✅ لا مشكلة | `source_observer.classify`: أول إيجابي مُرقّب (`preexisting`, بلا صف)، `require(i == len(polls)-1 ...)`، و`ABSENCE_METADATA` يوجب `sha256 is None and identity is None` لكل سالبة؛ السالب المشفّل يُرفض في التصدير (اختبار `forged absence`). |
+| لقطة خاصة | ✅ لا مشكلة | `runner.directory`walk مثبت بـ`O_NOFOLLOW` لكل مكوّن مع فحص uid/أذونات لكل أسلاف؛ `write_once` بوضع `0600` + `fsync` ملف ودليل؛ `read_at` يرفض غير النظامي/متعدد الروابط/المفتوح للجماعة. |
+| هوية descriptor مستقرة | ✅ لا مشكلة | `identity` على `STAT_KEYS` (بلا atime) مفحوصة قبل/بعد الفتح/بعد القراءة/بالاسم؛ وإعادة التحقق في `export` (`st_size == len(data)`). |
+| المهل الزمنية | ✅ لا مشكلة (بالفروقات F1/F3/F7) | `deadline_call` مؤقّت POSIX كلي (0.75s) مع عقد SIGALRM حصري و`sigwait` للإشارات المتأخرة؛ `SCHEDULING_GAP/POLL_GAP/CLOCK_JUMP` تفشل مغلقًا؛ `execute` deadline بـ`monotonic` وسقف 3600s. |
+| لا t1/t4/t5 زائفة ولا سببية AR | ✅ لا مشكلة | `action_confirmed` يُصدَّر بـ`kind:'action_confirmed'` ونص صريح "neither a source timestamp nor AR causality"؛ `bound_source` يمنع مفاتيح t1/t4/t5 (اختبار `assertFalse({'t1','t4','t5'} & set(row))`)؛ `kinds` في `collect` تربط كل stage بـkind الصارم وclock_map. |
+| ربط الاستيراد spec/path/clock/run/trial + تحقق بايتات | ✅ لا مشكلة | `bound_source` يفحص `source_spec_sha256`، `target_key`، `device == clock_map['t1']` و`clock_ref` ضد manifest، `(run_id, trial_id)`، ومسار t2/targets؛ `export` يعيد التحقق من بايتات `poll-*.bin` مقابل `expected_sha256` من المخزن لا من تصريح. |
+| ملخصات الفشل لا تتحقق من أجزاء | ✅ لا مشكلة | مسار failed في `source_observer.export` يعيد `artifacts_verified=False` و`observer=None` دون فحص artifacts (فحص `terminal['observer'] is None` وصياغة reason فقط). |
+| عدم تمرير gold/تحكيم بشري للنموذج | ✅ لا مشكلة (نصياً) | `prepare` يُسقط `full_log/وصف/مسارات/هويات` ويُسمّي بالأسماء المستعارة فقط؛ لا حقل labels/rubric في السياق المرسل في النص المعروض. |
+
+---
+
+## ثالثًا: خارج الضمانات المعلنة (مقبولة حصراً — ليست عيوباً)
+
+- **كاتب خبيث بنفس UID:** إعادة استخدام inode بهوية stat مطابقة، والسباق على `st_mtime_ns/ctime_ns` — معلنة خارج الضمان في نص المهمة.
+- **D-state / hard realtime / SIGKILL وانقطاع الطاقة:** تنظيف المجموعة غير مضمون (`execute` docstring صريح).
+- **HTTP close-delimited:** في `Ollama.__call__` يمر إطار بلا `Content-Length` ولا `Transfer-Encoding` ويعتمد EOF؛ اكتمال الجسم غير قابل للإثبات — معلن. بقية الفحوص (CL وحيد رقمي ≤ MAX، رفض CL+TE معًا، encoding identity، طول مطابق، رفض `tool_calls`، `done is True`) سليمة.
+- **صفوف المراقب القديمة بلا producer:** يُقبل صف `stage:'event'` مُشغَّل التوريد (operator-supplied) بلا `clock_ref` ويُفعّل `event_valid` (اختبار `legacy` يثبت القبول) — ليست مصادقة مستقلة، كما نص البروتوكول.
+- **أسماء mount/aliases وPID reuse:** فحص `STORE_SOURCE_OVERLAP` معجمي (lexical)؛ aliases عبر mount خارج النطاق.
+
+---
+
+## رابعًا: الحكم
+
+لا عيوب أمنية حرجة في مسار الأدلة M2-A نفسه؛ العقود (absence-first، البصمات، الربط الخماسي، المقامات الفاشلة) **منفذة ومحصنة في النص المعروض**. الفجوة الأعلى تشغيلية بحتة: **F1 (تيم الطفل عند الإلغاء أثناء الإطلاق)** تليها **F2 (تعليق `.pending`)** — وكلتاهما قابلتان للإصلاح محليًا باستخدام `launch_cancellation_guard` الموجود أصلاً ومعالجة `KeyboardInterrupt` في الالتقاط الخارجي وتوثيق استرجاع pending. هذا تقرير مراجعة ساكنة؛ لا يعتمد الكود ولا يغلق أي بوابة native.
