@@ -338,6 +338,31 @@ class Source(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'SOURCE_EVENT_CONFLICT'):
             runner.collect(trial, run, None, [], [], [path], evidence)
 
+    def test_other_trial_observer_rows_do_not_conflict_with_bound_source(self):
+        runner, manifest, run, trial, evidence = self.measurement()
+        other = s.export(*evidence); other['trial_id'] = 'different-trial'
+        legacy = dict(other); del legacy['producer']
+        path = self.base/'rotation.jsonl'
+        path.write_bytes(s.r.json_bytes(other) + s.r.json_bytes(legacy))
+        runner.collect(trial, run, None, [], [], [path], evidence)
+        self.assertTrue(trial['event_valid']); self.assertIsNone(trial['t1'])
+
+    def test_output_cannot_be_created_inside_source_evidence_store(self):
+        runner, manifest, run, trial, evidence = self.measurement()
+        spec_path, manifest_path = self.base/'trial.json', self.base/'manifest.json'
+        spec_path.write_bytes(s.r.json_bytes({'attempt': trial}))
+        manifest_path.write_bytes(s.r.json_bytes(manifest))
+        alerts = self.base/'alerts.jsonl'; alerts.write_bytes(b'')
+        output = self.store/'attempts.jsonl'
+        command = [sys.executable, '-I', '-B', str(ROOT/'scripts/measure/trial_runner.py'), '--replay',
+                   '--spec', str(spec_path), '--manifest', str(manifest_path), '--alerts', str(alerts),
+                   '--output', str(output), '--source-store', str(evidence[0]), '--source-intent-sha256', evidence[1]]
+        result = subprocess.run(command, capture_output=True, timeout=5)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn(b'OUTPUT_INSIDE_SOURCE_STORE', result.stderr)
+        self.assertFalse(output.exists())
+        self.assertIsNotNone(s.export(*evidence))
+
     def test_cli_bound_replay_preserves_sensor_miss(self):
         runner, manifest, run, trial, evidence = self.measurement()
         spec_path, manifest_path = self.base/'trial.json', self.base/'manifest.json'
