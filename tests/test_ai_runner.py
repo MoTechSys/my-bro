@@ -101,6 +101,106 @@ class Deadline(unittest.TestCase):
         self.assertEqual(out['output'], b'synthetic\n')
         self.assertEqual(self.run_python('raise SystemExit(2)')['reason'], 'WORKER_FAILED')
 
+    def test_launch_cancellation_inside_popen_and_before_assignment_cleans_child(self):
+        real_execute, real_start = subprocess.Popen._execute_child, subprocess.Popen
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            for phase in ('inside_popen', 'before_assignment'):
+                with self.subTest(signal=sig, phase=phase):
+                    children, delivered = [], []
+                    previous = signal.getsignal(sig)
+                    mask = signal.pthread_sigmask(signal.SIG_BLOCK, set())
+                    def handler(number, frame):
+                        delivered.append(number)
+                        raise KeyboardInterrupt()
+                    def execute(proc, *args, **kwargs):
+                        real_execute(proc, *args, **kwargs)
+                        children.append(proc)
+                        os.kill(os.getpid(), sig)
+                        os.kill(os.getpid(), sig)  # only the first cancellation is replayed
+                    def start(*args, **kwargs):
+                        proc = real_start(*args, **kwargs)
+                        children.append(proc)
+                        os.kill(os.getpid(), sig)
+                        return proc
+                    signal.signal(sig, handler)
+                    target = (patch.object(real_start, '_execute_child', execute) if phase == 'inside_popen'
+                              else patch.object(r.subprocess, 'Popen', side_effect=start))
+                    try:
+                        with target, self.assertRaises(KeyboardInterrupt):
+                            self.run_python('import time; time.sleep(30)')
+                        self.assertEqual(delivered, [sig])
+                        self.assertEqual(children[0].returncode, -signal.SIGKILL)
+                        self.assertTrue(children[0].stdout.closed)
+                        self.assertIs(signal.getsignal(sig), handler)
+                        self.assertEqual(signal.pthread_sigmask(signal.SIG_BLOCK, set()), mask)
+                    finally:
+                        signal.signal(sig, previous)
+                        for proc in children:
+                            if proc.poll() is None:
+                                os.killpg(proc.pid, signal.SIGKILL)
+                            proc.wait(timeout=2)
+                            proc.stdout.close()
+
+    def test_launch_guard_does_not_add_blocked_signals_to_worker(self):
+        result = self.run_python('import signal; print(sorted(int(s) for s in '
+                                 'signal.pthread_sigmask(signal.SIG_BLOCK,set())))')
+        expected = sorted(int(s) for s in signal.pthread_sigmask(signal.SIG_BLOCK, set()))
+        self.assertEqual(json.loads(result['output']), expected)
+
+    def test_launch_failure_restores_handlers_and_mask(self):
+        before = {s: signal.getsignal(s) for s in (signal.SIGINT, signal.SIGTERM)}
+        mask = signal.pthread_sigmask(signal.SIG_BLOCK, set())
+        with patch.object(r.subprocess, 'Popen', side_effect=OSError('synthetic spawn failure')):
+            self.assertEqual(self.run_python('pass')['reason'], 'WORKER_START_OR_IO_FAILED')
+        self.assertEqual({s: signal.getsignal(s) for s in before}, before)
+        self.assertEqual(signal.pthread_sigmask(signal.SIG_BLOCK, set()), mask)
+
+    def test_ignored_launch_signal_stays_ignored(self):
+        previous = signal.getsignal(signal.SIGTERM)
+        real = r.subprocess.Popen
+        def start(*args, **kwargs):
+            proc = real(*args, **kwargs)
+            os.kill(os.getpid(), signal.SIGTERM)
+            return proc
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        try:
+            with patch.object(r.subprocess, 'Popen', side_effect=start):
+                self.assertEqual(self.run_python('pass')['reason'], 'OK')
+            self.assertEqual(signal.getsignal(signal.SIGTERM), signal.SIG_IGN)
+        finally:
+            signal.signal(signal.SIGTERM, previous)
+
+    def test_default_launch_signal_is_cancellable_before_cleanup(self):
+        previous = signal.getsignal(signal.SIGTERM)
+        real, children = r.subprocess.Popen, []
+        def start(*args, **kwargs):
+            proc = real(*args, **kwargs); children.append(proc)
+            os.kill(os.getpid(), signal.SIGTERM)
+            return proc
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+        try:
+            with patch.object(r.subprocess, 'Popen', side_effect=start), self.assertRaises(KeyboardInterrupt):
+                self.run_python('import time; time.sleep(30)')
+            self.assertEqual(children[0].returncode, -signal.SIGKILL)
+            self.assertTrue(children[0].stdout.closed)
+        finally:
+            signal.signal(signal.SIGTERM, previous)
+            for proc in children:
+                if proc.poll() is None: os.killpg(proc.pid, signal.SIGKILL)
+                proc.wait(timeout=2); proc.stdout.close()
+
+    def test_non_main_thread_refused_without_launch(self):
+        failures = []
+        def attempt():
+            try: self.run_python('pass')
+            except ValueError as exc: failures.append(str(exc))
+        with patch.object(r.subprocess, 'Popen') as start:
+            thread = r.threading.Thread(target=attempt)
+            thread.start(); thread.join(timeout=2)
+            self.assertFalse(thread.is_alive())
+            start.assert_not_called()
+        self.assertEqual(failures, ['MAIN_THREAD_REQUIRED'])
+
     def test_success_signals_group_before_reaping_leader(self):
         real_start, real_kill = r.subprocess.Popen, r.os.killpg
         processes, observed = [], []

@@ -19,6 +19,7 @@ import signal
 import stat
 import subprocess
 import sys
+import threading
 import time
 
 HERE = Path(__file__).resolve().parent
@@ -143,6 +144,52 @@ def store_lock(path):
         os.close(fd)
 
 
+@contextmanager
+def launch_cancellation_guard():
+    """Defer catchable cancellation until the caller owns the Popen object.
+
+    Do not block signals across fork/exec: that would also block them in the
+    worker. Temporary Python handlers are reset by exec. Only the first caught
+    cancellation is replayed, with the original handler and frame, after Popen
+    assignment. SIG_IGN remains ignored; SIG_DFL cancellation becomes
+    KeyboardInterrupt so the caller can clean up rather than die immediately.
+    Main-thread/exclusive signal-handler ownership is required (not a sandbox).
+    """
+    if threading.current_thread() is not threading.main_thread():
+        raise ValueError('MAIN_THREAD_REQUIRED')
+    signals = {signal.SIGINT, signal.SIGTERM}
+    handlers = {sig: signal.getsignal(sig) for sig in signals}
+    pending = []
+
+    def defer(sig, frame):
+        if not pending:
+            pending.append((sig, frame))
+
+    # Mask only handler transitions, never process creation. Restore the exact
+    # caller mask even if installation or the process launch fails.
+    previous_mask = signal.pthread_sigmask(signal.SIG_BLOCK, signals)
+    try:
+        for sig, handler in handlers.items():
+            if handler != signal.SIG_IGN:
+                signal.signal(sig, defer)
+        signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
+        yield
+    finally:
+        signal.pthread_sigmask(signal.SIG_BLOCK, signals)
+        try:
+            for sig, handler in handlers.items():
+                signal.signal(sig, handler)
+        finally:
+            signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
+        if pending:
+            sig, frame = pending[0]
+            handler = handlers[sig]
+            if callable(handler):
+                handler(sig, frame)
+            else:
+                raise KeyboardInterrupt()
+
+
 def bounded_process(command, seconds):
     """Fixed trusted argv supplied by run_batch; bounded stdout and monotonic wall time.
 
@@ -162,9 +209,10 @@ def bounded_process(command, seconds):
     reason = 'WORKER_FAILED'
     returncode = None
     try:
-        proc = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL, start_new_session=True,
-                                env={'PATH': os.defpath, 'LANG': 'C.UTF-8', 'TZ': 'UTC'}, cwd=HERE.parent)
+        with launch_cancellation_guard():
+            proc = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                    stderr=subprocess.DEVNULL, start_new_session=True,
+                                    env={'PATH': os.defpath, 'LANG': 'C.UTF-8', 'TZ': 'UTC'}, cwd=HERE.parent)
         os.set_blocking(proc.stdout.fileno(), False)
         with selectors.DefaultSelector() as selector:
             selector.register(proc.stdout, selectors.EVENT_READ)
