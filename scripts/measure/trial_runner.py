@@ -23,6 +23,9 @@ import time
 _spec = importlib.util.spec_from_file_location('measurement', Path(__file__).with_name('mttd.py'))
 m = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(m)
+_source_spec = importlib.util.spec_from_file_location('trial_source', Path(__file__).with_name('source_observer.py'))
+so = importlib.util.module_from_spec(_source_spec)
+_source_spec.loader.exec_module(so)
 
 
 def document(path):
@@ -96,7 +99,29 @@ def set_time(trial, stage, value, ref):
     trial['missing_reasons'].pop(stage, None)
 
 
-def collect(trial, run, source, sources, alerts, observers):
+def bound_source(trial, run, evidence):
+    """Re-read private source artifacts, never trust an exported JSONL claim alone."""
+    binding = trial.get('source_binding')
+    m.require(isinstance(binding, dict) and set(binding) == {'source_spec_sha256', 'target_key'},
+              'SOURCE_BINDING_REQUIRED')
+    so.r.e.sha256(binding['source_spec_sha256'])
+    row = so.export(*evidence)
+    m.require(row is not None, 'SOURCE_EVENT_NOT_OBSERVED')
+    m.require((row['run_id'], row['trial_id']) == (trial['run_id'], trial['trial_id']), 'SOURCE_TRIAL_MISMATCH')
+    m.require(binding == {k: row[k] for k in binding}, 'SOURCE_BINDING_MISMATCH')
+    m.require(row['device'] == run['clock_map']['t1'] and
+              row['clock_ref'] == run['devices'][row['device']]['clock_ref'], 'SOURCE_CLOCK_MISMATCH')
+    path = row['target_key']['syscheck.path']
+    m.require(trial['stage_selectors'].get('t2', {}).get('target_key', {}).get('syscheck.path') == path,
+              'SOURCE_TARGET_MISMATCH')
+    targets = [trial['target_key']] + [item['target_key'] for item in trial['stage_selectors'].values()]
+    for item in targets:
+        for field in ('path', 'syscheck.path', 'data.virustotal.source.file', 'data.yara_scanned_file'):
+            m.require(field not in item or item[field] == path, 'SOURCE_TARGET_MISMATCH')
+    return row
+
+
+def collect(trial, run, source, sources, alerts, observers, source_evidence=None):
     """Collect within the declared observation window, preserving missing data."""
     provenance = []
     visibility_identity = None
@@ -119,8 +144,20 @@ def collect(trial, run, source, sources, alerts, observers):
             trial.update(event_valid=True, source_ref=ref,
                          source_precision_ms=source['precision_ms'])
             trial['timestamp_precision_ms']['t1'] = source['precision_ms']
-    if observers:
+    m.require(source_evidence is not None or 'source_binding' not in trial, 'SOURCE_STORE_REQUIRED')
+    verified_source = bound_source(trial, run, source_evidence) if source_evidence is not None else None
+    if observers or verified_source is not None:
         lines, hashes = snapshot(observers); provenance.extend(hashes)
+        for raw, _ in lines:
+            value = m.strict_json(raw)
+            m.require(not isinstance(value, dict) or 'producer' not in value or
+                      value['producer'] != so.PRODUCER, 'SOURCE_STORE_REQUIRED')
+            if verified_source is not None:
+                m.require(not isinstance(value, dict) or value.get('stage') != 'event', 'SOURCE_EVENT_CONFLICT')
+        if verified_source is not None:
+            lines.append((so.r.json_bytes(verified_source).decode('ascii'),
+                          'source-intent:sha256:' + source_evidence[1]))
+            provenance.append({'path': str(source_evidence[0]), 'sha256': source_evidence[1]})
         kinds = {'t1': 'source_event', 't3': 'indexer_first_visible',
                  't4': 'endpoint_start', 't5': 'independent_observation',
                  'event': 'action_confirmed'}
@@ -136,9 +173,9 @@ def collect(trial, run, source, sources, alerts, observers):
             m.require(device in run['devices'], 'unknown observer clock')
             if stage != 'event':
                 m.require(device == run['clock_map'][stage], 'observer clock disagrees with clock_map')
-                if 'clock_ref' in row:
-                    m.require(row['clock_ref'] == run['devices'][device]['clock_ref'],
-                              'observer clock_ref disagrees with manifest')
+            if 'clock_ref' in row:
+                m.require(row['clock_ref'] == run['devices'][device]['clock_ref'],
+                          'observer clock_ref disagrees with manifest')
             at = m.epoch_ms(row.get('timestamp_ms'))
             m.text(row.get('evidence_ref'), 'observer evidence_ref')
             m.number(row.get('precision_ms'), 'observer precision', 0)
@@ -299,6 +336,8 @@ def main(argv=None):
     parser.add_argument('--alerts', required=True, nargs='+', help='explicit local/exported rotation files')
     parser.add_argument('--source', nargs='*', default=[])
     parser.add_argument('--observers', nargs='*', default=[])
+    parser.add_argument('--source-store', help='private M2-A source store; no implicit observation')
+    parser.add_argument('--source-intent-sha256', help='externally retained intent hash for source store')
     parser.add_argument('--eicar-dir', help='UC-03 built-in unique EICAR attempt, replaces command; existing approved directory')
     parser.add_argument('--device', help='live runner clock device; must equal clock_map.t0')
     parser.add_argument('--timeout', type=float, default=60, help='child timeout seconds, max 3600')
@@ -313,6 +352,8 @@ def main(argv=None):
         for value in (args.timeout, args.wait):
             m.number(value, 'timeout/wait', 0.001)
             m.require(value <= 3600, 'timeout/wait exceeds one hour')
+        m.require(bool(args.source_store) == bool(args.source_intent_sha256), 'SOURCE_STORE_AND_HASH_REQUIRED')
+        source_evidence = (args.source_store, args.source_intent_sha256) if args.source_store else None
         spec, manifest = document(args.spec), document(args.manifest)
         trial = copy.deepcopy(spec['attempt'])
         run = next(r for r in manifest['runs'] if r['run_id'] == trial['run_id'])
@@ -396,7 +437,7 @@ def main(argv=None):
                                  window_ref=trial['time_refs']['t0'])
                     time.sleep(args.wait)
                     trial['observe_until'] = m.iso_ms(round(time.time_ns() // 1000000 + shift))
-                alert_rows = collect(trial, run, source, args.source, args.alerts, args.observers)
+                alert_rows = collect(trial, run, source, args.source, args.alerts, args.observers, source_evidence)
                 # Include previous trials: a new offset violation invalidates ALL
                 # rows in the report, without rewriting the append-only raw journal.
                 result = m.analyze_v2(existing + [(trial, 'runner')], alert_rows, manifest)
