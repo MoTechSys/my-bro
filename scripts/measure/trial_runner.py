@@ -150,6 +150,8 @@ def collect(trial, run, source, sources, alerts, observers, source_evidence=None
         lines, hashes = snapshot(observers); provenance.extend(hashes)
         for raw, _ in lines:
             value = m.strict_json(raw)
+            if isinstance(value, dict) and (value.get('run_id'), value.get('trial_id')) != (trial['run_id'], trial['trial_id']):
+                continue
             m.require(not isinstance(value, dict) or 'producer' not in value or
                       value['producer'] != so.PRODUCER, 'SOURCE_STORE_REQUIRED')
             if verified_source is not None:
@@ -233,6 +235,15 @@ def secure_open(path, flags):
         os.close(fd)
         raise m.InputError('output must be a regular single-link file')
     return fd
+
+
+def sync_parent(path):
+    """Validate private output ancestry and persist namespace changes, not just bytes."""
+    fd = so.r.directory(Path(path).absolute().parent)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
 
 
 def write_all(fd, data):
@@ -406,6 +417,10 @@ def main(argv=None):
         output = Path(args.output).absolute()
         inputs = [args.spec, args.manifest] + args.alerts + args.source + args.observers
         m.require(all(output.resolve() != Path(p).resolve() for p in inputs), 'output aliases an input')
+        if source_evidence is not None:
+            m.require(Path(source_evidence[0]).resolve() not in output.resolve().parents,
+                      'OUTPUT_INSIDE_SOURCE_STORE')
+        sync_parent(output)
         fd = secure_open(output, os.O_CREAT | os.O_RDWR | os.O_APPEND)
         with os.fdopen(fd, 'r+b', buffering=0) as journal:
             fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -428,7 +443,8 @@ def main(argv=None):
                     trial['time_refs']['t0'] = str(output) + '#' + trial['run_id'] + '/' + trial['trial_id'] + '/t0'
                 trial['runner'] = {'mode': 'lab' if args.lab else 'replay', 'command': command,
                                    'state': 'PREPARED_NOT_COMPLETED'}
-                write_all(pfd, encoded(trial))  # durable launch intent BEFORE command
+                write_all(pfd, encoded(trial))
+                sync_parent(pending)  # output + launch-intent names durable BEFORE command
             try:
                 if args.lab and trial['exclusion_reason'] is None:
                     trial['runner'].update(execute(command, args.timeout))
@@ -454,9 +470,14 @@ def main(argv=None):
                 trial['runner']['state'] = 'COLLECTION_FAILED'
             write_all(fd, encoded(trial))
             pending.unlink()
+            sync_parent(output)
         print(json.dumps({'run_id': trial['run_id'], 'trial_id': trial['trial_id'],
                           'exclusion_reason': trial['exclusion_reason'], 'output': str(output)}))
         return 2 if trial['exclusion_reason'] else 0
+    except KeyboardInterrupt:
+        # The durable pending intent is recovery evidence, never automatically removed.
+        print('trial runner interrupted; retain pending evidence and do not rerun', file=sys.stderr)
+        return 130
     except (OSError, ValueError, KeyError, TypeError, OverflowError, StopIteration) as exc:
         print('trial runner error: ' + str(exc), file=sys.stderr)
         return 2
