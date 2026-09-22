@@ -22,7 +22,7 @@ spec.loader.exec_module(r)
 
 class PrivateFiles(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory(dir=ROOT / '.git', prefix='ai-runner-')
+        self.tmp = tempfile.TemporaryDirectory(dir=ROOT, prefix='ai-runner-')
         self.addCleanup(self.tmp.cleanup)
         self.base = Path(self.tmp.name)
 
@@ -63,6 +63,19 @@ class PrivateFiles(unittest.TestCase):
             (self.base/'hard').unlink()
             (self.base/'original').chmod(0o644)
             with self.assertRaises(ValueError): r.read_at(fd, 'original')
+
+    def test_review_f2_utf8_bom_crlf_and_cr_roundtrip_is_exact(self):
+        raw = b'\xef\xbb\xbf{"synthetic":true}\r\n\r'
+        path = self.base/'bytes.json'; path.write_bytes(raw); path.chmod(0o600)
+        self.assertEqual(r.read_bytes(path), raw)
+        self.assertEqual(r.digest(r.read_bytes(path)), r.digest(raw))
+        # Reader round-trip only: this does not promise BOM acceptance by JSON parsers.
+
+    def test_review_f3_worker_reader_rejects_final_symlink(self):
+        path = self.base/'original'; path.write_bytes(b'{}'); path.chmod(0o600)
+        link = self.base/'link'; link.symlink_to(path)
+        with self.assertRaises(OSError): r.read_bytes(link)
+        self.assertEqual(path.read_bytes(), b'{}')
 
     def test_names_and_size_bounds(self):
         with r.store_lock(self.base) as fd:
@@ -354,7 +367,7 @@ def fixture(n=2):
 
 class Evidence(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory(dir=ROOT/'.git', prefix='ai-evidence-')
+        self.tmp = tempfile.TemporaryDirectory(dir=ROOT, prefix='ai-evidence-')
         self.addCleanup(self.tmp.cleanup)
         self.base=Path(self.tmp.name)
         self.manifest, self.inputs, self.response=fixture()
@@ -386,6 +399,15 @@ class Evidence(unittest.TestCase):
         self.assertEqual(report['classification_all_planned']['value'],0)
         self.assertFalse(imported['model_runtime_identity_verified'])
         self.assertFalse(imported['acceptance_approved'])
+
+    def test_review_f1_duplicate_batch_ref_rejected_before_inference(self):
+        self.manifest['cases'][1]['alert_ref'] = 'A1'
+        raw = r.json_bytes(self.manifest)
+        with patch.object(r, 'bounded_process') as worker:
+            with self.assertRaisesRegex(ValueError, '^DUPLICATE_CASE_OR_BATCH_REF$'):
+                r.run_batch(self.base, raw, 'batch-1', self.inputs, infer=True)
+            worker.assert_not_called()
+        self.assertEqual(list(self.base.iterdir()), [])
 
     def test_no_inference_without_optin(self):
         with patch.object(r,'bounded_process') as worker:
@@ -844,7 +866,7 @@ class CLI(unittest.TestCase):
     def test_real_cli_signals_kill_worker_group_and_keep_failed_intent(self):
         for sig in (signal.SIGTERM, signal.SIGINT):
             with self.subTest(signal=sig), tempfile.TemporaryDirectory(
-                    dir=ROOT/'.git', prefix='runner-signal-') as directory:
+                    dir=ROOT, prefix='runner-signal-') as directory:
                 base = Path(directory)
                 store = base/'store'; store.mkdir(mode=0o700)
                 ready = base/'ready.json'
@@ -923,7 +945,7 @@ class CLI(unittest.TestCase):
 
     def test_prepare_is_offline_with_matching_provenance(self):
         manifest,inputs,_=fixture(1)
-        with tempfile.TemporaryDirectory(dir=ROOT/'.git',prefix='runner-cli-') as directory:
+        with tempfile.TemporaryDirectory(dir=ROOT,prefix='runner-cli-') as directory:
             command=[sys.executable,'-I','-B',str(ROOT/'ai_agent/runner.py'),'prepare']
             mapping={'alerts.jsonl':'alerts','rules.xml':'rules','configuration.json':'configuration',
                      'model.json':'model-record','rubric.txt':'rubric'}
