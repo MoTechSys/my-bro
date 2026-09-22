@@ -970,6 +970,62 @@ class Runner(unittest.TestCase):
                             if proc.poll() is None: os.killpg(proc.pid, signal.SIGKILL)
                             proc.wait(timeout=2)
 
+    def test_namespace_sync_happens_before_execution_and_after_pending_removal(self):
+        pending = Path(str(self.output) + '.pending')
+        actual = self.r.sync_parent; calls = []
+        def sync(path):
+            actual(path)
+            calls.append((Path(path).name, pending.exists()))
+        def execute(*_):
+            self.assertEqual(calls[-1], (pending.name, True))
+            return {'exit_code': 0, 'timed_out': False}
+        times = iter([self.t['t0'] * 1000000, self.t['t0'] * 1000000, (self.t['t0'] + 121000) * 1000000])
+        with patch.object(self.r, 'sync_parent', side_effect=sync), \
+             patch.object(self.r, 'execute', side_effect=execute), patch.object(self.r.time, 'sleep'), \
+             patch.object(self.r.time, 'time_ns', side_effect=lambda: next(times)):
+            self.assertEqual(self.invoke(self.args('--lab') + ['--device', 'attacker', '--wait', '120', '--', '/mock-only']), 0)
+        self.assertEqual(calls, [(self.output.name, False), (pending.name, True), (self.output.name, False)])
+
+    def test_directory_fsync_failure_retains_intent_and_prevents_execution(self):
+        actual = self.r.sync_parent
+        def fail(path):
+            if str(path).endswith('.pending'): raise OSError('synthetic sync failure')
+            actual(path)
+        with patch.object(self.r, 'sync_parent', side_effect=fail), patch.object(self.r, 'execute') as execute:
+            self.assertEqual(self.invoke(self.args()), 2)
+        execute.assert_not_called()
+        self.assertTrue(Path(str(self.output) + '.pending').exists())
+        self.assertEqual(self.output.read_bytes(), b'')
+
+    def test_outer_cancellation_retains_pending_and_returns_130(self):
+        actual = self.r.sync_parent
+        def stop(path):
+            actual(path)
+            if str(path).endswith('.pending'): raise KeyboardInterrupt()
+        with patch.object(self.r, 'sync_parent', side_effect=stop), patch.object(self.r, 'execute') as execute:
+            self.assertEqual(self.invoke(self.args()), 130)
+        execute.assert_not_called()
+        pending = Path(str(self.output) + '.pending')
+        before = pending.read_bytes()
+        self.assertEqual(self.invoke(self.args()), 2)
+        self.assertEqual(pending.read_bytes(), before)
+        self.assertEqual(self.output.read_bytes(), b'')
+
+    def test_sync_parent_uses_directory_descriptor(self):
+        import os
+        import stat
+        actual = os.fsync; kinds = []
+        def sync(fd):
+            kinds.append(stat.S_ISDIR(os.fstat(fd).st_mode)); actual(fd)
+        with patch.object(self.r.os, 'fsync', side_effect=sync): self.r.sync_parent(self.output)
+        self.assertEqual(kinds, [True])
+
+    def test_public_output_parent_rejected_before_creating_journal(self):
+        public = self.home/'public'; public.mkdir(mode=0o755)
+        self.output = public/'attempts.jsonl'
+        self.assertEqual(self.invoke(self.args()), 2)
+        self.assertFalse(self.output.exists())
+
     def test_trial_launch_failure_does_not_mask_original_error(self):
         import signal
         before = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
