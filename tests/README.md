@@ -325,3 +325,106 @@ source_ref/clock_ref/coverage_ref/config_sha256 بيانات إقرار من ا�
 4. اختبارات الشروط الجديدة ومراجعة مستقلة ثم PILOT معملية؛ تهيئة تصدير الرسوم/الجداول للفصل الخامس من أدلة فعلية فقط.
 
 تحقق PR #20 التاريخي: 34 قياس +19 أمان=53. العدد الحالي موضح في قسم v2؛ لا نتائج SOC فعلية.
+
+## M2-A — مراقب أدلة المصدر وربطه بالقياس (2026-09-22)
+
+**الحالة:** تنفيذ محلي مع 36 اختبار مصدر، لا قبول أصلي. الكود `scripts/measure/source_observer.py`، والربط في `trial_runner.py`. جميع المخازن والأمثلة هنا خاصة؛ لا ترفع spec أو snapshots الأصلية إلى Git. لا يشغّل المراقب هجمة، ولا يكتب محتوى الملف المستهدف أو ينشئه أو يحذفه. القراءة قد تحدث access time وفق نظام الملفات؛ ليست أداة حفظ جنائي تمنع كل تغيير metadata.
+
+### عقد الإدخال والخصوصية
+
+Linux، عملية CLI رئيسية واحدة، SIGALRM افتراضي وغير محجوب ولا timer قائم، مع ملكية حصرية لمعالجات الإشارات. الجهاز/الساعة معتمدان في manifest، ولا يكفي اسم `clock_ref` لإثبات صحة الساعة.
+
+مثال هيكلي **يجب استبدال placeholders فيه قبل التشغيل**:
+
+```json
+{
+  "schema_version": 1,
+  "run_id": "APPROVED_RUN_ID",
+  "trial_id": "UNIQUE_TRIAL_ID",
+  "device": "endpoint",
+  "clock_ref": "APPROVED_CLOCK_EVIDENCE",
+  "directory": "/APPROVED/PRIVATE/TEST_DIRECTORY",
+  "filename": "unique_test_file.dat",
+  "expected_sha256": "<64 lowercase hex of approved test bytes>",
+  "seconds": 30,
+  "precision_ms": 1
+}
+```
+
+- مجلد المصدر موجود وخاصة صلاحياته؛ leaf ملك UID الجاري بلا صلاحيات group/other، وأسلافه ملك root أو UID الجاري وبلا group/other write ولا symlinks. لا تغيّر صلاحيات مسارات Wazuh تلقائياً لتجاوز الرفض؛ عالجها ضمن تصميم المعمل.
+- الملف عند ظهوره regular، single-link، ملك UID الجاري، بلا group/other permissions. حد المحتوى 65536 بايت، واسم آمن بطول1..101، ومجلد absolute canonical. seconds integer2..120، precision_ms integer1..100؛ bool مرفوض.
+- مدة poll كل1s، jitter مقبول100ms، سقف قراءة شامل750ms بمؤقت POSIX. تغير wall/monotonic غير المتوافق أو التأخر أو محتوى خاطئ أو رابط/FIFO أو تبديل هوية الملف يفشل مغلقاً. لا retries لانتظار استقرار ملف بدأ بمحتوى غير متوقع.
+- مخزن الأدلة موجود وفارغ وخاص0700، منفصل عن شجرة المصدر في الاتجاهين؛ artifacts0600. لا تسمح aliases عبر bind mounts أو كاتب غير موثوق بنفس UID. تخزين الأدلة خارج monitored paths مسؤولية المشغّل أيضاً.
+- `expected_sha256` لبايتات ملف الاختبار المخطط، وليس raw logs اعتباطية. يحتفظ المخزن بنسخة البايتات الفعلية؛ يلزم retention/ACL وحصة مساحة ومراجعة للخصوصية قبل القبول الحي.
+
+### التحضير والتشغيل والتصدير
+
+الأوامر التالية من جذر مستودع SOC. المتغيرات تشير إلى **مسارات خاصة معتمدة**؛ لا تُشغّل observe على معمل دون التفويض والبوابات. أعد المجلدات وspec الخاص مسبقاً وفق العقد، ولا تستخدم `.git` لحفظ أدلة التشغيل.
+
+```bash
+python3 -B scripts/measure/source_observer.py preview --spec "$SOURCE_SPEC"
+python3 -B scripts/measure/source_observer.py observe --lab --spec "$SOURCE_SPEC" --store "$SOURCE_STORE"
+python3 -B scripts/measure/source_observer.py export --store "$SOURCE_STORE" --intent-sha256 "$INTENT_SHA256" --summary
+```
+
+1. preview لا يقرأ المصدر؛ يعيد `source_spec_sha256` و`target_key`. بصمة spec لتمثيل JSON canonical (`r.json_bytes`) بعد التحقق، لا لمسافات الملف الأصلي. سجلهما في `attempt.source_binding` قبل الفعل، وثبت manifest وهوية trial ومساراً لا يعاد استخدامه بين التجارب.
+2. ابدأ المراقب **قبل** فعل الاختبار في عملية مستقلة تحت إشراف المشغّل. intent يحفظ قبل قراءة المصدر؛ انتظر السلبية الأولى المنشورة قبل إطلاق الفعل المعتمد. لا يكفي أن تكون العملية قد بدأت، ولا تسجل سلبية تخمينية إن كان الملف قد ظهر.
+3. احتفظ خارج المخزن ببصمة **بايتات intent.json الأصلية**؛ يمكنك الحصول عليها أثناء التشغيل بعد النشر أو من نتيجة observe. لا تعِد حساب قيمة ثقة جديدة من مخزن مشكوك فيه لتجاوز رفض importer.
+4. observe يعيد0 عند observed و2 عند failed/preexisting/not_observed؛ الإلغاء CLI يعيد130. أخطاء الإدخال/المخزن ترفض برمز1. خروج0 هنا يثبت عقد الرصد فقط، لا الكشف أو AR.
+5. export العادي يعطي صف JSONL فقط عند observed؛ لا صف عند preexisting/not_observed. `--summary` يوضح الحالة؛ عند failed أو intent بلا terminal يعطي `artifacts_verified=false` وobserver=null، وليس فحصاً جزئياً ناجحاً. terminal تالف يُرفض ولا يتحول تلقائياً إلى فشل موثوق.
+
+المخزن: `intent.json` يحوي spec وبصمات الكود، ثم `poll-NNN.json` للتوقيت/الهوية والسلبية أو الإيجابية، و`poll-NNN.bin` عند وجود محتوى، ثم `terminal.json`. fsync للملف والدليل بعد كل نشر، وقفل nonblocking على inode الدليل. الفشل أو snapshot جزئي يبقي الأصل دون overwrite. التصدير لا يفتح المصدر أو الشبكة، لكنه يقرأ الكود الحالي لمقارنة البصمات؛ الأرشيف القديم يحتاج نسخته الأصلية من الكود.
+
+### ربط محاولة القياس
+
+إضافة إلى attempt ذي schema_version2 المعتمد، أضف:
+
+```json
+"source_binding": {
+  "source_spec_sha256": "<canonical hash returned by preview>",
+  "target_key": {"syscheck.path": "/APPROVED/PRIVATE/TEST_DIRECTORY/unique_test_file.dat"}
+}
+```
+
+الربط الحالي مخصص لملف: يجب أن يطابق `stage_selectors.t2.target_key.syscheck.path`، وأي حقول path معروفة في target_key وبقية stage selectors. `device == clock_map.t1` وclock_ref مطابقان للـmanifest؛ run_id/trial_id يطابقان المحاولة. مع `--eicar-dir` يجب إعداد المسار المولد الفريد نفسه، لا نقل placeholder إلى binding.
+
+```bash
+python3 -B scripts/measure/trial_runner.py --replay \
+  --spec "$TRIAL_SPEC" --manifest "$MANIFEST" --alerts "$ALERT_EXPORT" \
+  --source-store "$SOURCE_STORE" --source-intent-sha256 "$INTENT_SHA256" \
+  --output "$ATTEMPTS_JOURNAL"
+```
+
+- journal داخل parent خاص موثوق؛ لا يكون داخل مخزن المصدر أو alias لأي input. live يبقى `--lab` واختيار أمر مستقل معتمَد، ولا يبدأ المراقب ضمنياً.
+- `--source-store` و`--source-intent-sha256` مطلوبان معاً؛ binding دون مخزن يرفض. importer يقرأ snapshots ويعيد حساب البايتات والهوية والتوقيت، ولا يثق بصف JSONL موسوم `soc-source-file-v1` وحده.
+- صفوف legacy للمراقبين تبقى operator-supplied، ليست مصادقة مستقلة. clock_ref إن قُدم يتحقق حتى لمرحلة event. عند binding لا يسمح لصف legacy event آخر للمحاولة نفسها أن يستبدل الدليل. صفوف تجارب أخرى في ملفات rotation تُتجاهل بعد فحص JSON، ولا تسبب تعارضاً غير متعلق بالهوية.
+- event الصحيح داخل نافذة القياس يجعل event_valid=true **دون ملء t1**. إذا غاب تنبيه الحساس يبقى MISSED في المقام، لا INVALID بسبب غياب الحساس وحده. غياب دليل المصدر أو فساده لا يصبح MISSED آلياً؛ يحتفظ runner بمحاولة مستبعدة/فاشلة وبسببها.
+- أول poll إيجابي يعطي preexisting بلا event. التوقيت المصدّر هو نهاية الرصد الإيجابي مع القوس من بداية السلبية السابقة والدقة المحافظة، **ليس لحظة إنشاء الملف أو هوية الكاتب**. الربط يثبت ملف المحاولة المعلن لا أن AR تسبب بوجوده/اختفائه؛ لا ت1/t4/t5 أو زمن مصدر مختلق.
+
+### استعادة الانقطاع وحدود الديمومة
+
+- source intent بلا terminal: summary فشل منقطع، ولا event أو إعادة رصد بنفس المخزن. لا تزيل الملفات ولا تصلح hashes. صفوف ناجحة يعاد بناؤها من snapshots؛ ملفات إضافية/ناقصة/متغيرة ترفض.
+- trial journal: اسم journal وpending يزامنان في الدليل قبل الإطلاق، وبعد كتابة السطر ومحو pending. فشل sync قبل الإطلاق يمنع الأمر ويبقي النية. SIGINT/SIGTERM عند Popen يؤجلان حتى امتلاك الكائن ثم killpg قبل reap؛ cleanup محدود2s. الإلغاء خارج المنطقة الداخلية يعطي130 ويحفظ pending؛ داخلها يسجل failure وفق العقد الموجود.
+- `.pending` سابق يمنع كل كتابة جديدة إلى journal نفسه عمداً حتى المراجعة. **لا تمسحه، ولا تعِد الهجمة، ولا تعتبر عدم وجود صف دليلاً على عدم الإطلاق.** راجع وجود عملية باقية عبر المشرف الموثوق، لا عبر PID قديم وحده؛ احفظ journal وpending ومدخلات manifest/spec الأصلية وبصماتها في موقع خاص خارجGit. تحقق من اكتمال آخر سطر ومن عدم وجود الهوية بالفعل في journal قبل بناء سجل فشل مشتق منفصل. لا تعيد كتابة الأصل أو دمج سطر جزئي؛ وثق أن pending لا يثبت هل نُفذ الأمر فعلياً ولا زمن خروجه. الاستعادة الآلية والتحقق من نسخها وربطها بالتقرير الكامل **LOCAL_PENDING**؛ هذه خطوات مراجعة يدوية وليست أداة استعادة منفذة.
+- timeout يعني أن المشغّل **لم يلاحظ الخروج قبل deadline**، لا أنه قاس لحظة خروج العملية. قد تخرج العملية قرب الحد بين pollين؛ لا نستبدل هذه الحالة برمز0 لاحق ثم نزعم خروجاً ضمن المهلة. startup/cleanup/fsync وجدولة OS ليست hard-real-time.
+- SIGKILL/power-loss/D-state ونسل يغادر process group، دقة الساعة، سلامة filesystem وACL ومشرف init، وصدق المشغّل/كاتب بنفسUID خارج الضمان. اختبارات fault injection ليست اختبارات انقطاع طاقة.
+- عدم تناظر مقصود حالياً: source export --summary يعرض فشل غير متحقق الأجزاء؛ M1 visibility export يرفض terminal ذي reason حتى مع summary. لا تتوقع واجهة تعافٍ متطابقة أو تعمم سلوك أحدهما على الآخر.
+
+### تحكيم المراجعة المستقلة d1598bba
+
+المهمة [d1598bba](https://www.genspark.ai/agents?id=d1598bba-abfd-5ef1-bb04-3f2c4ff797c1) منتهية فعلياً؛ scope لقطة2a50f77 ونص خمسة ملفات مع runner1–190. المراجع لم ينفذ اختبارات. النص الأصلي والـJSON في `research/inbox/2026-09-22_m2_review_result.*`. الحكم التالي للمنفذ مدعوم بالفحوص، لا شهادة من المراجع على الإصلاحات اللاحقة.
+
+| البند | الحكم والأدلة |
+|---|---|
+| F1 إطلاقPopen | مقبول ومُعاد الإنتاج بطفلPython حقيقي؛ d632a2c أصلح نافذة الإلغاء، وأربع subcases SIGINT/SIGTERM تتحقق من kill/reap واستعادة المعالج. |
+| F2 pending والإلغاء الخارجي | جزئي: pending يتعمد منع rerun وكانت قاعدة الاحتفاظ موثقة في هذا الدليل مسبقاً، فلا يزول بحذف تلقائي. أضيف خروج130 ورسالة محدودة مع بقاء النية واختبار عدم overwrite؛ الاستعادة الآلية مازالت LOCAL_PENDING/ISSUE-097. |
+| F3 خروج قربdeadline | نرفض تحويل timeout إلى نجاح استناداً إلىwait بعد انتهاءالمهلة: لا يثبت زمنالخروج. الحد هو موعدملاحظةالخروج لا توقيتkernel. قيد دقة polling موثق أعلاه؛ لا ادعاء معرفةماحدثقبلdeadline منرمزcleanup. |
+| F4 تعارض صفوف تجارب أخرى | مقبول؛ الدالة القديمة0c6b2d0 رفضت صفاً غير متعلق بـSOURCE_STORE_REQUIRED، والحالية تقبل الدليل المرتبط وتستبعدصفوفالهويةالأخرى. إصلاح67ae769 واختبارrotation. |
+| F5 غيابwindow_start بعداستبعادالساعة | المثال المقدم غير قابل للوصول عبرCLI كما وصف: preflight فيm.analyze_v2/validate_trial يطلبنافذةصالحةقبلالإطلاق. اختبارSESSION_CLOCK_LIMIT_EXCEEDED الموجوديحفظالسببويمنعالأمر. لا نعدلcollect لفرضيةتتجاهلpreflight؛ فسادمدخلاتآخر قديسجلفشلاًصريحاً. |
+| F6 fsync للدليل | مقبول فيجوهره؛ وصفالمراجعلـpendingأنهwrite_onceغيردقيق (كانsecure_open/write_all). أضيفsync_parent بعدنشرpending وقبلاالأمر وبعدunlink، وفحصparentخاص؛ اختبارات ترتيب/واصفدليل/فشلsync. لا power-loss claim. |
+| F7 analyst socket timeout | قيد صحيح موثق أصلاً فيUC-14 §3/§11؛ direct analyst لا يملكdeadlineالعامل تلقائياً. استخدمrunner لجمعأدلةC4 المحدودة؛ لا ادعاءغيابالتنقيطفيالمسارالمباشر. |
+| F8 فرقsummaryبينM1وM2 | توضيح مقبول، موثق أعلاه؛ كلاالمسارين يمنعإنتاجevent/t3منفشل. لمتُغيَّرواجهةM1. |
+
+تدقيق ذاتي إضافي لا ننسبه للمراجع:959deea يغلقfd داخلالاستدعاءالموقّت. اختبارالعائد منtimed call فشل فعلياً علىالدالةالقديمة3a5850d ونجحعلىالجديدة، معتنظيفالواصففيالاختبارالسلبي. يبقىمحدوداًبنافذةالعودةالمختبرة، لا كلسباقاتالإشاراتفيالمكتبات.
+
+**بوابةالإغلاق:**545 اختباراًمحلياًعلىe8aef17، وتحققCIللرأسالنهائي فيPR28.36 اختبارمصدر،134قياس،75runner. مراجعةساكنةمستقلةمحكمة، لكنها ليستقبولاًحياًأومراجعةإحصائيةبشرية. M2-B/t4/t5 وM3/UC-01ومقامAR وpending recovery وD1مازالتأعمالاًمحلية، لا تعادبناءM2-Aبدلاًعنها.
