@@ -424,33 +424,33 @@ git diff --check
 
 اختبارtransport محلي اصطناعي مضبوط عبرCLI والعامل الحقيقي: تأخرheaders،bodyمنقط،قطعقبل/بعدheaders،حجمزائد،والتقاطrequestيثبتعدمإرسالgold/raw. لم يُشغّلHTTPserver أوOllamaأصلي بهذهالجولة؛ subprocessالاصطناعي لايساوياختبارخادمOllama. ثممراجعةمختصة واختيارنموذج/رخصة/موارد/هويةوجردمعتمد و30labelsبشرية وتحكيمC4. المراجعةالحاليةذاتية فقط، ومراجعات2026-09-18 السابقةمنتهيةلايعادطلبهاكأنهاعالقة. بواباتالسحابة068/الاستعادة/reboot/daemon/canary/Windows/PILOT مستقلة؛ لاكتابةخارجworkspace.
 
-## 15. النقل HTTP الفعلي الاصطناعي — إصلاح8e0916a
+## 15. النقل HTTP الفعلي الاصطناعي — إصلاح 8e0916a
 
-`tests/test_ai_transport.py` يطلق خادم loopback اصطناعياً والعامل وCLI الحقيقيين؛17 اختباراً، لا Ollama weights ولا استنتاج أمني أصلي. يثبت request capture أن gold/rubric/raw logs لا تدخل سياق النموذج في fixtures المختبرة. الخادم يغلق بعد الاختبارات ولا يمثل واجهةSOC.
+`tests/test_ai_transport.py` يطلق خادم loopback اصطناعياً والعامل و CLI الحقيقيين؛ 17 اختباراً، بلا أوزان Ollama أو استنتاج أمني أصلي. يثبت التقاط الطلب أن gold و rubric و raw logs لا تدخل سياق النموذج في الحالات المختبرة. الخادم يغلق بعد الاختبارات، ولا يمثل واجهة SOC.
 
-أُعيد إنتاج رد `Content-Length` أكبر من البايتات الفعلية لكن الجسم الموجود JSON تام: `HTTPResponse.read(limit)` لا يرفع دائماً `IncompleteRead`. أصبح المحول يتحقق من status200، framing ورقمContent-Length وحجمEnvelope وطولالجسم صراحة. يرفض TE+CL، وتكرارCL/TE، وencoding غيرidentity، وTransfer-Encoding غيرchunked؛ يدعمchunked الصحيح ويرفض الناقص. رفضCL المكرر حتى المتطابق **اختيارمحليأشدمنRFC** وليس ادعاء أنRFC يمنعكلالتكرارات.
+أُعيد إنتاج رد يحمل Content-Length أكبر من البايتات الفعلية، لكن جسمه الموجود JSON تام: `HTTPResponse.read(limit)` لا يرفع دائماً IncompleteRead. أصبح المحول يتحقق صراحة من status=200، وتأطير الرسالة، ورقم Content-Length، وحد الحجم، وطول الجسم. يرفض اجتماع TE و CL، وتكرار CL أو TE، وترميز المحتوى غير identity، و Transfer-Encoding غير chunked. يدعم chunked الصحيح ويرفض الناقص. رفض CL المكرر حتى المتطابق **اختيار محلي أشد من RFC**، وليس ادعاء أن المعيار يمنع كل التكرارات.
 
-يبقى التحقق منUTF-8/JSON الصارم وdone=true وassistant/message/content ورفضtool_calls. فشل النقل يصل إلىjournal كـfailed/WORKER_FAILED دون نص المزود، بينما schemaرفضٌ مستقل. dripping headers/body لا يمددdeadline العامل؛ اختبارات deadline0.6s تسمح بزمنجداريأقلمن4s للتشغيلوالتنظيف، لا وعدhard-real-time.
+يبقى التحقق الصارم من UTF-8 و JSON و done=true وبنية assistant/message/content ورفض tool_calls. فشل النقل يصل إلى journal كـ failed/WORKER_FAILED دون نص المزود، بينما رفض schema حالة مستقلة. إرسال headers أو body ببطء لا يمدد مهلة العامل؛ اختبارات deadline=0.6s تسمح بزمن جداري أقل من 4s للتشغيل والتنظيف، ولا تعد بضمان hard-real-time.
 
-قيد لا نخفيه: EOF في close-delimited response بلاCL/TE لا يثبت أنجسماًذاJSONصالحلم يُقطع. المسارالمباشر `analyst --infer` يملكsocket timeoutفقط؛ استخدامه لا يمنحهعزلومهلةrunner تلقائياً. هويةالنموذجوالرخصةوالأوزانوالجردوالتحكيمالبشري ليستمستنتجةمننجاحHTTP/schema.
+**قيد معلن:** EOF في رد close-delimited بلا CL/TE لا يثبت أن جسماً ذا JSON صالح لم يُقطع. المسار المباشر `analyst --infer` يملك socket timeout فقط؛ استخدامه لا يمنحه عزل العامل ومهلته تلقائياً. هوية النموذج ورخصته وأوزانه والجرد والتحكيم البشري ليست مستنتجة من نجاح HTTP أو schema.
 
-المصادرالمؤرخة والأرشيفات: `research/analyzed/2026-09-22_completion_research.md` وreceipts/أرشيفاتgzip فيinbox. RFC9112 §6.3/§8 وOllama chat وPythonHTTPResponse.read المحلي؛ ليس امتثالاً عاماً. مراجعةd1598bba للنصعند2a50f77شملتالمحول، بلااختباراتعندالمراجع، وتحكيمهافيtests/README §M2-A.
+المصادر المؤرخة والأرشيفات في `research/analyzed/2026-09-22_completion_research.md` و receipts وأرشيفات gzip في inbox: RFC9112 §6.3/§8 و Ollama chat ومصدر Python المحلي. ليست شهادة امتثال. مراجعة d1598bba للنص عند 2a50f77 شملت المحول، بلا اختبارات عند المراجع؛ تحكيمها في tests/README §M2-A.
 
 ## 16. تحكيم مراجعة runner المستقلة ee00bee5
 
-[المراجعة](https://www.genspark.ai/agents?id=ee00bee5-a873-5abe-9b12-4a9957489528) انتهت (finished/has_error=false). نطاقها `5e98757cadbcfc71860cefe8b139fafb74c4af26`، runner واختباراته؛ بعضdependenciesلم تُقرأ كاملةعندالمراجع. JSONالأصليوالنصالنهائيفي `research/inbox/2026-09-22_independent_review.*`. لا تشملإصلاحHTTPاللاحقأوsourceobserver تلقائياً، ولا تعدمراجعةبشرية.
+[المراجعة](https://www.genspark.ai/agents?id=ee00bee5-a873-5abe-9b12-4a9957489528) انتهت فعلياً (finished/has_error=false). نطاقها `5e98757cadbcfc71860cefe8b139fafb74c4af26`، ومحتواها runner واختباراته؛ بعض الاعتماديات لم تُقرأ كاملة عند المراجع. JSON الأصلي والنص النهائي في `research/inbox/2026-09-22_independent_review.*`. لا تشمل إصلاح HTTP اللاحق أو source observer تلقائياً، ولا تعد مراجعة بشرية.
 
 | البند | حكم المنفذ والدليل |
 |---|---|
-| F1 تكرارA1داخلbatch | مرفوض: evaluate يتحققمن(case_id) ومن(batch_id,alert_ref) قبلworker/كتابةالأدلة. اختبارreview_f1 يثبتDUPLICATE_CASE_OR_BATCH_REFوعدمأيworker/artifact. لا إضافةفحصمكرربناءعلىdependencyلم يقرأهاالمراجع. |
-| F2 تطبيعCRLF/BOM | مرفوض للـreader: analyst.read_file يفتحbinary ثمUTF-8 strict؛ test_review_f2 يحفظBOM/CRLF/CR بايتياً. لا نزعمأنparserيقبلJSONبـBOM. اختبارالبصمةالأصلييبقىموجوداً. |
-| F3 final symlink والـpath race | فرضيةاتباعfinal symlink مرفوضة: O_NOFOLLOWموجودواختبارread_bytesيفشل. مخاطرparent replacement وكاتبsameUIDحدودمعلنة؛ ليسالاختبارشهادةأصالةولاsandbox. |
-| F4 القفل طوالالعامل | تصميممقصود: LOCK_NBيرفضفوراًولاينتظر120ث؛ يحميعمليةexportمنإساءةتصنيفintentجاريةكمنقطعة. تحريرالقفل مبكراً يحتاجعقدconcurrencyوجرّبالأدلة، لا إصلاحسريع. |
-| F5 testtempداخل.git | ملاحظةتنظيممقبولة: في60102d6 نُقلtemporaryrootلاختباراتrunnerإلىworkspace. اختباراتsourceالجديدةأيضاًخارجه. بقيةالحزم القديمةلمتنقلجميعها؛ لمتُقرأأوتؤرشفموادSSH. |
-| F6 تشخيصعام | قيدobservabilityصحيحومقصودلحمايةالخصوصية؛ validation_codeالمقيدموجود. تمييزinternal faultsبأكوادمحدودةتحسينمحتمل، لا كشفexception/providertext. لمندعِتنفيذه. |
-| F7 latency≤120 | اقتراحمرفوض: latencyيشملstartup/cleanupوقديتجاوزdeadline. فرض120سيرفضقياساًحقيقياً؛ hashليسإثباتصدقزمنالمشغّل. لا تقليممدةحقيقيةلتوافقالمهلة. |
-| F8 أولإشارةفقط | عقدصريحومختبر: أولcancellationيعاد، SIG_IGNمحفوظ وSIG_DFLيتحولإلىKeyboardInterruptداخلنافذةالإطلاق. ليستقائمةانتظارلكلالإشارات. |
-| F9 cleanupبعدdeadline | مقبولكقيدموثق؛ حدcleanup2sوفشلهلايخفى. لا hard-real-timeولااستنتاجهويةPIDأونسليغادرالمجموعة. |
-| F10 WNOWAIT | لمتثبتفجوةجديدة؛ بقاءkillpgقبلreapمعملكيةحصريةللأبناءوSIGCHLDافتراضي، والاختباراتالموجودةلترتيبالتنظيفباقية. |
+| F1 تكرار A1 داخل batch | مرفوض: evaluate يتحقق من case_id ومن الزوج(batch_id, alert_ref) قبل العامل وكتابة الأدلة. اختبار review_f1 يثبت DUPLICATE_CASE_OR_BATCH_REF وغياب أي استدعاء للعامل أو artifact. لا نضيف فحصاً مكرراً بناء على اعتماد لم يقرأه المراجع. |
+| F2 تطبيع CRLF/BOM | مرفوض للـ reader: analyst.read_file يفتح binary ثم يفك UTF-8 بصرامة. اختبار review_f2 يحفظ BOM و CRLF و CR بايتياً. لا نزعم أن parser يقبل JSON مع BOM. اختبار البصمة الأصلي باقٍ. |
+| F3 final symlink و path race | فرضية اتباع final symlink مرفوضة: O_NOFOLLOW موجود واختبار read_bytes يرفض الرابط. تبديل parent وكاتب بنفس UID من حدود الثقة المعلنة؛ الاختبار ليس شهادة أصالة أو sandbox. |
+| F4 القفل طوال العامل | تصميم مقصود: LOCK_NB يرفض فوراً، ولا ينتظر 120 ث. يحمي export من تصنيف intent جارية كأنها منقطعة. تحرير القفل مبكراً يحتاج عقد concurrency واختبارات، لا إصلاحاً متعجلاً. |
+| F5 ملفات الاختبار داخل.git | ملاحظة تنظيم مقبولة: في 60102d6 نُقل جذر الملفات المؤقتة لاختبارات runner إلى workspace. اختبارات المصدر الجديدة خارجه أيضاً. بقية الحزم القديمة لم تُنقل جميعها؛ لم تُقرأ أو تؤرشف مواد SSH. |
+| F6 التشخيص العام | قيد observability صحيح ومقصود لحماية الخصوصية؛ validation_code المقيد موجود. تمييز الأعطال الداخلية بأكواد محدودة تحسين محتمل، لا مبرر لكشف exception أو provider text. لم ندعِ تنفيذه. |
+| F7 latency≤120 | اقتراح مرفوض: latency يشمل startup و cleanup وقد يتجاوز deadline. فرض 120 سيرفض قياساً حقيقياً؛ hash لا يثبت صدق زمن المشغّل. لا نقلّم المدة الحقيقية لتوافق المهلة. |
+| F8 أول إشارة فقط | عقد صريح ومختبر: أول cancellation يعاد، و SIG_IGN محفوظ، و SIG_DFL يتحول إلى KeyboardInterrupt داخل نافذة الإطلاق. ليست قائمة انتظار لكل الإشارات. |
+| F9 cleanup بعد deadline | مقبول كقيد موثق؛ حد cleanup هو 2s وفشله لا يُخفى. لا hard-real-time أو ضمان لنسل يغادر المجموعة. |
+| F10 WNOWAIT | لم تثبت فجوة جديدة؛ يبقى killpg قبل reap مع ملكية حصرية للأبناء و SIGCHLD افتراضي. اختبارات ترتيب التنظيف الموجودة باقية. |
 
-75 اختبارrunnerناجحة؛ثلاثةجديدةلـF1/F2/F3. مجموعالمشروع545علىe8aef17. تحكيمالكاتبليس«مراجعةمستقلةثانية»؛ المستقل هوالتقريرالمؤرشفوالفحصبعدهإعادةإنتاجذاتية. AIيبقىexecution_authority=none. لا inferenceحقيقيأو30labelsأونتائجC4أصليةفيهذهالجولة.
+75 اختبار runner ناجحة؛ ثلاثة جديدة لـ F1/F2/F3. مجموع المشروع 545 على e8aef17. تحكيم الكاتب ليس «مراجعة مستقلة ثانية»؛ المستقل هو التقرير المؤرشف، والفحص اللاحق إعادة إنتاج ذاتية. AI يبقى execution_authority=none. لا inference حقيقي أو 30 labels بشرية أو نتائج C4 أصلية في هذه الجولة.

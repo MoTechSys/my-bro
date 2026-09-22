@@ -280,11 +280,11 @@ ISSUE-091 — FIXED-IN-REPO/NEEDS-NATIVE: مراجعةd21f2fcc انتهت ساك
 
 ## M2-A والنقل وتحكيم المراجعات — 2026-09-22 [AI]
 
-- **ISSUE-093 — FIXED-IN-REPO / NEEDS-NATIVE:** HTTPResponse.read(limit) قبل8e0916a قبل JSON تاماً رغم جسم أقصر منContent-Length.17 اختبارHTTP/CLI اصطناعياً؛ رفض framing/encoding غير المقبول وCL الناقص/المكرر. close-delimited لا يثبت عدم القطع، ورفضCL المكرر اختيار محلي أشد منRFC. UC-14 §15.
-- **ISSUE-094 — FIXED-IN-REPO / NEEDS-NATIVE:** M2-A لم يكن له منتج أدلة مصدر. أضيف المراقب وsnapshots/intent/export وbinding،36 اختباراً؛ لا t1/t4/t5 أو هوية كاتب منوقتpoll. ساعة/ACL/مصدرأصلي وقبولLinux باقية. tests/README §M2-A.
-- **ISSUE-095 — FIXED-IN-REPO:** نافذة إلغاءPopen فيtrial_runner أُعيد إنتاجها بطفل حقيقي حي؛ d632a2c يعيد استخدام الحارس ويغلقها. أربع حالاتإشارة فعلية وفشلspawn. لا ضمانD-state/SIGKILL/نسلخارجالمجموعة.
-- **ISSUE-096 — FIXED-IN-REPO:** فحصتعارضsource producer شملصفوفتجاربأخرى؛ أُعيد إنتاجرفضهاعلى0c6b2d0، وأصلح67ae769 فلترةالهويةقبلالفحص. اختبارrotation واختباررفضكتابةoutputداخلمخزنالمصدر.
-- **ISSUE-097 — PARTIAL / LOCAL_PENDING:** sync أسماءjournal/pending أضيف واختُبرقبلالإطلاقوبعدإزالةpending، معparentخاص. الإلغاءالخارجي يعطي130ويحفظالنية. pendingيتعمدمنعالتشغيلاللاحقعلىنفسjournal؛ دليل مراجعةيدوية موجود، لكنأداةاستعادةمحكومةومتكاملةمازالتعملًامحلياً. لا إزالةتلقائيةأوإعادةهجمة أوادعاءاختبارانقطاعطاقة.
-- **ISSUE-098 — FIXED-IN-REPO:** تدقيقذاتيأثبتfdمتسرباً عندعودةtimed directory-openقبلإسناده؛959deea يحصرالواصفاتداخلsample،واختبارe8aef17يفشلعلىالدالةالقديمة3a5850d. لا تعميمإلىكلسباقاتالإشاراتعلىمستوىsyscall.
-- المراجعةee00bee5: F1/F2 وفرضيةfinal-symlinkمنF3 مرفوضةبدليل؛ F5 عولجلاختباراتrunner؛بقاياسعةالتشخيصوحدودالثقةموثقةفيUC-14 §16. d1598bba منتهيةومحكمةفيtests/README، لاتعداعتماداًبشرياًأوللإصلاحاتاللاحقة.
-- 545 اختباراًمحلياًعلىe8aef17؛بواباتC4/native/ISSUE-068 والرسالةوM2-B/M3مازالتغيرمغلقة. لا تستمدنسبةإنجازمنعددالاختبارات.
+- **ISSUE-093 — FIXED-IN-REPO / NEEDS-NATIVE:** قبل 8e0916a، قبلت HTTPResponse.read(limit) جسم JSON تاماً رغم قصره عن Content-Length. أضيفت 17 حالة HTTP/CLI اصطناعية، ورفض framing أو encoding غير المقبول و CL الناقص أوالمكرر. close-delimited لا يثبت عدم القطع؛ ورفض CL المكرر اختيار أشد من RFC. UC-14 §15.
+- **ISSUE-094 — FIXED-IN-REPO / NEEDS-NATIVE:** أضيف منتج أدلة M2-A مع snapshots و intent و export و binding، و 36 اختباراً. لا t1/t4/t5 أو هوية كاتب منوقت poll. قبول Linux والساعة و ACL والمصدر الأصلي باقٍ؛ tests/README §M2-A.
+- **ISSUE-095 — FIXED-IN-REPO:** نافذة إلغاء Popen في trial_runner أُعيد إنتاجها بطفل حي. d632a2c يعيد استخدام الحارس ويغلقها؛ أربع حالات إشارة فعلية وفشل spawn. لا ضمان D-state أو SIGKILL أو نسل خارج المجموعة.
+- **ISSUE-096 — FIXED-IN-REPO:** فحص تعارض source producer شمل صفوف تجارب أخرى. أُعيد إنتاج الرفض على 0c6b2d0، وصحح 67ae769 فلترة الهوية قبل الفحص. أضيف اختبار rotation ورفض كتابة output داخل مخزن المصدر.
+- **ISSUE-097 — PARTIAL / LOCAL_PENDING:** أضيف sync لأسماء journal/pending، واختُبر قبل الإطلاق وبعد إزالة pending، مع parent خاص. الإلغاء الخارجي يعطي 130 ويحفظ النية. pending يتعمد منع تشغيل لاحق على journal نفسه. دليل المراجعة اليدوية موجود؛ أداة الاستعادة الآلية المتكاملة مازالت عملاً محلياً. لا حذف تلقائي أو إعادة هجمة أو ادعاء اختبار انقطاع طاقة.
+- **ISSUE-098 — FIXED-IN-REPO:** تدقيق ذاتي أثبت fd متسرباً عند عودة timed directory-open قبل إسناده.959deea يحصر الواصفات داخل sample، واختبار e8aef17 يفشل على الدالة القديمة 3a5850d. لا تعميم إلى كل سباقات الإشارات على مستوى syscall.
+- مراجعة ee00bee5: F1/F2 وفرضية final-symlink من F3 مرفوضة بدليل؛ F5 عولج لاختبارات runner. بقية حدود التشخيص والثقة موثقة في UC-14 §16. مراجعة d1598bba منتهية ومحكّمة في tests/README؛ ليست اعتماداً بشرياً أو شهادة للإصلاحات اللاحقة.
+- 545 اختباراً محلياً على e8aef17؛ بوابات C4 و native و ISSUE-068 والرسالة و M2-B/M3 مازالت غير مغلقة. لا تستمد نسبة إنجاز من عدد الاختبارات.
