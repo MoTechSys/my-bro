@@ -1,0 +1,54 @@
+[
+  {
+    "file": "nist_800_61r3.html",
+    "url": "https://csrc.nist.gov/pubs/sp/800/61/r3/final",
+    "final_url": "https://csrc.nist.gov/pubs/sp/800/61/r3/final",
+    "status": 200,
+    "bytes": 44822,
+    "sha256": "db5832684df57c9e04cabed034e66b1df4149ecc03d4ea048a013822249b2a04",
+    "retrieved_at": "2026-09-22T20:54:56.938354+00:00",
+    "archive": "nist_800_61r3.html.gz",
+    "archive_encoding": "gzip",
+    "archive_bytes": 9290,
+    "archive_sha256": "369bed3eb091206636a0fce65a87a22fc4a0b13af318079f74edbad0bc462100"
+  },
+  {
+    "file": "wazuh_custom_ar.html",
+    "url": "https://documentation.wazuh.com/current/user-manual/capabilities/active-response/custom-active-response-scripts.html",
+    "final_url": "https://documentation.wazuh.com/current/user-manual/capabilities/active-response/custom-active-response-scripts.html",
+    "status": 200,
+    "bytes": 236237,
+    "sha256": "7b412a0ceeabf806e2fa89a0ba186c49c368c6f873889c1f18019e0768231f65",
+    "retrieved_at": "2026-09-22T20:54:56.870277+00:00",
+    "archive": "wazuh_custom_ar.html.gz",
+    "archive_encoding": "gzip",
+    "archive_bytes": 37147,
+    "archive_sha256": "b17a0cdac291cf6d391923d07c9922ff023baf90d786187a4038e2110d64609e"
+  },
+  {
+    "file": "ollama_chat.md",
+    "url": "https://docs.ollama.com/api/chat.md",
+    "final_url": "https://docs.ollama.com/api/chat.md",
+    "status": 200,
+    "bytes": 20415,
+    "sha256": "a9ee082a650ed5bd306d178f02429d14e57e52d2c3ab0f63e476da44a41d8626",
+    "retrieved_at": "2026-09-22T20:54:56.979150+00:00",
+    "archive": "ollama_chat.md.gz",
+    "archive_encoding": "gzip",
+    "archive_bytes": 7283,
+    "archive_sha256": "017c9884734478e765e06cbfd8cb1531649ac80e39edff82f391cd175e58b9a4"
+  },
+  {
+    "file": "rfc9112.txt",
+    "url": "https://www.rfc-editor.org/rfc/rfc9112.txt",
+    "final_url": "https://www.rfc-editor.org/rfc/rfc9112.txt",
+    "status": 200,
+    "bytes": 109913,
+    "sha256": "e4f426bac6206b67fdf9e0da826154f70588db2133a0a86b15cde4ff725d8937",
+    "retrieved_at": "2026-09-22T20:54:56.924476+00:00",
+    "archive": "rfc9112.txt.gz",
+    "archive_encoding": "gzip",
+    "archive_bytes": 32069,
+    "archive_sha256": "ba32f20aaee566d22f8875187628cc032457d076093e1489216927263e461fd2"
+  }
+]
