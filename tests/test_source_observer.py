@@ -256,6 +256,26 @@ class Source(unittest.TestCase):
             with self.assertRaises(BlockingIOError): s.observe(self.spec, self.store)
             with self.assertRaises(BlockingIOError): s.export(self.store, 'a' * 64)
 
+    def test_deadline_at_call_return_does_not_leak_source_descriptor(self):
+        real = s.r.directory; opened = []
+        def directory(path):
+            fd = real(path)
+            if str(path) == str(self.source): opened.append(fd)
+            return fd
+        def expired_at_return(function):
+            function()
+            raise s.v.RequestDeadline()
+        with patch.object(s.r, 'directory', side_effect=directory), \
+             patch.object(s.v, 'deadline_call', side_effect=expired_at_return):
+            result = s.observe(self.spec, self.store)
+        self.assertEqual(result['status'], 'failed'); self.assertTrue(opened)
+        leaked = []
+        for fd in opened:
+            try: os.fstat(fd)
+            except OSError: continue
+            leaked.append(fd); os.close(fd)  # also clean up when proving the old regression
+        self.assertEqual(leaked, [])
+
     def test_actual_read_deadline_is_retained(self):
         with patch.object(s, 'read_source', side_effect=lambda *_: time.sleep(2)):
             result = s.observe(self.spec, self.store)
