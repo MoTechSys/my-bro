@@ -1,5 +1,49 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
+## الاستئناف الحاكم — M2-A وتحكيم المراجعات، 2026-09-22 [AI]
+
+هذا القسم أحدث من جميع اللقطات التاريخية أدناه. استئناف من `ae18d100a45e4641c008c9cae2af7376f5c2dd87`؛ مساحة SOC هي `/home/user/webapp/my-bro`، لا المستودع الأب. الحساب MoTechSys وصلاحية push مثبتان، والفرع المشترك لم يُعد كتابة تاريخه. PR28 مفتوح للمراجعة، لا دمج أو نشر ضمني.
+
+### المنجز الفعلي
+
+- `source_observer.py`: مراقب Linux محلي، قراءة فقط لملف اختبار مخطط. غياب ثم بايتات مطابقة يعطيان `event/action_confirmed` فقط؛ أول إيجابية `preexisting`، وعدم الظهور ليس إثبات فشل الكشف. لا اشتقاق t1 من mtime أو poll ولا t4/t5 أو سببية AR.
+- مخزن جديد 0700 وملفات 0600، intent قبل قراءة المصدر، snapshots للبايتات، فحص regular/single-link/owner/mode، تطابق dev/inode/size/mtime/ctime قبل القراءة وبعدها وبالاسم، مهلة قراءة كلية 750ms وفاصل 1s. التصدير يعيد التحقق دون فتح المصدر. بصمة spec هي JSON canonical؛ بصمة الملف لبايتاته الأصلية بما فيها bytes غير UTF-8.
+- الربط في `trial_runner`: `attempt.source_binding` يحفظ source_spec_sha256 وtarget_key؛ `--source-store` مع `--source-intent-sha256` يعيدان استيراد المخزن، والتحقق من run/trial/path/spec/device/clock_ref. رفض standalone JSONL المنتج من المصدر، مع بقاء legacy operator-supplied موضحاً. event الصحيح يحفظ MISSED عند فقد الحساس مع t1 فارغ.
+- أُعيد إنتاج نافذة Popen في مشغّل التجارب وأُصلحت في `d632a2c` بإعادة استخدام حارس الإلغاء الموجود؛ أربع حالات SIGINT/SIGTERM حقيقية واختبار فشل إطلاق. أُصلح نطاق تعارض observer وديمومة أسماء journal/pending في `67ae769`، وأضيف خروج130 للإلغاء الخارجي مع الاحتفاظ بالنية. مخرجات القياس تحتاج parent خاصاً موثوقاً الآن.
+- تدقيق ذاتي إضافي أثبت تسرب fd عند عودة دالة فتح المصدر الخاضعة للمؤقت: الدالة القديمة من `3a5850d` فشلت في الاختبار، والجديدة `959deea` تغلق الواصفات داخل الاستدعاء وتحتفظ بهوية الدليل فقط. اختبار `e8aef17` يثبت الانحدار؛ ليس ضماناً ضد كل إشارة بين syscalls أو D-state.
+- إصلاح HTTP السابق `8e0916a` موثق الآن في UC-14 §15: الرد ذو JSON تام وContent-Length ناقص لا يصبح completed؛ 17 اختبار نقل حقيقي اصطناعي، لا inference أصلي.
+- **545 اختباراً محلياً وALL CHECKS PASSED على `e8aef1723d874b919a844b5e7024b29f6aa60f52`** (25.112s): 499 موروثة +36 مصدر +7 قياس +3 runner. runner=75، measurement=134. CI لنفس الرأس/رأس التوثيق النهائي يثبت في تعليق PR28 بعد النشر؛ لا تستعر نجاح 60102d6 أو ae18d10 لرأس لاحق.
+
+### المراجعات — منتهية، لا تعاد
+
+- مراجعة `ee00bee5` للقطة5e98757 مؤرشفة ومحكّمة في UC-14 §16. F1 يرفضه evaluator قبل worker؛ F2 reader binary يحفظ BOM/CRLF/CR؛ F3 final symlink مرفوض. أضيفت اختبارات فعلية. same-UID/parent replacement ليست أصالة مضمونة. نُقلت temporary directories لاختبارات runner وحدها إلى workspace؛ بقية الاختبارات القديمة لم تُنقل بالجملة.
+- مراجعة [d1598bba](https://www.genspark.ai/agents?id=d1598bba-abfd-5ef1-bb04-3f2c4ff797c1) للقطة2a50f77 انتهت فعلياً (finished/has_error=false). JSON الأصلي والنص النهائي في `research/inbox/2026-09-22_m2_review_result.*`، والتحكيم في tests/README §M2-A. ليست مراجعة بشرية أو اعتماداً للتعديلات اللاحقة. لا مهمة مراجعة جارية عند هذا التسليم.
+- أُعيد فحص أرشيفات البحث الأربعة: gzip hash/size والبايتات المفكوكة تطابق receipts. لا إعادة تنزيل أو تنفيذ محتواها.
+
+### التشغيل والاستعادة
+
+الدليل الكامل وspec وbinding والأوامر في **tests/README §M2-A**. `export --summary` للمصدر يصف failed/interrupted مع `artifacts_verified=false` ولا ينتج event. غياب terminal بعد intent لا يسمح بإعادة المحاولة. snapshot جزئي أو terminal تالف يستلزمان حفظ الأصل ومراجعة؛ لا إصلاح hashes لتوافق كوداً جديداً. تعديل source/code fingerprint يلزم الكود الأصلي عند استيراد الأرشيف القديم.
+
+`trial_runner` يرفض `.pending` سابقاً عمداً، ولا يحذفه تلقائياً. دليل المراجعة اليدوية موجود؛ **أداة استعادة آلية آمنة للمحاولات لم تُنفذ بعد وهي عمل محلي متبقٍ**، لا بوابة بيئة. SIGKILL للوالد/انقطاع الطاقة/نسل يغادر المجموعة/ACL/mount aliases خارج الإثبات الحالي. لا raw logs أو مفاتيح أو جرد حساس في Git، ولا أرشفة `.git`.
+
+### التالي بالضبط — ما زال عمل محلي
+
+1. تطوير استيراد/استعادة pending دون overwrite أو retry، وربط start/exit observations دون ادعاء لحظة خروج عملية لا نعرفها؛ مراجعة واختبارات فساد/تكرار/انقطاع.
+2. M2-B: عقد t4 instrumentation وهوية AR؛ t5 مستقل بقرينة سببية، لا اختفاء ملف وحده. ثم M3: UC-01 ومقام AR الكامل. هذه حزم برمجية غير منجزة؛ لا نسميها جميعاً محجوبة بالبيئة.
+3. ISSUE-068 تصميم حماية config دون تخفيف guard؛ ثم الرسالة D1: تدقيق المراجع والفصول، تصيير الرسوم، pipeline DOCX/PDF قابل للإعادة، front matter ودليل التشغيل/العرض النهائي.
+4. الخارجي: native Linux/Windows/ACL/AR/ساعة، reboot/daemon/rollback/canary بتفويض مناسب، نموذج ورخصة وموارد وهوية وجرد معتمدان، 30 labels بشرية وتحكيم C4، عينة جهاز شبكة وطوبولوجيا ونطاق، PILOT5 ثم n≥30 وbaseline≥12h، قالب الجامعة والموعد والمراجعة البشرية.
+
+لا يقال «لم يبق إلا البيئة» قبل إنهاء البنود المحلية. AI استشاري وexecution_authority=none دائماً. لا SSH أو cloud write أو نموذج حي في هذه الجولة.
+
+```bash
+cd /home/user/webapp/my-bro && pwd
+git status --short --branch
+git fetch origin main genspark_ai_developer
+TMPDIR=/home/user/webapp/my-bro/.git PYTHONDONTWRITEBYTECODE=1 bash scripts/validate/validate_all.sh
+python3 -B -m unittest discover -s tests -p test_source_observer.py
+git diff --check
+```
+
 ## متابعة T-70 — الأحدث 2026-09-22 [AI]
 
 - مساحة العمل الصحيحة لهذه الجلسة `/home/user/webapp/my-bro` داخل المساحة المسموحة؛ المستودع الأب مشروع مختلف ولم يُعدّل. بداية المتابعة `81700310772d1653a619ffb68d7a8929f51aca12`، لا نقطة301 اختباراً التاريخية. runner/importer/report موجودة؛ لا تعاود بناءها.

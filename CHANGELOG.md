@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] — 2026-09-22 — [AI] M2-A, transport and review follow-up
+
+- Read-only prospective source observer with private byte snapshots, bounded reads, stable identity checks, explicit failure/left-censoring, offline export and frozen trial/path/spec/clock binding. Never fabricates t1/t4/t5 or AR causality.
+- Reproduced and fixed trial launch cancellation (d632a2c), observer conflict scope and journal directory durability (67ae769), and source deadline-return descriptor leak (959deea; old implementation fails the regression).
+- 545 local tests pass on e8aef17: 499 inherited +36 source +7 measurement +3 AI runner. CI is tracked per exact SHA in PR28.
+- Documented inherited HTTP framing fix8e0916a and both completed independent automated reviews. Three review assumptions disproved by tests; remaining limits recorded instead of false fixes.
+- Updated operating/recovery guidance and current handoff pointers. Pending recovery automation, t4/t5, UC-01/AR denominator, thesis pipeline and native/human acceptance remain open. No live model, original C4 or cloud deployment.
+
 ## [Unreleased] — 2026-09-22 — [AI] T-70 launch safety and evidence regressions
 
 - Reproduced cancellation inside Popen/before assignment leaving a live unowned child and open stdout; fixed in bd67699 by deferring the first SIGINT/SIGTERM until assignment, then using existing group cleanup. No added signal mask inherited by workers and no preexec_fn.

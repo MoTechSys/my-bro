@@ -1,5 +1,7 @@
 # SOC Graduation Project — Open-Source Security Operations Center with Wazuh SIEM
 
+> **الحالة الحاكمة 2026-09-22 — M2-A والتحكيم:** مراقب المصدر وربطه بـtrial/spec/path/clock منفذان، مع إصلاح إلغاء مشغّل التجارب وديمومة journal. 545 اختباراً محلياً علىe8aef17؛ أدلة CI لكل رأس في PR28. المراجعتان ee00bee5 وd1598bba منتهيتان ومحكّمتان، لا تعادا. اقرأ أول قسم CONTEXT_RESUME وtests/README §M2-A وUC-14 §15–16. جميع اللقطات التالية تاريخية؛ M2-B/M3 وpending recovery وD1/ISSUE-068 أعمال محلية باقية، لا مجرد انتظار بيئة. لا t4/t5 أو نموذج/C4 أصلي أو قبول native.
+
 > 🧠 **للوكلاء/المطوّرين الجدد:** ابدأ بـ [`CONTEXT_RESUME.md`](CONTEXT_RESUME.md) — ذاكرة المشروع الكاملة في ملف واحد.
 
 > **مشروع تخرّج:** تصميم وتنفيذ مركز عمليات أمنية (SOC) يعتمد على أدوات مفتوحة المصدر — Wazuh 4.14.7 + Suricata 8.0.6 + YARA + VirusTotal + auditd — في معمل افتراضي يراقب Windows 10 وKali Linux.
