@@ -263,6 +263,101 @@ class Source(unittest.TestCase):
         self.assertEqual(self.saved('terminal.json')['reason'], 'READ_DEADLINE')
         self.assertEqual(signal.getsignal(signal.SIGALRM), signal.SIG_DFL)
 
+    def measurement(self):
+        from test_measure import manifest_v2, trial_v2
+        runner = load('source_trial_test', ROOT/'scripts/measure/trial_runner.py')
+        manifest = manifest_v2(); run = manifest['runs'][0]
+        trial = trial_v2(event_valid=False, source_ref='', **{k: None for k in runner.m.TIMES if k != 't0'})
+        self.spec.update(run_id=trial['run_id'], trial_id=trial['trial_id'], clock_ref='fixture clock')
+        result = self.observe()
+        trial['target_key'] = {'syscheck.path': str(self.file)}
+        trial['stage_selectors']['t2']['target_key'] = dict(trial['target_key'])
+        trial['source_binding'] = {'source_spec_sha256': s.r.digest(s.r.json_bytes(self.spec)),
+                                   'target_key': dict(trial['target_key'])}
+        evidence = (self.store, result['intent_sha256'])
+        return runner, manifest, run, trial, evidence
+
+    def test_sensor_miss_keeps_full_denominator_without_t1(self):
+        runner, manifest, run, trial, evidence = self.measurement()
+        runner.collect(trial, run, None, [], [], [], evidence)
+        self.assertTrue(trial['event_valid']); self.assertIsNone(trial['t1'])
+        self.assertIsNone(trial['t4']); self.assertIsNone(trial['t5'])
+        report = runner.m.analyze_v2([(trial, 'synthetic')], [], manifest)
+        self.assertEqual(report['trials'][0]['status'], 'MISSED')
+        self.assertEqual(report['summaries'][0]['denominator_all_attempts'], 1)
+
+    def test_binding_hash_path_clock_run_and_trial_are_enforced(self):
+        runner, manifest, run, trial, evidence = self.measurement()
+        changes = [('spec', 'a' * 64), ('path', '/wrong'), ('clock', 'wrong'),
+                   ('device', 'observer'), ('run', 'wrong'), ('trial', 'wrong'), ('selector', '/wrong')]
+        for kind, value in changes:
+            with self.subTest(kind=kind):
+                t, config = copy.deepcopy(trial), copy.deepcopy(run)
+                if kind == 'spec': t['source_binding']['source_spec_sha256'] = value
+                if kind == 'path': t['source_binding']['target_key']['syscheck.path'] = value
+                if kind == 'clock': config['devices']['endpoint']['clock_ref'] = value
+                if kind == 'device': config['clock_map']['t1'] = value
+                if kind == 'run': t['run_id'] = value
+                if kind == 'trial': t['trial_id'] = value
+                if kind == 'selector': t['stage_selectors']['t2']['target_key']['syscheck.path'] = value
+                with self.assertRaises(ValueError): runner.collect(t, config, None, [], [], [], evidence)
+                self.assertFalse(t['event_valid'])
+
+    def test_binding_requires_store_and_refuses_plain_export(self):
+        runner, manifest, run, trial, evidence = self.measurement()
+        with self.assertRaisesRegex(ValueError, 'SOURCE_STORE_REQUIRED'):
+            runner.collect(trial, run, None, [], [], [])
+        row = s.export(*evidence); path = self.base/'observer.jsonl'; path.write_bytes(s.r.json_bytes(row))
+        del trial['source_binding']
+        with self.assertRaisesRegex(ValueError, 'SOURCE_STORE_REQUIRED'):
+            runner.collect(trial, run, None, [], [], [path])
+
+    def test_legacy_event_clock_ref_checked_without_breaking_legacy_absence(self):
+        runner, manifest, run, trial, evidence = self.measurement()
+        del trial['source_binding']
+        row = s.export(*evidence)
+        for key in ('producer', 'source_spec_sha256', 'source_intent_sha256', 'target_key'):
+            del row[key]
+        path = self.base/'observer.jsonl'
+        row['clock_ref'] = 'wrong'; path.write_bytes(s.r.json_bytes(row))
+        with self.assertRaisesRegex(ValueError, 'clock_ref disagrees'):
+            runner.collect(trial, run, None, [], [], [path])
+        del row['clock_ref']; path.write_bytes(s.r.json_bytes(row))
+        runner.collect(trial, run, None, [], [], [path]); self.assertTrue(trial['event_valid'])
+
+    def test_snapshot_tamper_is_rejected_at_trial_import(self):
+        runner, manifest, run, trial, evidence = self.measurement()
+        (self.store/'poll-001.bin').write_bytes(b'wrong')
+        with self.assertRaises(ValueError): runner.collect(trial, run, None, [], [], [], evidence)
+        self.assertFalse(trial['event_valid'])
+
+    def test_conflicting_legacy_event_cannot_override_bound_source(self):
+        runner, manifest, run, trial, evidence = self.measurement()
+        row = s.export(*evidence); del row['producer']
+        path = self.base/'observer.jsonl'; path.write_bytes(s.r.json_bytes(row))
+        with self.assertRaisesRegex(ValueError, 'SOURCE_EVENT_CONFLICT'):
+            runner.collect(trial, run, None, [], [], [path], evidence)
+
+    def test_cli_bound_replay_preserves_sensor_miss(self):
+        runner, manifest, run, trial, evidence = self.measurement()
+        spec_path, manifest_path = self.base/'trial.json', self.base/'manifest.json'
+        spec_path.write_bytes(s.r.json_bytes({'attempt': trial}))
+        manifest_path.write_bytes(s.r.json_bytes(manifest))
+        alerts = self.base/'alerts.jsonl'; alerts.write_bytes(b'')
+        output = self.base/'attempts.jsonl'
+        command = [sys.executable, '-I', '-B', str(ROOT/'scripts/measure/trial_runner.py'), '--replay',
+                   '--spec', str(spec_path), '--manifest', str(manifest_path), '--alerts', str(alerts),
+                   '--output', str(output), '--source-store', str(evidence[0]), '--source-intent-sha256', evidence[1]]
+        result = subprocess.run(command, capture_output=True, timeout=5)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        saved = json.loads(output.read_bytes())
+        self.assertTrue(saved['event_valid']); self.assertIsNone(saved['t1'])
+        report = runner.m.analyze_v2([(saved, 'synthetic')], [], manifest)
+        self.assertEqual(report['trials'][0]['status'], 'MISSED')
+        repeated = subprocess.run(command, capture_output=True, timeout=5)
+        self.assertEqual(repeated.returncode, 2)
+        self.assertEqual(len(output.read_text().splitlines()), 1)
+
     def test_cli_preview_and_preexisting_offline_export(self):
         spec_path = self.base/'spec.json'; spec_path.write_bytes(s.r.json_bytes(self.spec)); spec_path.chmod(0o600)
         command = [sys.executable, '-I', '-B', str(ROOT/'scripts/measure/source_observer.py')]
