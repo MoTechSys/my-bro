@@ -257,9 +257,11 @@ def execute(command, timeout):
     m.require(timeout <= 3600, 'child timeout exceeds bound')
     m.require(signal.getsignal(signal.SIGCHLD) == signal.SIG_DFL, 'DEFAULT_SIGCHLD_REQUIRED')
     deadline = time.monotonic() + timeout
-    child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL, start_new_session=True)
+    child = None
     try:
+        with so.r.launch_cancellation_guard():
+            child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                     stderr=subprocess.DEVNULL, start_new_session=True)
         while time.monotonic() < deadline:
             ended = os.waitid(os.P_PID, child.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
             if ended is not None:
@@ -271,16 +273,17 @@ def execute(command, timeout):
         previous = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM, signal.SIGINT})
         failed = False
         try:
-            try:
-                os.killpg(child.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            except OSError:
-                failed = True
-            try:
-                child.wait(timeout=2)
-            except (OSError, subprocess.TimeoutExpired):
-                failed = True
+            if child is not None:
+                try:
+                    os.killpg(child.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                except OSError:
+                    failed = True
+                try:
+                    child.wait(timeout=2)
+                except (OSError, subprocess.TimeoutExpired):
+                    failed = True
             m.require(not failed, 'WORKER_CLEANUP_FAILED')
         finally:
             signal.pthread_sigmask(signal.SIG_SETMASK, previous)
