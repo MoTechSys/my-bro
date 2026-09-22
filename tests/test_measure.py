@@ -937,6 +937,47 @@ class Runner(unittest.TestCase):
         self.assertEqual(len(self.output.read_text().splitlines()),2)
         self.assertEqual(self.result()['reason'],'SESSION_CLOCK_LIMIT_EXCEEDED')
 
+    def test_trial_launch_cancellation_cleans_real_child(self):
+        import os
+        import signal
+        import subprocess
+        real = subprocess.Popen
+        real_execute = real._execute_child
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            for phase in ('inside', 'assignment'):
+                with self.subTest(signal=sig, phase=phase):
+                    children = []
+                    previous = signal.getsignal(sig)
+                    def handler(*_): raise KeyboardInterrupt()
+                    def inside(proc, *args, **kwargs):
+                        real_execute(proc, *args, **kwargs)
+                        children.append(proc); os.kill(os.getpid(), sig)
+                    def start(*args, **kwargs):
+                        proc = real(*args, **kwargs)
+                        children.append(proc); os.kill(os.getpid(), sig)
+                        return proc
+                    signal.signal(sig, handler)
+                    hook = (patch.object(real, '_execute_child', inside) if phase == 'inside'
+                            else patch.object(self.r.subprocess, 'Popen', side_effect=start))
+                    try:
+                        with hook, self.assertRaises(KeyboardInterrupt):
+                            self.r.execute([sys.executable, '-I', '-B', '-c', 'import time; time.sleep(30)'], 1)
+                        self.assertEqual(children[0].returncode, -signal.SIGKILL)
+                        self.assertIs(signal.getsignal(sig), handler)
+                    finally:
+                        signal.signal(sig, previous)
+                        for proc in children:
+                            if proc.poll() is None: os.killpg(proc.pid, signal.SIGKILL)
+                            proc.wait(timeout=2)
+
+    def test_trial_launch_failure_does_not_mask_original_error(self):
+        import signal
+        before = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+        with patch.object(self.r.subprocess, 'Popen', side_effect=OSError('synthetic launch failure')):
+            with self.assertRaisesRegex(OSError, 'synthetic launch failure'):
+                self.r.execute(['/never-run'], 1)
+        self.assertEqual(before, {sig: signal.getsignal(sig) for sig in before})
+
     def test_fifo_log_rejected_without_blocking(self):
         import os
         path = self.home/'pipe'; os.mkfifo(path)
