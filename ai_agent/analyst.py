@@ -345,7 +345,26 @@ class Ollama:
                                          headers={'Content-Type': 'application/json'})
         try:
             with self.opener.open(request, timeout=self.timeout) as response:
+                # HTTPResponse.read(limit) does not raise on a short Content-Length
+                # body. Validate framing separately so valid partial JSON cannot
+                # turn a truncated transport into a completed advisory attempt.
+                lengths = response.headers.get_all('Content-Length', [])
+                transfers = response.headers.get_all('Transfer-Encoding', [])
+                encoding = response.headers.get('Content-Encoding', 'identity').lower()
+                if (response.status != 200 or len(lengths) > 1 or len(transfers) > 1
+                        or (lengths and transfers) or encoding != 'identity'
+                        or (transfers and transfers[0].strip().lower() != 'chunked')):
+                    raise AnalystError('MODEL_HTTP_FRAMING_INVALID')
+                expected = None
+                if lengths:
+                    if not re.fullmatch(r'[0-9]{1,7}', lengths[0]):
+                        raise AnalystError('MODEL_HTTP_FRAMING_INVALID')
+                    expected = int(lengths[0])
+                    if expected > MAX_RESPONSE:
+                        raise AnalystError('MODEL_RESPONSE_TOO_LARGE_OR_INVALID')
                 raw = response.read(MAX_RESPONSE + 1)
+                if expected is not None and len(raw) != expected:
+                    raise AnalystError('MODEL_HTTP_BODY_INCOMPLETE')
             if len(raw) > MAX_RESPONSE:
                 raise AnalystError('MODEL_RESPONSE_TOO_LARGE_OR_INVALID')
             result = strict_json(raw.decode('utf-8'))

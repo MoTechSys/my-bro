@@ -4,6 +4,7 @@ Inputs are artificial. Fixtures stay under the repository .git directory.
 """
 import contextlib
 import copy
+from email.message import Message
 import http.client
 import importlib.util
 import io
@@ -269,6 +270,8 @@ class Provider(unittest.TestCase):
     def make(self, payload=None):
         client = a.Ollama('local-model:test')
         stream = Mock()
+        stream.status = 200
+        stream.headers = Message()
         stream.read.return_value = json.dumps(payload or {
             'done': True, 'message': {'role': 'assistant', 'content': json.dumps(response())}}).encode()
         manager = Mock(); manager.__enter__ = Mock(return_value=stream); manager.__exit__ = Mock(return_value=False)
