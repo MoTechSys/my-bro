@@ -408,6 +408,179 @@ class Evidence(unittest.TestCase):
         with patch.object(r,'bounded_process',side_effect=worker):
             r.run_batch(self.base,self.manifest_bytes,'batch-1',self.inputs,infer=True)
 
+    def test_original_byte_hash_not_normalized_json_or_declared_hash(self):
+        original = self.inputs['alerts.jsonl']
+        changed = original.replace(b'\n', b'\r\n')
+        path = self.base/'source.jsonl'
+        path.write_bytes(changed)
+        self.assertEqual(r.read_bytes(path), changed)
+        self.assertNotEqual(r.digest(original), r.digest(changed))
+        self.assertEqual(r.a.read_alerts(original.decode()), r.a.read_alerts(changed.decode()))
+        inputs = dict(self.inputs, **{'alerts.jsonl': r.read_bytes(path)})
+        with patch.object(r, 'bounded_process') as worker:
+            with self.assertRaisesRegex(ValueError, 'FROZEN_PROVENANCE_MISMATCH'):
+                r.run_batch(self.base, self.manifest_bytes, 'batch-1', inputs, infer=True)
+            worker.assert_not_called()
+        self.assertFalse((self.base/'manifest.json').exists())
+
+    def test_filtered_duplicate_records_preserve_source_binding_and_reconstruction(self):
+        first, second = r.a.read_alerts(self.inputs['alerts.jsonl'].decode())
+        low = copy.deepcopy(first); low['id'] = 'low-level'; low['rule']['level'] = 3
+        self.inputs['alerts.jsonl'] = b''.join(r.json_bytes(row) for row in (low, second, second, first))
+        for case in self.manifest['cases']:
+            case['input_sha256'] = r.digest(self.inputs['alerts.jsonl'])
+        # Case list order must not drive projection: alert_ref is the join key.
+        self.manifest['cases'].reverse()
+        self.manifest_bytes = r.json_bytes(self.manifest)
+        findings = []
+        for ref, classification in (('A2', 'suspicious'), ('A1', 'likely_benign')):
+            finding = copy.deepcopy(json.loads(self.response)['findings'][0])
+            finding.update(evidence_refs=[ref], classification=classification)
+            findings.append(finding)
+        self.run_batch(response=r.json_bytes({'findings': findings}))
+        context = json.loads((self.batch/'context.json').read_bytes())
+        self.assertEqual([(row['ref'], row['source_record']) for row in context['alerts']],
+                         [('A1', 2), ('A2', 4)])
+        cases = {row['case_id']: row['prediction']['classification'] for row in self.export()['attempts']}
+        self.assertEqual(cases, {'case-0': 'likely_benign', 'case-1': 'suspicious'})
+        path = self.batch/'context.json'
+        self.alter(path, lambda value: value['alerts'][0].update(source_record=4))
+        self.alter(self.batch/'intent.json', lambda value: value['artifact_sha256'].update(
+            {'context.json': r.digest(path.read_bytes())}))
+        with self.assertRaisesRegex(ValueError, 'CONTEXT_OR_CODE_SNAPSHOT_MISMATCH'):
+            self.export()
+
+    def two_batch_plan(self):
+        manifest, first, response = fixture(1)
+        second = copy.deepcopy(first)
+        row = r.a.read_alerts(first['alerts.jsonl'].decode())[0]
+        row['id'] = 'different-private-alert'
+        row['manager']['name'] = 'different-private-manager'
+        second['alerts.jsonl'] = r.json_bytes(row)
+        case = copy.deepcopy(manifest['cases'][0])
+        case.update(case_id='case-second', batch_id='batch-2', cluster_id='cluster-2',
+                    input_sha256=r.digest(second['alerts.jsonl']))
+        manifest['cases'].append(case)
+        self.manifest, self.inputs, self.response = manifest, first, response
+        self.manifest_bytes = r.json_bytes(manifest)
+        other_response = json.loads(response)
+        other_response['findings'][0]['classification'] = 'likely_benign'
+        return second, r.json_bytes(other_response)
+
+    def test_same_alert_ref_across_batches_is_not_an_identity_join(self):
+        second, response = self.two_batch_plan()
+        self.run_batch()
+        with patch.object(r, 'bounded_process', return_value={
+                'reason': 'OK', 'returncode': 0, 'latency_seconds': .5, 'output': response}):
+            r.run_batch(self.base, self.manifest_bytes, 'batch-2', second, infer=True)
+        rows = {row['case_id']: row for row in self.export()['attempts']}
+        self.assertEqual(rows['case-0']['prediction']['classification'], 'suspicious')
+        self.assertEqual(rows['case-second']['prediction']['classification'], 'likely_benign')
+        self.assertEqual(rows['case-0']['input_sha256'], r.digest(self.inputs['alerts.jsonl']))
+        self.assertEqual(rows['case-second']['input_sha256'], r.digest(second['alerts.jsonl']))
+        self.assertEqual(rows['case-second']['output_sha256'], r.digest(response))
+        other = self.base/r.batch_directory(self.manifest['evaluation_id'], 'batch-2')
+        temporary = self.base/'swapping'
+        self.batch.rename(temporary); other.rename(self.batch); temporary.rename(other)
+        with self.assertRaisesRegex(ValueError, 'INTENT_BINDING_MISMATCH'): self.export()
+
+    def test_success_in_other_batch_never_replaces_failed_attempt_or_missing_denominator(self):
+        second, response = self.two_batch_plan()
+        missing = copy.deepcopy(self.manifest['cases'][0])
+        missing.update(case_id='case-missing', batch_id='batch-3', input_sha256='c'*64)
+        self.manifest['cases'].append(missing)
+        self.manifest_bytes = r.json_bytes(self.manifest)
+        self.run_batch(reason='DEADLINE_EXCEEDED', response=b'partial', code=None)
+        original = {path.name: path.read_bytes() for path in self.batch.iterdir()}
+        with patch.object(r, 'bounded_process', return_value={
+                'reason': 'OK', 'returncode': 0, 'latency_seconds': .5, 'output': response}):
+            r.run_batch(self.base, self.manifest_bytes, 'batch-2', second, infer=True)
+        with patch.object(r, 'bounded_process') as worker:
+            with self.assertRaises(FileExistsError):
+                r.run_batch(self.base, self.manifest_bytes, 'batch-1', self.inputs, infer=True)
+            worker.assert_not_called()
+        self.assertEqual(original, {path.name: path.read_bytes() for path in self.batch.iterdir()})
+        report = r.e.evaluate(self.manifest, self.export()['attempts'], [])
+        self.assertEqual([report['counts'][s] for s in ('completed', 'failed', 'missing')], [1, 1, 1])
+        self.assertEqual(report['classification_all_planned']['denominator'], 3)
+        self.assertEqual(report['classification_all_planned']['numerator'], 1)
+
+    def test_cancellation_at_launch_recovers_failed_intent_without_new_inference(self):
+        real, children = r.subprocess.Popen, []
+        previous = signal.getsignal(signal.SIGINT)
+        def handler(*_): raise KeyboardInterrupt()
+        def start(command, **kwargs):
+            proc = real([sys.executable, '-I', '-B', '-c', 'import time; time.sleep(30)'], **kwargs)
+            children.append(proc)
+            os.kill(os.getpid(), signal.SIGINT)
+            return proc
+        signal.signal(signal.SIGINT, handler)
+        try:
+            with patch.object(r.subprocess, 'Popen', side_effect=start), self.assertRaises(KeyboardInterrupt):
+                r.run_batch(self.base, self.manifest_bytes, 'batch-1', self.inputs, infer=True)
+            self.assertIsNotNone(children[0].returncode)
+            self.assertTrue(children[0].stdout.closed)
+            with patch.object(r.a.Ollama, '__call__', side_effect=AssertionError('no inference')):
+                result = self.export()
+                self.assertEqual(result, self.export())
+            self.assertEqual(result['batches'][0]['reason'], 'INTERRUPTED_AFTER_INTENT')
+            for row in result['attempts']:
+                self.assertEqual(row['status'], 'failed')
+                self.assertIsNone(row['latency_seconds'])
+                self.assertIsNone(row['output_sha256'])
+            with patch.object(r, 'bounded_process') as worker:
+                with self.assertRaises(FileExistsError):
+                    r.run_batch(self.base, self.manifest_bytes, 'batch-1', self.inputs, infer=True)
+                worker.assert_not_called()
+        finally:
+            signal.signal(signal.SIGINT, previous)
+            for proc in children:
+                if proc.poll() is None: os.killpg(proc.pid, signal.SIGKILL)
+                proc.wait(timeout=2); proc.stdout.close()
+
+    def test_crash_after_each_published_artifact_keeps_explicit_recovery_state(self):
+        # Inject after durable publication, not an actual power-loss/filesystem test.
+        bundle = r.build_bundle(self.inputs, '2026-09-18T01:00:00Z')[0]
+        for boundary in (*bundle, 'intent.json', 'output.bin', 'terminal.json'):
+            with self.subTest(boundary=boundary), tempfile.TemporaryDirectory(
+                    dir=self.base, prefix='boundary-') as store:
+                real = r.write_once
+                def crash(fd, name, data):
+                    real(fd, name, data)
+                    if name == boundary: raise OSError('synthetic interruption')
+                with patch.object(r, 'write_once', side_effect=crash), patch.object(
+                        r, 'bounded_process', return_value={'reason': 'OK', 'returncode': 0,
+                        'latency_seconds': .25, 'output': self.response}) as worker:
+                    with self.assertRaises(OSError):
+                        r.run_batch(store, self.manifest_bytes, 'batch-1', self.inputs, infer=True)
+                    self.assertEqual(worker.call_count, int(boundary in ('output.bin', 'terminal.json')))
+                if boundary in bundle:
+                    with self.assertRaises(FileNotFoundError):
+                        r.export_attempts(store, r.digest(self.manifest_bytes))
+                else:
+                    imported = r.export_attempts(store, r.digest(self.manifest_bytes))
+                    expected = 'completed' if boundary == 'terminal.json' else 'failed'
+                    self.assertTrue(all(row['status'] == expected for row in imported['attempts']))
+                    report = r.e.evaluate(self.manifest, imported['attempts'], [])
+                    self.assertEqual(report['classification_all_planned']['denominator'], 2)
+                    if expected == 'failed':
+                        self.assertTrue(all(row['latency_seconds'] is None for row in imported['attempts']))
+                    self.assertEqual(imported['stored_artifact_bytes_verified'], boundary != 'output.bin')
+                with patch.object(r, 'bounded_process') as worker:
+                    with self.assertRaises(FileExistsError):
+                        r.run_batch(store, self.manifest_bytes, 'batch-1', self.inputs, infer=True)
+                    worker.assert_not_called()
+
+    def test_prose_abstention_is_rejected_not_silently_dropped_or_classified(self):
+        self.run_batch(response=b'I cannot assess these alerts.')
+        imported = self.export()
+        report = r.e.evaluate(self.manifest, imported['attempts'], [])
+        self.assertEqual(report['counts']['rejected'], 2)
+        self.assertEqual(report['counts']['missing'], 0)
+        self.assertEqual(report['classification_all_planned']['denominator'], 2)
+        self.assertTrue(all(row['output_sha256'] == r.digest(b'I cannot assess these alerts.')
+                            for row in imported['attempts']))
+
     def test_retry_is_refused_without_worker_call(self):
         self.run_batch()
         with patch.object(r,'bounded_process') as worker:
