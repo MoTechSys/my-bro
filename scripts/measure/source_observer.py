@@ -132,10 +132,8 @@ def observe(s, store):
         terminal = {'status': 'failed', 'reason': 'INTERRUPTED', 'observer': None,
                     'intent_sha256': r.digest(intent_raw), 'poll_count': 0}
         polls = []
-        source = None
+        pinned = None
         try:
-            source = v.deadline_call(lambda: r.directory(s['directory']))
-            pinned = os.fstat(source)
             start = time.monotonic_ns()
             for i in range(s['seconds'] + 1):
                 due = start + i * v.POLL_NS
@@ -144,12 +142,17 @@ def observe(s, store):
                 require(0 <= ns - due <= v.JITTER_NS, 'SCHEDULING_GAP')
                 before = time.time_ns() // 1_000_000
                 def sample():
-                    # Rewalk the trusted path to detect directory replacement between polls.
+                    # Own and close descriptors inside the timed call: a deadline
+                    # at its return boundary must not strand an escaped open fd.
+                    nonlocal pinned
                     current = r.directory(s['directory'])
                     try:
                         info = os.fstat(current)
-                        require((info.st_dev, info.st_ino) == (pinned.st_dev, pinned.st_ino), 'SOURCE_DIRECTORY_CHANGED')
-                        return read_source(source, s['filename'])
+                        identity = (info.st_dev, info.st_ino)
+                        if pinned is None:
+                            pinned = identity
+                        require(identity == pinned, 'SOURCE_DIRECTORY_CHANGED')
+                        return read_source(current, s['filename'])
                     finally:
                         os.close(current)
                 raw, info = v.deadline_call(sample)
@@ -174,8 +177,6 @@ def observe(s, store):
             terminal.update(status='failed', reason='INTERRUPTED', observer=None, poll_count=len(polls))
             raise
         finally:
-            if source is not None:
-                os.close(source)
             previous = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
             try:
                 r.write_once(out, 'terminal.json', r.json_bytes(terminal))
