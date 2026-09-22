@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] — 2026-09-22 — [AI] T-70 launch safety and evidence regressions
+
+- Reproduced cancellation inside Popen/before assignment leaving a live unowned child and open stdout; fixed in bd67699 by deferring the first SIGINT/SIGTERM until assignment, then using existing group cleanup. No added signal mask inherited by workers and no preexec_fn.
+- Made main-thread/exclusive signal-handler ownership explicit. Ignored signals remain ignored; default cancellation caught during launch becomes KeyboardInterrupt for cleanup. C4 and terminal-v2 schemas unchanged; code fingerprints still require the original revision to import older archives.
+- Added13 tests: six launch/handler/mask tests and seven byte/source_record/batch/failure/recovery tests. Boundary faults are injected after durable artifact writes, not physical power-loss tests. Prose refusal remains rejected with full denominator, not inferred abstention.
+- 72 runner / 482 total tests and validator pass locally on Python3.13.14. Push CI35779096256 for908432575d9eae6b4ab78cad5ea2deaba8437f4f passes3.12/3.13; job logs confirm482 tests each. Final documentation SHA/CI recorded in PR28 after push.
+- Updated handoff/STATE/taskboard/issues/session log and UC-14 section14. No live model, HTTP service, original C4 data, independent human review, cloud changes or published-history rewrite.
+
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
 ## [Unreleased] — 2026-09-18 — [AI] M1 review adjudication

@@ -1,5 +1,32 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
+## متابعة T-70 — الأحدث 2026-09-22 [AI]
+
+- مساحة العمل الصحيحة لهذه الجلسة `/home/user/webapp/my-bro` داخل المساحة المسموحة؛ المستودع الأب مشروع مختلف ولم يُعدّل. بداية المتابعة `81700310772d1653a619ffb68d7a8929f51aca12`، لا نقطة301 اختباراً التاريخية. runner/importer/report موجودة؛ لا تعاود بناءها.
+- GitHub API أكد الحساب `MoTechSys` وصلاحية push؛ استُخدم نفس اعتماد gh للدفع دون حفظ token أو البحث عن اعتماد قديم. PR28 مفتوح؛ main سلف الفرع. كل الدفع fast-forward، لا squash لتاريخ منشور أو force-push أو نسخ .git.
+- حجز `ed78e67`، إصلاح `bd6769998015469688e57cd5f63ae75233b97fa2`، ثم اختبارات `908432575d9eae6b4ab78cad5ea2deaba8437f4f`؛ الأخير **آخر commit مرفوع عند كتابة هذا التسليم**. commit الوثائق النهائي وCI الخاص به يُثبتان في تعليقPR28 بعد النشر، لتجنب مرجع SHA ذاتي متغير.
+- ISSUE-092 مثبت: الإلغاء داخلPopen أو قبل إسناده كان يترك العامل حياً وstdout مفتوحاً. `launch_cancellation_guard` يؤجل أول SIGINT/SIGTERM حتى امتلاك الكائن ثم يعيد المعالج الأصلي ليمر التنظيف الحالي. لا حجب إشارات موروث للعامل ولاpreexec_fn. الكود القديم فشل في4 subcases الجديدة؛ الجديد نجح.
+- عقد Python صار صريحاً: main thread وملكية حصرية لمعالجات الإشارات وحصد الأبناء. SIG_IGN محفوظ؛ SIG_DFL المستلم داخل نافذة الإطلاق يتحول إلى KeyboardInterrupt للتنظيف. لا تغيير لعقد C4 أوterminal v2؛ بصمة الكود تغيرت، فالأرشيف القديم يحتاج إصداره الأصلي ولا يُحوّر.
+- **482 اختباراً محلياً وALL CHECKS PASSED** علىPython3.13.14:469 خط أساس +13 جديدة،72 runner. [CI push9084325](https://github.com/MoTechSys/my-bro/actions/runs/35779096256) ناجح، وقرئت سجلات3.12/3.13:482 وALL CHECKS PASSED لكل منهما. تشغيلPR9084325: [35779102945](https://github.com/MoTechSys/my-bro/actions/runs/35779102945)؛ تحقّق حالته الحالية ولا تستعر نجاحه لرأس لاحق.
+- الاختبارات الجديدة: CRLF/LF وبصمة البايتات لا JSON المطبع؛ source_record بعدskip/duplicate وترتيبcases/findings؛ A1 فيدفعتين مختلفتين ورفض تبديلdirectories؛ فشل محفوظ ثم نجاحدفعةأخرى معmissing؛ إلغاءالإطلاق والاستعادة؛ حقن عطل بعدكلartifact منشور. حقنOSError ليس انقطاعطاقة حقيقياً. refusalنصي يبقىrejected بمقامكامل؛ insufficient_evidence صالح يبقىcompleted، ولا يُستنتجabstained من النثر.
+
+### أوامر الاستئناف لهذه المساحة
+
+```bash
+cd /home/user/webapp/my-bro && pwd
+ git status --short --branch
+ gh api user --jq .login
+ gh api repos/MoTechSys/my-bro --jq .permissions
+ git fetch origin main genspark_ai_developer
+ TMPDIR=/home/user/webapp/my-bro/.git PYTHONDONTWRITEBYTECODE=1 bash scripts/validate/validate_all.sh
+ python3 -B -m unittest discover -s tests -p test_ai_runner.py
+ git diff --check
+```
+
+**التالي القابل للتنفيذ:** اقرأUC-14 §14 ثم اختبر transport باستخدام endpoint محلي اصطناعي مضبوط (تأخرheaders/body، قطعالاستجابة، حجمزائد) معCLIالعامل الحقيقي وrequest-capture يثبتعدمإرسالgold/raw؛ ليست هذه تجربةنموذج. لم يُنفذHTTPserver في هذهالجولة. بعده مراجعةمختصة واختيارنموذج/رخصة/موارد/هوية وجردمعتمد، ثم30labels بشرية وتحكيمC4 أصلي. T-70 IN-PROGRESS؛ لا تنزيلأوتشغيلنموذج تلقائي أوانتظارمراجعةآليةقديمةمنتهية. M2 مسارمستقل ولا يُنفذضمنهذهالمتابعة.
+
+**لم يُختبر/لم يتغير:** SIGKILL/power-loss أوD-state أونسليغادرprocess group أوتعددwaiters، ولاOllamaحي/جردأصلي/نتائجC4/تحكيمبشري. الفحصذاتي لا مراجعةمستقلة. ISSUE-068 والاستعادة/reboot/daemon/canary/Windows/PILOT مستقلة؛ لاSSHأوتغييرسحابي أوأسرارفيGit. execution_authority=none ثابت؛ صحةالبصمات/schema ليستصحةاستنتاج.
+
 ## استئناف M1/T-11 — الأحدث 2026-09-18 [AI]
 
 ### المنجز القابل للفحص

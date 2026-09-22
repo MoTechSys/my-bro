@@ -387,3 +387,39 @@ python3 -I -B ai_agent/report.py \
 - لا يحتوي العرض على raw logs أو gold أو أسماء المحكمين أو نص تحليل النموذج؛ ليس واجهة L1 كاملة أو نظام موافقة. معرفات الحالات والتوقيت والبصمات قابلة للربط، لذا التقرير خاص حتى بعد التنقيح.
 - `stored_artifact_bytes_verified` يصف المرفقات الموجودة المرتبطة بالبصمات، لا اكتمال العينة أو أصالة المصدر أو ساعة موثوقة أو تشغيل الأوزان المعلنة. تبقى أعلام القبول واستقلال البشر وهوية النموذج false.
 - 16 اختبار تقرير اصطناعياً: فساد المخزن، مراجعات hash-bound، خصوصية الملفات، missing/unknown latency/orphan، escaping/CSP وCLI بلا نموذج. اجتاز التحقق الكلي 434 اختباراً بعد إصلاح Telegram في2026-09-18؛ نتائج كل HEAD فيPR28. لا استدلال أو C4 أصلي ضمن هذا التحقق.
+
+## 14. متابعة عقد التشغيل واختبارات الاستلام — 2026-09-22 [AI]
+
+أُعيد فحص النسخة8170031: runner/importer/report موجودة،469 اختباراً وCI ناجحان. هذه متابعة تنفيذ لا إعادة إنشاء. الإصلاحbd67699 والاختبارات9084325 يرفعان المجموع إلى **482، منها72runner**؛ CI push[35779096256](https://github.com/MoTechSys/my-bro/actions/runs/35779096256) على908432575d9eae6b4ab78cad5ea2deaba8437f4f ناجح3.12/3.13 وقرئت سجلات العدد. رأس الوثائق النهائي وCI الخاص به فيPR28، لا تُنسب نتيجة9084325 تلقائياً لأي تعديل لاحق.
+
+### 14.1 التعديل الضروري وحدوده
+
+ISSUE-092: الإلغاء داخلPopen أو قبل إسناد نتيجته كان يفلت من cleanup لأنproc لم يُسند بعد. اختبار جديد بحقن إشارات حقيقية عند هذين الحدين يفشل في4subcases علىالدالةالقديمة. `launch_cancellation_guard` يثبت معالجاً مؤقتاً يؤجل أولSIGINT/SIGTERM حتى امتلاك الكائن، ثم يعيد المعالج الأصلي ليجري killpg قبلreap وإغلاقstdout. لا يحجب الإشارات عبرfork/exec ولا يستخدمpreexec_fn؛ يستعيد القناع والمعالجات عندفشل الإطلاق أيضاً.
+
+عقدembedding الآن صريح: التشغيل من **main thread** وملكية حصرية لمعالجات الإشارات وحصد الأبناء؛ non-main-thread يرفضقبلPopen. SIG_IGN يبقىمتجاهلاً، وSIG_DFL المستلمداخلنافذةالإطلاق يتحولإلىKeyboardInterrupt للتنظيف بدلاًمنإنهاءالأب فوراً. CLI يثبت أصلاًمعالجإلغاءويرجع130؛ الاستيراديحفظINTERRUPTED_AFTER_INTENT بزمن/ردnull ولايعيدالاستدعاء. هذا لا يمنعSIGKILL أوتعطلOS أوانتظاراتPopenغيرالقابلةللقطع؛ ليسحداًhard-real-time أوsandbox. لا يُقتلخادمOllama.
+
+**لم تتغير schema** لـC4 أوintent أوterminal v2. code_sha256 يتغيرمعالكود؛ احتفظبنسخةالكودالأصليةلإعادةاستيرادالأرشيف، ولا تعِدكتابةالبصماتليقبلهابإصدارجديد. محاولةواحدةلكلbatch كماكانت؛ لاتغييرللمقامات أوالتحكيم.
+
+### 14.2 تغطية الشروط الحالية
+
+| الشرط | اختبار/دليل محلي | الحد الباقي |
+|---|---|---|
+| بصمة بايتات أصلية | CRLF/LF لهماJSONمتطابق وبصمتانمختلفتان؛التبديليرفضقبلالاستدعاء؛تلاعبartifactsيعادتحققه | سلامةبايتات لاأصالةمصدرأوتوقيع |
+| case/batch/ref/source_record | بعدتصفيةlevelمنخفض وتكرارسجلمتطابق تصبحA1→record2 وA2→record4؛ترتيبcases/findingsلايغيرالإسقاط؛تزويرsource_record معإعادةhashيرفض | source_record ترقيمالسجلاتغيرالفارغةبعدread_alerts، لارقمسطرملفبمافيهالفراغات؛ تخصيصgoldالبشري مسؤوليةالمشغّل |
+| عزل الدفعات | A1 فيدفعتينبمصدرينومخرجينمختلفين؛تبديلdirectoriesيرفضINTENT_BINDING_MISMATCH | reserializedexports واعتمادالمحتوىيحتاجانتدقيقاًبشرياً، لايدعيhashكشفكلتكرار |
+| failure/retry/denominator | timeout محفوظقبلنجاحدفعةأخرى؛إعادةالأولىترفضدونworker؛1failed+1completed+1missing والمقام3 | لاانتقاءأفضلنتيجة؛إعادةتجربةصريحةلاتمحوالمحاولةالأصلية |
+| interruption/recovery | إلغاءإطلاقفعليثمexportمتكررoffline؛حقنOSError بعدكلartifactمنشور | intentغائب/جزئيرفض،سليمبلاترمينالفشل،outputيتيمغيرمتوثق؛terminalسليممنشورقبلخطألاحقيبقىمرجعالحالة؛ليسفصلاًكهربائياًحقيقياً |
+| رفض/امتناع | النثرالرافضمحفوظكـrejected والمقامكامل؛insufficient_evidenceصالحcompleted؛evaluatorيدعمabstainedللصيغةالمطبعة | runnerلايخمنabstainedمننصحر؛تغييرذلكيحتاجعقداًمصرحاًولايفعلهذهالجولة |
+| privacy/authority | اختباراتسابقةتؤكدغيابgold/rubric/raw/الهوياتعنcontext/argv وبيئةالعامل؛metadataأكوادمقيدة؛لاسلطةتنفيذ | sameUIDموثوق؛النصالمولدخاصوقديحتاجتنقيحاًبشرياً؛schema/MITREليسا صحةاستنتاج |
+
+```bash
+# From the actual repository checkout; all fixtures are synthetic and temporary.
+cd /home/user/webapp/my-bro
+python3 -B -m unittest discover -s tests -p test_ai_runner.py
+TMPDIR=/home/user/webapp/my-bro/.git PYTHONDONTWRITEBYTECODE=1 bash scripts/validate/validate_all.sh
+git diff --check
+```
+
+### 14.3 الخطوة التالية القابلة للتنفيذ
+
+اختبارtransport محلي اصطناعي مضبوط عبرCLI والعامل الحقيقي: تأخرheaders،bodyمنقط،قطعقبل/بعدheaders،حجمزائد،والتقاطrequestيثبتعدمإرسالgold/raw. لم يُشغّلHTTPserver أوOllamaأصلي بهذهالجولة؛ subprocessالاصطناعي لايساوياختبارخادمOllama. ثممراجعةمختصة واختيارنموذج/رخصة/موارد/هويةوجردمعتمد و30labelsبشرية وتحكيمC4. المراجعةالحاليةذاتية فقط، ومراجعات2026-09-18 السابقةمنتهيةلايعادطلبهاكأنهاعالقة. بواباتالسحابة068/الاستعادة/reboot/daemon/canary/Windows/PILOT مستقلة؛ لاكتابةخارجworkspace.
