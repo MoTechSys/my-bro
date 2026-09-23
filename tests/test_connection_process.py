@@ -250,6 +250,40 @@ class ProcReads(unittest.TestCase):
         self.assertEqual(len(rows), 5)
         self.assertTrue(all('cmdline' not in r for r in rows))
 
+    def test_unrelated_early_kernel_process_does_not_require_executable(self):
+        self.write('2/stat', proc_stat(2, 'kthreadd', ticks=0))
+        with patch.object(p.time, 'monotonic', return_value=0), patch.object(p.os, 'readlink') as link:
+            self.assertEqual(p.scan(self.base, 1, lambda _: None), [])
+        link.assert_not_called()
+
+    def test_missing_candidate_executable_is_not_silently_skipped(self):
+        self.write('100/stat', proc_stat(100))
+        with patch.object(p.time, 'monotonic', return_value=0), self.assertRaises(FileNotFoundError):
+            p.scan(self.base, 1, lambda _: None)
+
+    def test_unreadable_process_table_is_not_partial_success(self):
+        self.write('100/stat', proc_stat(100))
+        with patch.object(p, 'read_text', side_effect=PermissionError()), self.assertRaises(PermissionError):
+            p.scan(self.base, float('inf'), lambda _: None)
+
+    def test_duplicate_or_missing_btime_rejected(self):
+        for text in ['cpu 1 2 3\n', 'btime 10\nbtime 11\n']:
+            self.write('stat', text)
+            with patch.object(p.time, 'monotonic', return_value=0), self.assertRaisesRegex(ValueError, 'BTIME'):
+                p.btime_line(self.base, 1)
+
+    def test_wrong_proc_pid_namespace_rejected_before_scan(self):
+        self.write('self/stat', proc_stat(os.getpid()+1, 'python'))
+        with patch.object(p, 'scan') as scan, self.assertRaisesRegex(ValueError, 'PID_NAMESPACE_MISMATCH'):
+            p.collect(lambda _: None, self.base)
+        scan.assert_not_called()
+
+    def test_descriptor_closed_after_read_failure(self):
+        path = self.write('stat', 'data'); actual = p.os.close
+        with patch.object(p.os, 'read', side_effect=OSError('synthetic')), patch.object(p.os, 'close', wraps=actual) as close, self.assertRaises(OSError):
+            p.read_text(path, float('inf'))
+        close.assert_called_once()
+
     def test_process_count_limit_rejected(self):
         for index in range(3): (self.base/str(index+1)).mkdir()
         with patch.object(p, 'MAX_PROCESSES', 2), patch.object(p.time, 'monotonic', return_value=0), self.assertRaisesRegex(ValueError, 'PROCESS_LIMIT'):
