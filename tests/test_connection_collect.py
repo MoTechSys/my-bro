@@ -202,10 +202,82 @@ class Collector(unittest.TestCase):
         self.assertFalse(result['acceptance_approved'])
         self.assertFalse(result['causality_authenticated'])
 
-    def test_source_absence_preexistence_and_wrong_bytes_cannot_bind(self):
+    def test_absent_source_cannot_bind(self):
         request, stores = self.binding(mode='absent')
-        with self.assertRaises((ValueError, TypeError)):
+        with self.assertRaisesRegex(ValueError, 'SOURCE_EVENT_REQUIRED'):
             cc.bind(self.raw, cc.r.json_bytes(request), **stores)
+
+    def test_preexisting_source_cannot_bind(self):
+        request, stores = self.binding(mode='preexisting')
+        with self.assertRaisesRegex(ValueError, 'SOURCE_EVENT_REQUIRED'):
+            cc.bind(self.raw, cc.r.json_bytes(request), **stores)
+
+    def test_wrong_source_bytes_cannot_bind(self):
+        request, stores = self.binding(mode='wrong')
+        with self.assertRaises(ValueError):
+            cc.bind(self.raw, cc.r.json_bytes(request), **stores)
+
+    def test_boolean_intent_version_and_acceptance_zero_rejected(self):
+        for key, value in [('schema_version', True), ('acceptance_approved', 0)]:
+            desc, _ = self.capture('service')
+            self.mutate(desc, 'intent.json', lambda obj: obj.update({key: value}))
+            desc['sha256'] = cc.r.digest((Path(desc['path'])/'intent.json').read_bytes())
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, 'INTENT_TYPES'):
+                self.export(desc, 'service')
+
+    def test_boolean_terminal_count_rejected(self):
+        desc, _ = self.capture('service')
+        self.mutate(desc, 'terminal.json', lambda obj: obj.update(count=True))
+        with self.assertRaisesRegex(ValueError, 'TERMINAL_TYPES'): self.export(desc, 'service')
+
+    def test_coarse_service_precision_cannot_be_understated(self):
+        self.p['clocks']['endpoint']['precision_ms'] = 999; self.raw = cc.r.json_bytes(self.p)
+        request, stores = self.binding()
+        with self.assertRaisesRegex(ValueError, 'SERVICE_PRECISION'):
+            cc.bind(self.raw, cc.r.json_bytes(request), **stores)
+
+    def test_source_bracket_precision_cannot_be_understated(self):
+        self.p['clocks']['endpoint']['precision_ms'] = 1000; self.raw = cc.r.json_bytes(self.p)
+        request, stores = self.binding()
+        with self.assertRaisesRegex(ValueError, 'SOURCE_PRECISION'):
+            cc.bind(self.raw, cc.r.json_bytes(request), **stores)
+
+    def test_source_binding_fields_rejected_individually(self):
+        request, stores = self.binding()
+        original = cc.s.export(stores['source']['path'], stores['source']['sha256'])
+        for key, value in [('run_id', 'other'), ('trial_id', 'other'), ('device', 'manager'),
+                           ('clock_ref', 'other'), ('target_key', {'syscheck.path': '/other'})]:
+            event = dict(original, **{key: value})
+            with self.subTest(key=key), patch.object(cc.s, 'export', return_value=event), self.assertRaisesRegex(ValueError, 'SOURCE_BINDING'):
+                cc.bind(self.raw, cc.r.json_bytes(request), **stores)
+
+    def test_source_negative_observation_must_follow_restart(self):
+        request, stores = self.binding()
+        event = cc.s.export(stores['source']['path'], stores['source']['sha256'])
+        event['last_negative_start_ms'] = BASE+5000
+        with patch.object(cc.s, 'export', return_value=event), self.assertRaisesRegex(ValueError, 'SOURCE_AFTER_RESTART'):
+            cc.bind(self.raw, cc.r.json_bytes(request), **stores)
+
+    def test_partial_sample_write_has_failed_terminal_and_cannot_export(self):
+        actual = cc.r.write_once
+        def write(fd, name, raw):
+            if name == 'sample-000.json': raise OSError('synthetic disk failure')
+            return actual(fd, name, raw)
+        with patch.object(cc.r, 'write_once', side_effect=write):
+            desc, result = self.capture('service')
+        self.assertEqual(result['count'], 0)
+        self.assertTrue((Path(desc['path'])/'sample-000.bin').exists())
+        with self.assertRaises(ValueError): self.export(desc, 'service')
+
+    def test_monotonic_gap_and_boolean_timestamp_rejected(self):
+        for changes in [dict(start_monotonic_ms=30000, end_monotonic_ms=30100), dict(start_ms=True)]:
+            desc, _ = self.capture()
+            self.mutate(desc, 'sample-001.json', lambda q: q.update(changes))
+            with self.assertRaises(ValueError): self.export(desc)
+
+    def test_executable_guard_rejects_user_owned_file(self):
+        path = self.private(self.base/'fake-command', b'#!/bin/sh\nexit 0\n'); path.chmod(0o700)
+        with self.assertRaisesRegex(ValueError, 'UNPROTECTED_COMMAND'): cc.trusted_binary(path)
 
     def test_wrong_controller_run_and_unplanned_cycle_rejected(self):
         request, stores = self.binding()
@@ -274,6 +346,15 @@ class NativeParsing(unittest.TestCase):
             with self.subTest(raw=raw), self.assertRaises(ValueError):
                 cc.normalize('service', raw, 'endpoint', BOOT, plan())
         with self.assertRaises(ValueError): cc.normalize('service', service(), 'endpoint', 'bad', plan())
+
+    def test_weekday_mismatch_and_unicode_pid_rejected(self):
+        for raw in [service().replace(b'Wed', b'Thu'), service().replace(b'MainPID=123', 'MainPID=١٢٣'.encode())]:
+            with self.assertRaises(ValueError): cc.normalize('service', raw, 'endpoint', BOOT, plan())
+
+    def test_wrong_native_host_prevents_query(self):
+        with patch.object(cc, 'trusted_binary'), patch.object(cc.socket, 'gethostname', return_value='wrong'), patch.object(cc.r, 'bounded_process') as query, self.assertRaises(ValueError):
+            cc.native_sample('manager', plan())
+        query.assert_not_called()
 
     def test_windows_service_adapter_rejected(self):
         p = plan(); p['identity']['os'] = 'windows'
