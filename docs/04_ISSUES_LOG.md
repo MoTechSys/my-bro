@@ -304,3 +304,10 @@ ISSUE-091 — FIXED-IN-REPO/NEEDS-NATIVE: مراجعةd21f2fcc انتهت ساك
 رسمت النسخة القديمة `rm -f` وYARA مع recursion، وحذفت Filebeat من المسار، وافترضت تأكيد كل إجراء وتغطية MITRE لكل تنبيه. صحح886817e النص والمخططات الثمانية؛ 15 ملف SVG ومصادرها موجودة الآن. قوّى138a260 و3abb755 النشر واتجاهات التدفق وقراءة تعريفات الأزمنة بعد مراجعة bdb07323 وفحص بصري.
 
 نجح36 اختبار writer و641 اختباراً إجمالاً محلياً؛ لا قبول native أو ادعاء مخطط SQL. تفاصيل F1–F8 وحدود الذرية والتغطية في WRITER_HANDOFF §10.
+
+
+## ISSUE-103 — AR declared-evidence review and documentation drift (2026-09-23)
+
+**FIXED-IN-REPO** forF3/F6anddiagnostics;notnativeacceptance. Review46bbb5ff(snapshot5bd2feb)staticonly. ReproducedUC-07acceptingVTasFIM,andv1silentlyignoringar_policies;fixedfb4100a. Addedexclusion_detailswithoutreassigningambiguousrawownership,explicitconditionaltriggerdenominatorscope,andper-attemptclocksource/differences. 12additionalregressions,39ARtotal. Fulladjudication(F1–F9)intests/README. Fresh-checkoutfixturecorrected83ebff9.
+
+**OPEN** forfullacademic/referenceaudit: ch2Rev.2supersession,YARA-versus-containmentandunsupportedproduct/performance/noveltyclaimswerequalified;TEST_PLANAIstatusandch5/WRITER_HANDOFFimplementationstaterefreshed. Thisdoesnotvalidateallpapers,licensing,figuresororiginalclaims. t4/t5/causality,UC-01,ISSUE-068andnative/human/datarequirementsremainopen;TAKEOVER_AUDIT §9.

@@ -1,5 +1,20 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
+## الاستئناف الحاكم — تدقيق الاكتمال وتحكيم AR، 2026-09-23 [AI]
+
+طلبالمالكفيdocs/owner-messages/2026-09-23_vector_completion_audit.md: تأكيدvector، استكمال، بحثومعاييروتدقيقالاكتمال. checkout الصحيحmy-bro؛ المستودعالأب لميمس. لاreset/force/squashللتاريخالمنشور، وPR28مفتوح لا نشرSOC.
+
+- نُفذمقامأدلةAR فيe05937d و27اختبارًا في5bd2feb؛ راجعه46bbb5ff ساكنًامنالنص، لميفتحcheckoutولميختبر. النتيجةالأصليةفيresearch/inbox/2026-09-23_ar_review_result.json والتحكيمالكاملآخرtests/README؛ **انتهتولا تعاد**.
+- عولجUC-07 triggerغيرFIM والسياسةالمهملةفيv1، وحفظexclusion_details، وscopeالمحفزاتغيرالمستبعدة، وتصريحمصدرoffsetوالمختلفعنrun، ورفضoverrideفيالمحاولة. fb4100a، ثماختباراتfresh-checkoutفي83ebff9.39AR؛ **680اختبارًا محليًا علىdd87465 في28.865s**. CIالرأسالنهائي وروابطالتسليمفيPR28 لايستعارانمنرأسقديم.
+- F1مساواةoffsetالمحاولةبالـrun لميتبع: العقديسمحبقياساتمتجددة، كلهاإقراراتتحتاجأدلة. F2لميخصصالمحفزالمشتركبعدإبطالclaim؛ احتفظبالغموضوالأسباب. F4خلطtimezoneبـNTP رُفض. F8/F9fail-closedمقصود. التفاصيلوالاختباراتفيالدليل.
+-15SVGفعلًامتجهةبدونimage/script/foreignObject/href/data؛31مخرجًا متطابقًا. لاMermaidengine validation أوقبولبشري. حزمةb5d72e7القديمةليستمخرجاتهذهالجولة؛ الحزمةالمحدثةتعنونبرأسهافيPR28.
+-أرشفت5مصادررسمية وبصمات/UTC؛ SP800-61r3نهائيأبريل2025حلRev.2، SSDF1.1نهائيفبراير2022وممارساتمختارةمنPDF، SSDF1.2المشارإليهمسودةIPD17ديسمبر2025، Wazuhcurrentdefault15mللانقطاعليسإعدادالمعمل. لاامتثالNISTمُدعى.
+- TAKEOVER_AUDIT §9مصفوفةالحالةوالأدلةوالمتبقي، research/analyzed/2026-09-22_completion_research.md §6تحليلالمصادر. الفصل2صُححجزئيًا دونادعاءتدقيقكلالأوراق، والفصل5ودليلالكاتبمحدثان.
+
+**التاليبالتحديد:** M2-Bمنتجt4وهويةARثمt5المستقلالسببي؛ M3UC-01collector/evaluatorبحدثجديدلاcachedactive؛ ISSUE-068حمايةconfigدونتخفيفguard؛ تدقيقبقيةالفصولوالمراجعوالملاحق. هذهبرمجة/تحريرمحليغيرمكتمل، لا مجردبيئة. بعدهابواياتnative/clock/Linux/Windows/YARA/ACLوالتعافيوالنموذجوالجردوالبشرو30labelsوPILOT5/MEASURED≥30/BASELINE≥12h. لاتجاربأصلية أوأرقامSOCجديدة. لا طلبإعادةإنشاءobservers/recovery/runnerأوالرسومات.
+
+أوامرالتحقق: `python3 -B scripts/build_writer_package.py --check` ثم `SOC_TRANSPORT_TEST_PORT=18434 TMPDIR=/home/user/webapp/my-bro/build PYTHONDONTWRITEBYTECODE=1 bash scripts/validate/validate_all.sh` بعدوجودbuild؛ المسارالمؤقتداخلworkspace. لاخدمةHTTPمستمرة. أحدثHEADيتحققمنgit، وأحدثCIمنPR28. المشروع**IN-PROGRESSوليس100%**.
+
 ## الاستئناف الحاكم — تسليم Markdown وSVG، 2026-09-23 [AI]
 
 طلب المالك الجديد محفوظ حرفياً في docs/owner-messages/2026-09-23_markdown_svg_handoff.md؛ لا إعادة تسليم Word/PDF بدلاً منه. بدأت الجولة من0ed5c21، والمساحة الصحيحة /home/user/webapp/my-bro. حافظنا على الفرع والتاريخ المشترك دون reset/force؛ PR28 مفتوح، لم يُدمج ولم يُنشر SOC.

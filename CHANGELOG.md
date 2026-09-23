@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] — 2026-09-23 — [AI] completion audit and declared AR evidence outcomes
+
+- Reverified 15 passive vector SVGs and all generated derivatives; no embedded raster or new Word/PDF.
+- Added opt-in UC-03/UC-07 AR policies, all-recorded-attempt denominators, conservative uncertainty/coverage classification and conditional statistics; t4/t5 producers and causal acceptance remain unimplemented.
+- Adjudicated static review46bbb5ff: constrained UC-07 FIM triggers, rejected v1/attempt-misplaced policies, retained exclusion diagnostics and exposed eligible-trigger/clock scopes. No weakening of ambiguous ownership or invariant guards.
+- 39 new AR tests;680 total local regressions passed ondd87465. Final-head CI verified separately inPR28.
+- Archived five official NIST/Wazuh sources with hashes; documented selected SSDF applicability without compliance claims. Updated partial literature review, writer guide, completion matrix and remaining local/native/human gates.
+
 ## [Unreleased] — 2026-09-23 — [AI] Markdown writer handoff and SVG diagrams
 
 - Honored the owner's Markdown/SVG delivery requirement rather than generating another Word/PDF.
