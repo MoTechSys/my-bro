@@ -249,13 +249,25 @@ class PowerShellProducer(unittest.TestCase):
         self.assertIn('Get-CimInstance', names)
         self.assertFalse(set(names) & {'Start-Service','Stop-Service','Restart-Service','Invoke-Expression','Invoke-Command','Set-Service'})
 
+    def test_producer_without_lab_fails_before_native_queries(self):
+        command = "& '"+str(cc.WINDOWS_PRODUCER)+"' -RunId synthetic -CycleId cycle-0 -PlanSha256 '"+'a'*64+"' -ClockRef synthetic -ExpectedHost endpoint -ImagePath 'C:\\SOC\\wazuh-agent.exe' -ImageSha256 '"+'b'*64+"'"
+        out = self.run_ps(command+'; exit $LASTEXITCODE')
+        self.assertEqual(out.returncode, 2)
+        self.assertEqual(out.stdout, '')
+        self.assertIn('WINDOWS_EVIDENCE_REJECTED', out.stderr)
+
     def test_mocked_service_sample_executes_actual_function_bodies(self):
         path = str(cc.WINDOWS_PRODUCER)
         command = "$t=$null;$e=$null;$a=[System.Management.Automation.Language.Parser]::ParseFile('"+path+"',[ref]$t,[ref]$e); $a.FindAll({param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst]},$true) | ForEach-Object { . ([scriptblock]::Create($_.Extent.Text)) }; "
         command += "$ImagePath='C:\\SOC\\wazuh-agent.exe';$ImageSha256='"+'b'*64+"'; function Protected-ImageHash {return $ImageSha256}; function Get-CimInstance {param($ClassName,$Filter,$OperationTimeoutSec); if($ClassName -eq 'Win32_Service'){[pscustomobject]@{Name='WazuhSvc';State='Running';ProcessId=100;PathName=('\"'+$ImagePath+'\"')}}else{[pscustomobject]@{ProcessId=100;ExecutablePath=$ImagePath;CreationDate=[DateTime]'2026-09-23T01:00:03Z'}}}; Service-Sample | ConvertTo-Json -Compress"
+        command = 'Set-StrictMode -Version Latest; $ErrorActionPreference=\'Stop\'; '+command
         out = self.run_ps(command); self.assertEqual(out.returncode, 0, out.stderr+out.stdout)
         sample = json.loads(out.stdout); self.assertEqual(sample['process_id'], 100)
         self.assertEqual(sample['process_created_ticks'], str(w.EPOCH_TICKS+(BASE+3000)*10000))
+        bad = command.replace('ProcessId=100;ExecutablePath', 'ProcessId=101;ExecutablePath')
+        out = self.run_ps(bad)
+        self.assertNotEqual(out.returncode, 0)
+        self.assertIn('WINDOWS_EVIDENCE_REJECTED', out.stderr)
 
 
 if __name__ == '__main__':
