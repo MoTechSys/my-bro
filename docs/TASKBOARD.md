@@ -45,7 +45,7 @@
 | T-22 | الفصل4 — التنفيذ | AI | IN-PROGRESS — مسودة مصححة v1 موجودة | `docs/thesis/ch4_implementation.md` | فصل الأدلة والكود والسحابة؛ الرسوم وتدقيق الأصول والقبول النهائي متبقية |
 | T-23 | الفصل5 — النتائج والمناقشة | AI | IN-PROGRESS — مسودة مصححة v2 موجودة؛ نتائج أصلية متبقية | `docs/thesis/ch5_results_conclusion.md` | منهجية ومصفوفة أدلة وحدود واستنتاجات شرطية؛ لا أرقام فعالية مختلقة |
 | T-24 | توحيد الفصل 1 مع الواقع (ISSUE-001/002/003/015): تعديل جدول 1.1 | CLAUDE | ✅ DONE (v2: نص S4 حرفياً + 9 تصحيحات موثَّقة في §1.8) | `docs/thesis/ch1_introduction.md` | تصحيح #1 (OVA) قابل للنقض بجواب Q1 |
-| T-25 | تجميع DOCX نهائي بقالب الجامعة (بعد Q6) | ASTRA | ⛔ BLOCKED (Q6 القالب) | `docs/thesis/build/` | — |
+| T-25 | تسليم Markdown/SVG للكاتب وفق طلب2026-09-23 | AI | IMPLEMENTED-LOCAL —36 اختبار writer | `docs/thesis/WRITER_HANDOFF.md`, figures, build_writer_package.py | MD هو المطلوب الحالي؛ التنسيق الجامعي النهائي والمراجعة البشرية منفصلان، لا Word/PDF جديد |
 | T-30 | Demo Script للجنة (10–15 دقيقة، 4 هجمات حية، خطة بديلة) | CLAUDE | ✅ DONE [CLAUDE] 2026-09-09 (v1: §0–§9، 4 هجمات مرجَّعة بمعرّفات القواعد، خطة B، Q&A، checklist) | `docs/DEMO_SCRIPT.md` | **توثيقي؛ يحتاج dry-run بشري ×2 + أرقام Δt من T-11 (ASTRA يعبّئ §6)** |
 | T-31 | UC-12 أجهزة الشبكة عبر Syslog — **تصميم + تنفيذ** decoders/قواعد 100400+ | ASTRA (كان CLAUDE→ASTRA) | 🟢 FREE | `extension/UC-12_network_syslog_design.md`, `wazuh/manager/rules/local_rules_network.xml` | تنفيذه يعتمد Q5 |
 | T-32 | الملخص التنفيذي + المقدمة العامة + الخاتمة الأدبية للرسالة | ASTRA (كان CLAUDE) | 🟢 FREE | `docs/thesis/front_matter.md` | بعد ch4/ch5 |
@@ -79,3 +79,7 @@ M2-A منفذ محلياً في 69a25f6/e819196 مع تقوية 67ae769/959deea�
 ## تقدم محلي — 2026-09-23 [AI]
 
 بتوجيهالمالك «كمله بدقه يالله»: أُنجز recovery.py مع 46 اختباراً و manifest/journal binding واحتفاظالإلغاء و continuation journal؛ pipeline مراجعةالرسالةمع 13 اختباراًوتصدير DOCX/PDF فعلي.605 اختباراتمحليةناجحة؛ مراجعة 66ea9527 انتهتوحُكمت. T-11/T-16/T-25 تبقى IN-PROGRESS؛ التالي M2-B/M3 و ISSUE-068 والرسوموالمراجعوالنهائي،لا إعادةبناءالاستعادةأوال pipeline. AR لميتغيربهذهالجولة؛بقيةالبواباتالأصليةباقية.
+
+## تسليم حزمة الكاتب — 2026-09-23 [AI]
+
+MD/SVG منفذ:15 مخططاً متجهياً، JSON editable وMermaid وفهرس ودليل الكاتب، تصحيحثمانيةمخططاتالفصل3، وأداةتغليفMDبـmanifest،36اختباراًجديداً و641 إجمالاًناجحةعلى3abb755. انتهتوحكمت مراجعةbdb07323،لا تعاد. لا إعادةWord/PDF. حجزهذهالحزمة منتهٍ بعدالتحققوالنشر؛ T-16/T-11/T-70 ليستDONE. التاليM2-B/t4/t5 وM3 وISSUE-068 وتدقيقالفصولوالمراجع؛ الخارجيةباقية. المصدرالحاكم WRITER_HANDOFF وCONTEXT،والـSHA/CIالنهائي فيPR28.

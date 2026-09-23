@@ -1,5 +1,34 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
+## الاستئناف الحاكم — تسليم Markdown وSVG، 2026-09-23 [AI]
+
+طلب المالك الجديد محفوظ حرفياً في docs/owner-messages/2026-09-23_markdown_svg_handoff.md؛ لا إعادة تسليم Word/PDF بدلاً منه. بدأت الجولة من0ed5c21، والمساحة الصحيحة /home/user/webapp/my-bro. حافظنا على الفرع والتاريخ المشترك دون reset/force؛ PR28 مفتوح، لم يُدمج ولم يُنشر SOC.
+
+### المنجز الفعلي
+
+- `scripts/build_writer_package.py`: renderer stdlib دون أدوات خارجية أو شبكة، catalog JSON قابل للتحرير، 15 SVG و15 Mermaid وفهرس عربي. رسم العلاقات JSON لا SQL؛ AI استشاري؛ مخطط الأزمنة بطاقات مستقلة لا ترتيب مفروض لـt3/AR.
+- `docs/thesis/WRITER_HANDOFF.md`: توجيه الكاتب، خريطة الأشكال، قاموس البيانات، مصفوفة الأدلة، خطة الفصول، مسودة ملخص بلا نتائج مختلقة، المراجع المطلوبة وحدود التدقيق. ZIP يتضمن الفصول الخمسة ونسخة MD مجمعة ومصادر مختارة وMANIFEST، وليس نسخة تشغيل كاملة.
+- `ch3_methodology.md`: ثمانية Mermaid blocks تطابق المصدر، وروابط SVG؛ إزالة rm -f وYARA recursion من وصف التنفيذ، وتقييد MITRE/التكلفة/حصصVT/سلامةAR/تأكيدالنتائج/الجردالتاريخي. لم تُدقق بقية الفصول/المراجع بالكامل.
+- `tests/test_writer_package.py`:36 اختباراً؛ **641 إجمالاً وALL CHECKS PASSED على3abb755 في28.857s**. CI النهائي يجب أن يثبت لكل رأس فيPR28؛ لا يستعار من الرأس السابق.
+- المراجعة المستقلة الآلية bdb07323 مكتملة ومحكّمة، snapshot2945525 للـcatalog/renderer وAR/evaluate فقط. submission/result الأصليان فيresearch/inbox؛ لا تعاد المهمة. تفصيل F1–F8 وحدود التغطية في WRITER_HANDOFF §10.
+- شُغّل librsvg على15 SVG. فحص آلي للصورة الجامعة، وفحص full-resolution لـfig04/06/11 ثمfig03/04/15. وجد التباساً في توجيهVirusTotal وأصلح في3abb755. لا تدقيق بصري بشري لكل شكل أوكل صفحة. لا يُخلط XML validity مع صحة المعنى.
+
+### عقود البناء وحدوده
+
+`--render` يكتب staging ثم يستبدل كل ملف منفرداً؛ **ليس معاملة ذرية للمجموعة**، و--check يرفض خليط النسخ قبل التغليف. ZIP يُبنى ويُفحص في staging خاص، ثم يُنشر hard-link حصرياً، فلا overwrite؛ فشل fsync للدليل بعد النشر قد يترك ZIP كاملاً ويظل الأمر فاشلاً. نفس المدخلات تعطي ZIP مطابق البايتات. القراءة من workspace موثوق غير متغير؛ لا ضمان ضد same-UID malicious writer أوparent swap. لا .git/runtime/أصول خام/مفاتيح ضمن allowlist. بعض روابط الوثائق المرجعية المختارة تحتاج المستودع الكامل؛ روابط دليل الكاتب والفصول والأشكال مختبرة داخل الحزمة.
+
+```bash
+python3 -B scripts/build_writer_package.py --check
+python3 -B -m unittest discover -s tests -p test_writer_package.py
+python3 -B scripts/build_writer_package.py --package build/writer_package_NEW.zip
+SOC_TRANSPORT_TEST_PORT=18434 TMPDIR=/home/user/webapp/my-bro/build PYTHONDONTWRITEBYTECODE=1 bash scripts/validate/validate_all.sh
+```
+
+### التالي — لا تقول لم يبق إلا البيئة
+
+لم نغير AR أوقياس التشغيل بهذه الجولة: M2-B/t4 instrumentation وربطهويةAR وt5 السببي، ثم UC-01 ومقامAR الكامل، وحمايةconfig فيISSUE-068، وتدقيق المراجع والفصول والملاحق/دليل العرض النهائي مازالت أعمالاً محلية. الأجهزة والساعات والـnative acceptance والنموذج/الجرد و30labels والتحكيم وC4 والقياسات الأصلية وقالبالجامعة بوابات خارجية مستقلة. الرسوم الصحيحة لا تغلق هذه الأعمال.
+
+
 ## الاستئناف الحاكم — الاستعادة و pipeline الرسالة، 2026-09-23 [AI]
 
 هذا القسم أحدث من اللقطات التالية: استعادة pending و pipeline نسخة المراجعة أصبحا منفذين. بدأت الجولة عند b11a756؛ آخر رأس كود مختبر محلياً عند كتابة هذا التسليم هو 68d4e1e. الرأس النهائي و CI الخاص به في PR28، مع الحفاظ على التاريخ والفرع المشترك.

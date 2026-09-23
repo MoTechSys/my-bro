@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased] — 2026-09-23 — [AI] Markdown writer handoff and SVG diagrams
+
+- Honored the owner's Markdown/SVG delivery requirement rather than generating another Word/PDF.
+- Added 15 deterministic passive SVGs, editable JSON catalog, Mermaid derivatives, Arabic captions/index, writer guide, evidence matrix, logical data dictionary and reproducible allowlisted ZIP with assembled Markdown chapters.
+- Corrected eight chapter diagrams against guarded Linux AR and actual JSON/OpenSearch storage; qualified unsupported claims about MITRE coverage, VT quotas, licensing, Filebeat, safety and universal confirmation.
+- Adjudicated independent automated review bdb07323: guarded catalog, snapshot checks, staged per-file SVG publication, completed ZIP exclusive publication and explicit flow directions. No group-atomic or authenticity guarantees.
+- Added36 regression tests;641 total and ALL CHECKS PASSED on3abb755. Native acceptance, t4/t5, UC-01/AR denominator, config protection, full reference audit and human academic review remain open.
+
+
 ## [Unreleased] — 2026-09-23 — [AI] pending recovery and traceable thesis review build
 
 - Added offline, private, byte-pinned pending recovery with complete derived journals, duplicate preservation, no invented execution/timing, safe continuation export and original-file retention.
