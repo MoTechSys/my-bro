@@ -31,6 +31,8 @@ def load(name, path):
 c = load('_collect_connection', Path(__file__).with_name('connection_measure.py'))
 s = load('_collect_source', Path(__file__).with_name('source_observer.py'))
 p = load('_collect_process', Path(__file__).with_name('connection_process.py'))
+w = load('_collect_windows', Path(__file__).with_name('connection_windows.py'))
+WINDOWS_PRODUCER = Path(__file__).with_name('connection_windows.ps1')
 r = s.r
 require = c.require
 LIMIT = 65536
@@ -42,7 +44,7 @@ STATUS = {'Active': 'active', 'Disconnected': 'disconnected',
 
 
 def source_hashes():
-    paths = {Path(__file__), Path(c.__file__), Path(c.m.__file__), Path(s.__file__), Path(s.v.__file__), Path(p.__file__)}
+    paths = {Path(__file__), Path(c.__file__), Path(c.m.__file__), Path(s.__file__), Path(s.v.__file__), Path(p.__file__), Path(w.__file__), WINDOWS_PRODUCER}
     paths.update(ROOT/'ai_agent'/name for name in r.SOURCE_NAMES)
     return {str(p.relative_to(ROOT)): r.digest(p.read_bytes()) for p in sorted(paths)}
 
@@ -207,6 +209,8 @@ def capture(plan_raw, cycle_id, kind, store):
 
 def export(store, expected, plan_raw, cycle_id, kind):
     """Replay all raw bytes, not stored derived statuses. No partial success export."""
+    if kind == 'windowsservice':
+        return export_windows(store, expected, plan_raw, cycle_id)
     r.e.sha256(expected)
     plan = native_plan(plan_raw)
     require(kind in KINDS and cycle_id in {x['cycle_id'] for x in plan['cycles']}, 'CAPTURE_IDENTITY')
@@ -268,7 +272,7 @@ def bind(plan_raw, request_raw, manager, before, after, source):
         c.keys(desc, 'path sha256'+optional, 'STORE_DESCRIPTOR')
         c.text(desc['path'], 'STORE_PATH'); r.e.sha256(desc['sha256'])
     backend = before.get('kind', 'service')
-    require(isinstance(backend, str) and backend in {'service', 'linuxproc'} and
+    require(isinstance(backend, str) and backend in {'service', 'linuxproc', 'windowsservice'} and
             after.get('kind', 'service') == backend, 'SERVICE_BACKEND_BINDING')
     require(len({x['sha256'] for x in (manager, before, after, source)}) == 4, 'DISTINCT_STORES_REQUIRED')
     polls = export(manager['path'], manager['sha256'], plan_raw, cid, 'manager')['samples']
@@ -285,6 +289,10 @@ def bind(plan_raw, request_raw, manager, before, after, source):
                 'PARTIAL_DAEMON_RESTART')
         require(c.point(plan, 'endpoint', new['earliest_started_ms'])[0] >
                 c.point(plan, 'controller', request['request_ms'])[1], 'DAEMONS_NOT_AFTER_REQUEST')
+    if backend == 'windowsservice':
+        require(old['boot_ref'] == new['boot_ref'] and
+                old['image_path'].casefold() == new['image_path'].casefold() and
+                old['image_sha256'] == new['image_sha256'], 'WINDOWS_SERVICE_CHAIN')
     event = s.export(source['path'], source['sha256'])
     require(isinstance(event, dict), 'SOURCE_EVENT_REQUIRED')
     cycle = next(x for x in plan['cycles'] if x['cycle_id'] == cid)
@@ -306,6 +314,63 @@ def bind(plan_raw, request_raw, manager, before, after, source):
     return row
 
 
+def windows_payload(plan_raw, cycle_id, raw, image_raw):
+    require(isinstance(raw, bytes) and len(raw) <= w.LIMIT and len(image_raw) <= w.LIMIT, 'WINDOWS_INPUT_LIMIT')
+    plan = native_plan(plan_raw)
+    require(cycle_id in {x['cycle_id'] for x in plan['cycles']}, 'UNPLANNED_CYCLE')
+    obj = c.m.strict_json(raw.decode('utf-8'))
+    value, query = w.validate(obj, plan, cycle_id, r.digest(plan_raw), r.digest(WINDOWS_PRODUCER.read_bytes()),
+                              c.m.strict_json(image_raw.decode('utf-8')))
+    return value, query
+
+
+def import_windows(plan_raw, cycle_id, raw, expected_raw, image_raw, store):
+    """Offline import, NOT durable native capture or Windows authenticity."""
+    r.e.sha256(expected_raw)
+    require(r.digest(raw) == expected_raw, 'WINDOWS_RAW_HASH')
+    windows_payload(plan_raw, cycle_id, raw, image_raw)
+    with r.store_lock(store) as fd:
+        require(not os.listdir(fd), 'EMPTY_STORE_REQUIRED')
+        intent = {'schema_version': 1, 'kind': 'windowsservice', 'cycle_id': cycle_id,
+                  'capture_id': uuid.uuid4().hex, 'plan_sha256': r.digest(plan_raw),
+                  'native_sha256': expected_raw, 'image_spec_sha256': r.digest(image_raw),
+                  'source_sha256': source_hashes(), 'acceptance_approved': False}
+        data = r.json_bytes(intent)
+        r.write_once(fd, 'intent.json', data)
+        r.write_once(fd, 'plan.json', plan_raw)
+        r.write_once(fd, 'image.json', image_raw)
+        r.write_once(fd, 'windows.json', raw)
+        terminal = {'intent_sha256': r.digest(data), 'status': 'complete', 'count': 1}
+        r.write_once(fd, 'terminal.json', r.json_bytes(terminal))
+    return dict(terminal, acceptance_approved=False, import_not_native_capture=True)
+
+
+def export_windows(store, expected, plan_raw, cycle_id):
+    r.e.sha256(expected)
+    with r.store_lock(store) as fd:
+        data = r.read_at(fd, 'intent.json')
+        require(r.digest(data) == expected, 'INTENT_HASH')
+        intent = c.m.strict_json(data.decode())
+        c.keys(intent, 'schema_version kind cycle_id capture_id plan_sha256 native_sha256 image_spec_sha256 source_sha256 acceptance_approved', 'WINDOWS_INTENT_KEYS')
+        require(type(intent['schema_version']) is int and intent['schema_version'] == 1 and
+                intent['kind'] == 'windowsservice' and intent['cycle_id'] == cycle_id and
+                intent['acceptance_approved'] is False and isinstance(intent['capture_id'], str) and
+                re.fullmatch(r'[0-9a-f]{32}', intent['capture_id']), 'WINDOWS_INTENT_BINDING')
+        require(intent['plan_sha256'] == r.digest(plan_raw) and r.read_at(fd, 'plan.json') == plan_raw and
+                intent['source_sha256'] == source_hashes(), 'WINDOWS_PLAN_OR_CODE')
+        terminal = c.m.strict_json(r.read_at(fd, 'terminal.json').decode())
+        require(isinstance(terminal, dict) and type(terminal.get('count')) is int and
+                terminal == {'intent_sha256': expected, 'status': 'complete', 'count': 1}, 'INCOMPLETE_CAPTURE')
+        raw = r.read_at(fd, 'windows.json', w.LIMIT); image_raw = r.read_at(fd, 'image.json', w.LIMIT)
+        require(r.digest(raw) == intent['native_sha256'] and r.digest(image_raw) == intent['image_spec_sha256'], 'WINDOWS_STORED_BYTES')
+        value, query = windows_payload(plan_raw, cycle_id, raw, image_raw)
+        require(set(os.listdir(fd)) == {'intent.json', 'plan.json', 'image.json', 'windows.json', 'terminal.json'}, 'UNEXPECTED_STORE_ENTRY')
+        value.update(captured_start_ms=query['start_ms'], captured_end_ms=query['end_ms'], ref=expected)
+        return {'kind': 'windowsservice', 'cycle_id': cycle_id, 'samples': [value], 'intent_sha256': expected,
+                'native_payload_sha256': intent['native_sha256'], 'stored_bytes_verified': True,
+                'import_not_native_capture': True, 'acceptance_approved': False, 'authenticity_verified': False}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='action', required=True)
@@ -313,9 +378,12 @@ def main(argv=None):
     out = sub.add_parser('export'); out.add_argument('--sha256', required=True)
     for command_parser in (cap, out):
         command_parser.add_argument('--plan', required=True); command_parser.add_argument('--cycle', required=True)
-        command_parser.add_argument('--kind', choices=sorted(KINDS), required=True); command_parser.add_argument('--store', required=True)
+        command_parser.add_argument('--kind', choices=sorted(KINDS if command_parser is cap else KINDS | {'windowsservice'}), required=True); command_parser.add_argument('--store', required=True)
     join = sub.add_parser('bind'); join.add_argument('--plan', required=True); join.add_argument('--request', required=True)
     join.add_argument('--stores', required=True, help='private JSON object with manager/before/after/source descriptors')
+    win = sub.add_parser('import-windows')
+    for option in ('plan', 'cycle', 'input', 'sha256', 'image', 'store'):
+        win.add_argument('--'+option, required=True)
     args = parser.parse_args(argv)
     previous = signal.getsignal(signal.SIGTERM)
     def terminate(*_):
@@ -326,6 +394,9 @@ def main(argv=None):
         if args.action == 'capture':
             require(args.lab and sys.platform == 'linux', 'LAB_LINUX_REQUIRED')
             result = capture(plan_raw, args.cycle, args.kind, args.store)
+        elif args.action == 'import-windows':
+            result = import_windows(plan_raw, args.cycle, c.read_private(args.input), args.sha256,
+                                    c.read_private(args.image), args.store)
         elif args.action == 'export':
             result = export(args.store, args.sha256, plan_raw, args.cycle, args.kind)
         else:
