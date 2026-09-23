@@ -208,3 +208,12 @@ T-16/T-70 IN-PROGRESS. التالي محلياً ROADMAP §3: عقد artifact/im
 -المراجعة08768699 انتهت وحُكمتD1..D6؛المراجعلميشغّلاختباراتالمستودع.التقريروالحدودفيtests/README.رفضاقتراحretry وتوسيعR/S؛أُصلحوصفD وأضافت3اختباراتتحكيمضمن38.
 -الوقتالمصدرlatest required daemon birth ليسجاهزية.المحللschemav1 باقٍ؛معرفةbackend تحتاجintent/exports المرتبطة،والسجلالمجردلايحمله.هذهالدلالةصريحةبدليل الكاتب.
 -متبقي:قبولnativeLinux،والبرمجةWindows/controller وt4/t5/config والتكاملوبقيةالتدقيق.15SVGلمتتغير و31مخرجًامتطابقًا؛لانتيجةSOCأواستقلال/أصالةمدعاة.
+
+
+## 13. Windows service evidence — 2026-09-23
+
+- أضيفمنتجCIM قراءةفقط وهويةخدمة/عملية،ومستوردLinux خاصوبايتمثبتوexport/backend.الأدلةالأصليةلمتجمع؛stdoutالمنتجليسمخزنWindowsدائمًا.
+-34اختبارًاجديدًا و872كليًا على6fe661c في48.508ث بلاskips محليًا.7اختباراتPowerShellتستخدم7.4.13Linux (parser/core معmocks،hash/symlinkمؤقت،فشلopt-in).لاWindows5.1/CIM/NTFSnative. البقيةاختباراتPython/schema/import. مصدرcanaryفيbindمختبَربـmock فقط.
+-أُرشفت5مصادرWazuh/MicrosoftمعUTCوالبصمات؛قُرئمعرفالخدمةواسمالبرنامجواجزاءCIM ذاتالصلة،لالمكتبةSDKكاملة.نسخةPowerShellLinux وبصمتهافيwindows_sources.json وتبقىفيbuildالمهمل.
+-المراجعة9dbf6edeمكتملة؛originalقُطعفاستُكملنفسالمشروعوالذيلمؤرشف.تحكيم1..10 فيtests/README،معاختباراتتثبتINVALID_TIMELINEللبدءالقديم،وعدمتحويلhashإلىأصالة.الإصلاحاتاللاحقةليستمراجعةمستقلةبأثررجعي.
+-متبقي محلي:Windowscanary/المخزنوتوقيتcontroller،t4/t5 وISSUE-068 والتكاملوبقيةالتدقيق.قبولWindowsالأصليبوابةمنفصلة.15SVGو31مشتقًا دونتغيير؛لانشرأوعيناتوlabelsمختلقة.
