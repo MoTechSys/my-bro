@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased] — 2026-09-23 — Windows service evidence producer/importer
+
+- Added read-only PowerShell CIM service snapshots and strict offline validation/import into private write-once Linux stores. Pinned plan/cycle/host/clock, expected image and producer versions; replay raw bytes on export.
+- Enforced sample/boot agreement, explicit DateTime kinds with ambiguous/unspecified rejection, PID binding and aggregate timing. Process birth is not readiness; image/producer hashes remain attestations.
+-34 new tests;872 full local tests without skips on6fe661c. Real PowerShell7.4.13 parser/core tests use mocked CIM on Linux, not native Windows. Five source archives and portable-parser hash recorded.
+- Review9dbf6ede plus truncated-output continuation complete/adjudicated. Windows canary/private native store, controller capture, t4/t5, config protection and remaining work still open.
+
 ## [Unreleased] — 2026-09-23 — Linux procfs UC-01 adapter
 
 - Added two-scan fixed-daemon procfs evidence with executable inode/protection checks, PID/start-tick/boot/namespace identities and explicitly derived birth-time precision. No native execution or service control.
