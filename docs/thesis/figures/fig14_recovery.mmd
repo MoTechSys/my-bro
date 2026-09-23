@@ -1,0 +1,17 @@
+flowchart TB
+    n0["Operator stops collection / Pins original input hashes"]
+    n1["Lock original journal / Snapshot original bytes"]
+    n2["Validate manifest + pending / Journal path / prefix binding"]
+    n3["Existing final row? / Preserve once, never replace"]
+    n4["Otherwise append interrupted / Keep t0#59; no invented t1..t6"]
+    n5["Seal derived attempts.jsonl / Original inputs unchanged"]
+    n6["Offline export verification / No command replay or alerts"]
+    n7["New continuation journal / Exclusive private destination"]
+    n0 -->|"next stage"| n1
+    n1 -->|"next stage"| n2
+    n2 -->|"next stage"| n3
+    n3 -->|"no published final row"| n4
+    n4 -->|"next stage"| n5
+    n5 -->|"next stage"| n6
+    n6 -->|"next stage"| n7
+    n3 -->|"existing final row: preserve once"| n5

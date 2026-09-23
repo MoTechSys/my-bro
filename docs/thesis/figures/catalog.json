@@ -1,0 +1,3296 @@
+{
+  "schema_version": 1,
+  "diagrams": [
+    {
+      "id": "fig01_methodology",
+      "title": "Iterative research and acceptance workflow",
+      "caption_ar": "مراحل البحث والتطوير. الانتقال مرهون بأدلة المرحلة؛ فشل التحقق يعيد العمل إلى التصميم أو التنفيذ. وجود الأداة أو الرسم لا يعني اجتياز القبول.",
+      "status": "Design / workflow; not evidence that every stage has passed",
+      "sources": [
+        "tests/TEST_PLAN.md",
+        "docs/03_ROADMAP.md"
+      ],
+      "kind": "graph",
+      "nodes": [
+        {
+          "id": "n0",
+          "x": 430,
+          "y": 170,
+          "kind": "process",
+          "lines": [
+            "Requirements",
+            "and source audit"
+          ]
+        },
+        {
+          "id": "n1",
+          "x": 430,
+          "y": 350,
+          "kind": "process",
+          "lines": [
+            "Tool selection",
+            "and scope decisions"
+          ]
+        },
+        {
+          "id": "n2",
+          "x": 430,
+          "y": 530,
+          "kind": "process",
+          "lines": [
+            "Architecture",
+            "and data contracts"
+          ]
+        },
+        {
+          "id": "n3",
+          "x": 430,
+          "y": 710,
+          "kind": "process",
+          "lines": [
+            "Implementation",
+            "and local regression tests"
+          ]
+        },
+        {
+          "id": "n4",
+          "x": 430,
+          "y": 890,
+          "kind": "pending",
+          "lines": [
+            "Authorized native pilot",
+            "PILOT: 5 per scenario"
+          ]
+        },
+        {
+          "id": "n5",
+          "x": 430,
+          "y": 1070,
+          "kind": "pending",
+          "lines": [
+            "Measured trials + baseline",
+            "planned_n >= 30; >= 12 h"
+          ]
+        },
+        {
+          "id": "n6",
+          "x": 430,
+          "y": 1250,
+          "kind": "pending",
+          "lines": [
+            "Human review",
+            "and final thesis"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "n0",
+          "to": "n1",
+          "label": "next stage",
+          "points": [
+            [
+              580,
+              270
+            ],
+            [
+              580,
+              350
+            ]
+          ],
+          "label_at": [
+            580,
+            305
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n1",
+          "to": "n2",
+          "label": "next stage",
+          "points": [
+            [
+              580,
+              450
+            ],
+            [
+              580,
+              530
+            ]
+          ],
+          "label_at": [
+            580,
+            485
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n2",
+          "to": "n3",
+          "label": "next stage",
+          "points": [
+            [
+              580,
+              630
+            ],
+            [
+              580,
+              710
+            ]
+          ],
+          "label_at": [
+            580,
+            665
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n3",
+          "to": "n4",
+          "label": "next stage",
+          "points": [
+            [
+              580,
+              810
+            ],
+            [
+              580,
+              890
+            ]
+          ],
+          "label_at": [
+            580,
+            845
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n4",
+          "to": "n5",
+          "label": "next stage",
+          "points": [
+            [
+              580,
+              990
+            ],
+            [
+              580,
+              1070
+            ]
+          ],
+          "label_at": [
+            580,
+            1025
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n5",
+          "to": "n6",
+          "label": "next stage",
+          "points": [
+            [
+              580,
+              1170
+            ],
+            [
+              580,
+              1250
+            ]
+          ],
+          "label_at": [
+            580,
+            1205
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n3",
+          "to": "n2",
+          "label": "revise design after failed checks",
+          "points": [
+            [
+              430,
+              760
+            ],
+            [
+              190,
+              760
+            ],
+            [
+              190,
+              580
+            ],
+            [
+              430,
+              580
+            ]
+          ],
+          "label_at": [
+            230,
+            665
+          ],
+          "direction": "forward"
+        }
+      ],
+      "height": 1460
+    },
+    {
+      "id": "fig02_architecture",
+      "title": "SOC architecture and advisory boundary",
+      "caption_ar": "مسار الجمع والتحليل والتخزين: alerts.json ثم Filebeat ثم Wazuh Indexer ثم العرض. مسار الاستجابة مستقل عن المحلل الاستشاري؛ لا سهم تنفيذ من AI إلى AR. هذه معمارية منطقية، لا جرد نشر حالي.",
+      "status": "Implemented contracts / design view; native acceptance pending",
+      "sources": [
+        "docs/02_ARCHITECTURE.md",
+        "wazuh/manager/rules/local_rules.xml",
+        "wazuh/agents/linux/active-response/soc_ar.py",
+        "ai_agent/analyst.py"
+      ],
+      "kind": "graph",
+      "nodes": [
+        {
+          "id": "sensors",
+          "x": 60,
+          "y": 170,
+          "kind": "actor",
+          "lines": [
+            "Endpoints / Suricata",
+            "FIM, audit, web, processes"
+          ]
+        },
+        {
+          "id": "agent",
+          "x": 800,
+          "y": 170,
+          "kind": "process",
+          "lines": [
+            "Wazuh Agent",
+            "syscheck / logcollector"
+          ]
+        },
+        {
+          "id": "rules",
+          "x": 60,
+          "y": 360,
+          "kind": "store",
+          "lines": [
+            "Decoders + Rules + CDB",
+            "Selected MITRE annotations"
+          ]
+        },
+        {
+          "id": "manager",
+          "x": 800,
+          "y": 360,
+          "kind": "process",
+          "lines": [
+            "Wazuh Manager",
+            "Decode / match / route"
+          ]
+        },
+        {
+          "id": "ar",
+          "x": 60,
+          "y": 550,
+          "kind": "process",
+          "lines": [
+            "Endpoint Active Response",
+            "Configured rules only"
+          ]
+        },
+        {
+          "id": "alerts",
+          "x": 800,
+          "y": 550,
+          "kind": "store",
+          "lines": [
+            "alerts.json",
+            "Manager alert records"
+          ]
+        },
+        {
+          "id": "advisory",
+          "x": 60,
+          "y": 740,
+          "kind": "process",
+          "lines": [
+            "AI advisory pipeline",
+            "execution_authority=none"
+          ]
+        },
+        {
+          "id": "filebeat",
+          "x": 800,
+          "y": 740,
+          "kind": "process",
+          "lines": [
+            "Filebeat",
+            "Alert shipping"
+          ]
+        },
+        {
+          "id": "human",
+          "x": 60,
+          "y": 930,
+          "kind": "actor",
+          "lines": [
+            "Security analyst",
+            "Reviews advice / alerts"
+          ]
+        },
+        {
+          "id": "index",
+          "x": 800,
+          "y": 930,
+          "kind": "store",
+          "lines": [
+            "Wazuh Indexer",
+            "OpenSearch documents"
+          ]
+        },
+        {
+          "id": "report",
+          "x": 60,
+          "y": 1120,
+          "kind": "store",
+          "lines": [
+            "Private AI report",
+            "Not an execution interface"
+          ]
+        },
+        {
+          "id": "dashboard",
+          "x": 800,
+          "y": 1120,
+          "kind": "process",
+          "lines": [
+            "Wazuh Dashboard",
+            "Search / visualization"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "sensors",
+          "to": "agent",
+          "label": "events / EVE",
+          "points": [
+            [
+              360,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            580,
+            208
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "agent",
+          "to": "manager",
+          "label": "collected events",
+          "points": [
+            [
+              950,
+              270
+            ],
+            [
+              950,
+              360
+            ]
+          ],
+          "label_at": [
+            950,
+            310
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "rules",
+          "to": "manager",
+          "label": "matching configuration",
+          "points": [
+            [
+              360,
+              410
+            ],
+            [
+              800,
+              410
+            ]
+          ],
+          "label_at": [
+            580,
+            398
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "manager",
+          "to": "ar",
+          "label": "AR dispatch",
+          "points": [
+            [
+              800,
+              410
+            ],
+            [
+              580,
+              410
+            ],
+            [
+              580,
+              600
+            ],
+            [
+              360,
+              600
+            ]
+          ],
+          "label_at": [
+            580,
+            499
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "manager",
+          "to": "alerts",
+          "label": "alerts",
+          "points": [
+            [
+              950,
+              460
+            ],
+            [
+              950,
+              550
+            ]
+          ],
+          "label_at": [
+            950,
+            500
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "alerts",
+          "to": "filebeat",
+          "label": "JSON records",
+          "points": [
+            [
+              950,
+              650
+            ],
+            [
+              950,
+              740
+            ]
+          ],
+          "label_at": [
+            950,
+            690
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "filebeat",
+          "to": "index",
+          "label": "indexing",
+          "points": [
+            [
+              950,
+              840
+            ],
+            [
+              950,
+              930
+            ]
+          ],
+          "label_at": [
+            950,
+            880
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "index",
+          "to": "dashboard",
+          "label": "queries / results",
+          "points": [
+            [
+              950,
+              1030
+            ],
+            [
+              950,
+              1120
+            ]
+          ],
+          "label_at": [
+            950,
+            1070
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "advisory",
+          "to": "human",
+          "label": "advice only",
+          "points": [
+            [
+              210,
+              840
+            ],
+            [
+              210,
+              930
+            ]
+          ],
+          "label_at": [
+            210,
+            880
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "human",
+          "to": "report",
+          "label": "review",
+          "points": [
+            [
+              210,
+              1030
+            ],
+            [
+              210,
+              1120
+            ]
+          ],
+          "label_at": [
+            210,
+            1070
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "alerts",
+          "to": "advisory",
+          "label": "controlled sanitized export",
+          "points": [
+            [
+              800,
+              600
+            ],
+            [
+              580,
+              600
+            ],
+            [
+              580,
+              790
+            ],
+            [
+              360,
+              790
+            ]
+          ],
+          "label_at": [
+            580,
+            694
+          ],
+          "direction": "forward"
+        }
+      ],
+      "height": 1330
+    },
+    {
+      "id": "fig03_context",
+      "title": "DFD level 0 - SOC context",
+      "caption_ar": "السياق يميز نقاط النهاية وحركة الشبكة والخدمات الخارجية والمحلل. الاستجابة أوامر من قواعد Wazuh، وليست أوامر النموذج. المحاكاة المصرح بها تقع على نقاط النهاية؛ لا يلزم اتصال المهاجم بالمنصة.",
+      "status": "Implemented contracts / design view; native acceptance pending",
+      "sources": [
+        "docs/02_ARCHITECTURE.md",
+        "wazuh/agents/linux/active-response/soc_ar.py",
+        "docs/lab/UC-14_ai_analyst.md"
+      ],
+      "kind": "graph",
+      "nodes": [
+        {
+          "id": "endpoints",
+          "x": 60,
+          "y": 170,
+          "kind": "actor",
+          "lines": [
+            "Endpoints / network",
+            "Authorized event sources"
+          ]
+        },
+        {
+          "id": "soc",
+          "x": 800,
+          "y": 170,
+          "kind": "process",
+          "lines": [
+            "SOC platform",
+            "Collection and detection"
+          ]
+        },
+        {
+          "id": "vt",
+          "x": 60,
+          "y": 370,
+          "kind": "actor",
+          "lines": [
+            "VirusTotal",
+            "External reputation service"
+          ]
+        },
+        {
+          "id": "analyst",
+          "x": 800,
+          "y": 370,
+          "kind": "actor",
+          "lines": [
+            "Security analyst",
+            "Search / investigate"
+          ]
+        },
+        {
+          "id": "operator",
+          "x": 60,
+          "y": 570,
+          "kind": "actor",
+          "lines": [
+            "Lab operator",
+            "Authorized test actions"
+          ]
+        },
+        {
+          "id": "reviewer",
+          "x": 800,
+          "y": 570,
+          "kind": "actor",
+          "lines": [
+            "Human evaluator",
+            "Independent labels/reviews"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "endpoints",
+          "to": "soc",
+          "label": "event telemetry",
+          "points": [
+            [
+              360,
+              205
+            ],
+            [
+              800,
+              205
+            ]
+          ],
+          "label_at": [
+            580,
+            193
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "soc",
+          "to": "vt",
+          "label": "hash request / reputation reply",
+          "points": [
+            [
+              880,
+              270
+            ],
+            [
+              880,
+              320
+            ],
+            [
+              210,
+              320
+            ],
+            [
+              210,
+              370
+            ]
+          ],
+          "label_at": [
+            580,
+            309
+          ],
+          "direction": "both"
+        },
+        {
+          "from": "soc",
+          "to": "analyst",
+          "label": "alerts / search requests",
+          "points": [
+            [
+              950,
+              270
+            ],
+            [
+              950,
+              370
+            ]
+          ],
+          "label_at": [
+            950,
+            315
+          ],
+          "direction": "both"
+        },
+        {
+          "from": "operator",
+          "to": "endpoints",
+          "label": "authorized test events",
+          "points": [
+            [
+              60,
+              620
+            ],
+            [
+              30,
+              620
+            ],
+            [
+              30,
+              220
+            ],
+            [
+              60,
+              220
+            ]
+          ],
+          "label_at": [
+            245,
+            530
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "reviewer",
+          "to": "analyst",
+          "label": "review evidence",
+          "points": [
+            [
+              950,
+              570
+            ],
+            [
+              950,
+              470
+            ]
+          ],
+          "label_at": [
+            950,
+            515
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "soc",
+          "to": "endpoints",
+          "label": "configured rule-driven AR",
+          "direction": "forward",
+          "points": [
+            [
+              800,
+              245
+            ],
+            [
+              360,
+              245
+            ]
+          ],
+          "label_at": [
+            580,
+            234
+          ]
+        }
+      ],
+      "height": 780
+    },
+    {
+      "id": "fig04_dfd1",
+      "title": "DFD level 1 - collection, enrichment and storage",
+      "caption_ar": "تفكيك DFD تشغيلي. الإثراء يعاد كحدث للتحليل، وسجل AR يعاد إلى الجمع ولا يثبت بمفرده t5. يشمل P6 النقل والفهرسة والاستعلام، ولا اتصال مباشر بين المخزن والمحلل دون عملية استعلام.",
+      "status": "Implemented contracts / design view; native acceptance pending",
+      "sources": [
+        "docs/02_ARCHITECTURE.md",
+        "wazuh/manager/rules/local_rules.xml",
+        "wazuh/agents/linux/active-response/soc_ar.py"
+      ],
+      "kind": "graph",
+      "nodes": [
+        {
+          "id": "source",
+          "x": 60,
+          "y": 170,
+          "kind": "actor",
+          "lines": [
+            "Endpoint / network sources",
+            "Events and EVE JSON"
+          ]
+        },
+        {
+          "id": "collect",
+          "x": 800,
+          "y": 170,
+          "kind": "process",
+          "lines": [
+            "P1 Collect",
+            "Agent / logcollector"
+          ]
+        },
+        {
+          "id": "config",
+          "x": 60,
+          "y": 360,
+          "kind": "store",
+          "lines": [
+            "D1 Rules / decoders / CDB",
+            "Versioned configuration"
+          ]
+        },
+        {
+          "id": "decode",
+          "x": 800,
+          "y": 360,
+          "kind": "process",
+          "lines": [
+            "P2 Decode",
+            "Extract fields"
+          ]
+        },
+        {
+          "id": "enrich",
+          "x": 60,
+          "y": 550,
+          "kind": "process",
+          "lines": [
+            "P4 Enrich via VirusTotal",
+            "Hash request / event reply"
+          ]
+        },
+        {
+          "id": "match",
+          "x": 800,
+          "y": 550,
+          "kind": "process",
+          "lines": [
+            "P3 Match and route",
+            "Configured rule conditions"
+          ]
+        },
+        {
+          "id": "respond",
+          "x": 60,
+          "y": 740,
+          "kind": "process",
+          "lines": [
+            "P5 Endpoint AR",
+            "Guarded remove / YARA"
+          ]
+        },
+        {
+          "id": "alerts",
+          "x": 800,
+          "y": 740,
+          "kind": "store",
+          "lines": [
+            "D2 alerts.json",
+            "Alert records"
+          ]
+        },
+        {
+          "id": "arlog",
+          "x": 60,
+          "y": 930,
+          "kind": "store",
+          "lines": [
+            "D3 active-responses.log",
+            "Recollected by P1"
+          ]
+        },
+        {
+          "id": "present",
+          "x": 800,
+          "y": 930,
+          "kind": "process",
+          "lines": [
+            "P6 Ship / index / query",
+            "Filebeat + Indexer + UI"
+          ]
+        },
+        {
+          "id": "analyst",
+          "x": 60,
+          "y": 1120,
+          "kind": "actor",
+          "lines": [
+            "Security analyst",
+            "Search requests / results"
+          ]
+        },
+        {
+          "id": "documents",
+          "x": 800,
+          "y": 1120,
+          "kind": "store",
+          "lines": [
+            "D4 Index documents",
+            "wazuh-alerts-4.x-*"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "source",
+          "to": "collect",
+          "label": "raw events",
+          "points": [
+            [
+              360,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            580,
+            208
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "collect",
+          "to": "decode",
+          "label": "enveloped events",
+          "points": [
+            [
+              950,
+              270
+            ],
+            [
+              950,
+              360
+            ]
+          ],
+          "label_at": [
+            950,
+            310
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "config",
+          "to": "decode",
+          "label": "decoder definitions",
+          "points": [
+            [
+              360,
+              410
+            ],
+            [
+              800,
+              410
+            ]
+          ],
+          "label_at": [
+            580,
+            398
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "decode",
+          "to": "match",
+          "label": "decoded fields",
+          "points": [
+            [
+              950,
+              460
+            ],
+            [
+              950,
+              550
+            ]
+          ],
+          "label_at": [
+            950,
+            500
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "match",
+          "to": "enrich",
+          "label": "configured enrichment trigger",
+          "points": [
+            [
+              800,
+              580
+            ],
+            [
+              360,
+              580
+            ]
+          ],
+          "label_at": [
+            580,
+            568
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "match",
+          "to": "respond",
+          "label": "configured AR triggers",
+          "points": [
+            [
+              800,
+              600
+            ],
+            [
+              580,
+              600
+            ],
+            [
+              580,
+              790
+            ],
+            [
+              360,
+              790
+            ]
+          ],
+          "label_at": [
+            580,
+            689
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "respond",
+          "to": "arlog",
+          "label": "result / error logs",
+          "points": [
+            [
+              210,
+              840
+            ],
+            [
+              210,
+              930
+            ]
+          ],
+          "label_at": [
+            210,
+            880
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "match",
+          "to": "alerts",
+          "label": "eligible alert",
+          "points": [
+            [
+              950,
+              650
+            ],
+            [
+              950,
+              740
+            ]
+          ],
+          "label_at": [
+            950,
+            690
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "alerts",
+          "to": "present",
+          "label": "JSON shipping",
+          "points": [
+            [
+              950,
+              840
+            ],
+            [
+              950,
+              930
+            ]
+          ],
+          "label_at": [
+            950,
+            880
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "present",
+          "to": "documents",
+          "label": "index / read",
+          "points": [
+            [
+              950,
+              1030
+            ],
+            [
+              950,
+              1120
+            ]
+          ],
+          "label_at": [
+            950,
+            1070
+          ],
+          "direction": "both"
+        },
+        {
+          "from": "analyst",
+          "to": "present",
+          "label": "query / display",
+          "points": [
+            [
+              360,
+              1170
+            ],
+            [
+              580,
+              1170
+            ],
+            [
+              580,
+              980
+            ],
+            [
+              800,
+              980
+            ]
+          ],
+          "label_at": [
+            580,
+            1069
+          ],
+          "direction": "both"
+        },
+        {
+          "from": "config",
+          "to": "match",
+          "label": "rule / CDB definitions",
+          "points": [
+            [
+              360,
+              410
+            ],
+            [
+              530,
+              410
+            ],
+            [
+              530,
+              600
+            ],
+            [
+              800,
+              600
+            ]
+          ],
+          "label_at": [
+            560,
+            495
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "arlog",
+          "to": "collect",
+          "label": "feedback log collection",
+          "points": [
+            [
+              60,
+              980
+            ],
+            [
+              30,
+              980
+            ],
+            [
+              30,
+              140
+            ],
+            [
+              950,
+              140
+            ],
+            [
+              950,
+              170
+            ]
+          ],
+          "label_at": [
+            275,
+            140
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "enrich",
+          "to": "match",
+          "label": "enrichment event returned",
+          "direction": "forward",
+          "points": [
+            [
+              360,
+              625
+            ],
+            [
+              800,
+              625
+            ]
+          ],
+          "label_at": [
+            580,
+            614
+          ]
+        }
+      ],
+      "height": 1330
+    },
+    {
+      "id": "fig05_dfd2",
+      "title": "DFD level 2 - rule matching detail",
+      "caption_ar": "تفصيل منطقي لعملية المطابقة P3، لا ادعاء مراحل داخلية مستقلة في analysisd. CDB ووسوم MITRE مشروطة بالقاعدة ولا تمر بهما كل الأحداث. تصدر التنبيهات ومحفزات التكامل والاستجابة وفق الإعداد.",
+      "status": "Implemented contracts / design view; native acceptance pending",
+      "sources": [
+        "wazuh/manager/rules/local_rules.xml",
+        "wazuh/manager/decoders/local_decoder.xml"
+      ],
+      "kind": "graph",
+      "nodes": [
+        {
+          "id": "input",
+          "x": 60,
+          "y": 170,
+          "kind": "actor",
+          "lines": [
+            "Decoded fields from P2",
+            "Event metadata"
+          ]
+        },
+        {
+          "id": "builtin",
+          "x": 800,
+          "y": 170,
+          "kind": "process",
+          "lines": [
+            "P3.1 Built-in parents",
+            "Rule-specific matching"
+          ]
+        },
+        {
+          "id": "cdb",
+          "x": 60,
+          "y": 370,
+          "kind": "store",
+          "lines": [
+            "CDB lists",
+            "Conditional command lookup"
+          ]
+        },
+        {
+          "id": "local",
+          "x": 800,
+          "y": 370,
+          "kind": "process",
+          "lines": [
+            "P3.2 Local rule conditions",
+            "if_sid / field / match"
+          ]
+        },
+        {
+          "id": "annotations",
+          "x": 60,
+          "y": 570,
+          "kind": "store",
+          "lines": [
+            "Optional MITRE metadata",
+            "Not universal coverage"
+          ]
+        },
+        {
+          "id": "route",
+          "x": 800,
+          "y": 570,
+          "kind": "process",
+          "lines": [
+            "P3.3 Rule level + routing",
+            "Configured thresholds"
+          ]
+        },
+        {
+          "id": "alert",
+          "x": 60,
+          "y": 770,
+          "kind": "store",
+          "lines": [
+            "alerts.json",
+            "Eligible alerts"
+          ]
+        },
+        {
+          "id": "outputs",
+          "x": 800,
+          "y": 770,
+          "kind": "actor",
+          "lines": [
+            "P4 enrichment / P5 AR",
+            "Configured triggers only"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "input",
+          "to": "builtin",
+          "label": "decoded input",
+          "points": [
+            [
+              360,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            580,
+            208
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "builtin",
+          "to": "local",
+          "label": "parent match",
+          "points": [
+            [
+              950,
+              270
+            ],
+            [
+              950,
+              370
+            ]
+          ],
+          "label_at": [
+            950,
+            315
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "cdb",
+          "to": "local",
+          "label": "lookup where configured",
+          "points": [
+            [
+              360,
+              420
+            ],
+            [
+              800,
+              420
+            ]
+          ],
+          "label_at": [
+            580,
+            408
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "local",
+          "to": "route",
+          "label": "matching rule",
+          "points": [
+            [
+              950,
+              470
+            ],
+            [
+              950,
+              570
+            ]
+          ],
+          "label_at": [
+            950,
+            515
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "annotations",
+          "to": "route",
+          "label": "metadata if present",
+          "points": [
+            [
+              360,
+              620
+            ],
+            [
+              800,
+              620
+            ]
+          ],
+          "label_at": [
+            580,
+            608
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "route",
+          "to": "alert",
+          "label": "alert record",
+          "points": [
+            [
+              800,
+              620
+            ],
+            [
+              580,
+              620
+            ],
+            [
+              580,
+              820
+            ],
+            [
+              360,
+              820
+            ]
+          ],
+          "label_at": [
+            580,
+            714
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "route",
+          "to": "outputs",
+          "label": "trigger conditions",
+          "points": [
+            [
+              950,
+              670
+            ],
+            [
+              950,
+              770
+            ]
+          ],
+          "label_at": [
+            950,
+            715
+          ],
+          "direction": "forward"
+        }
+      ],
+      "height": 980
+    },
+    {
+      "id": "fig06_vt_sequence",
+      "title": "UC-03 - guarded Linux removal sequence",
+      "caption_ar": "التسلسل المصحح لـLinux: قاعدة 87105 والمسار المعتمد، ثم check_keys ورد continue أو abort، ثم مقارنة MD5 وهوية الملف قبل os.unlink تحت واصف أب مثبت. لا rm -f. تبقى نافذة تبديل الاسم النهائية موثقة في SECURITY_REVIEW؛ سجل النجاح ليس شاهد t5 مستقلاً.",
+      "status": "Linux code path; failure/abort branches described, no measured timing",
+      "sources": [
+        "wazuh/agents/linux/active-response/soc_ar.py",
+        "wazuh/manager/rules/local_rules.xml",
+        "tests/SECURITY_REVIEW.md"
+      ],
+      "kind": "sequence",
+      "participants": [
+        {
+          "id": "agent",
+          "label": "Agent"
+        },
+        {
+          "id": "manager",
+          "label": "Manager"
+        },
+        {
+          "id": "vt",
+          "label": "VT integration"
+        },
+        {
+          "id": "execd",
+          "label": "execd / wrapper"
+        },
+        {
+          "id": "ar",
+          "label": "soc_ar remove"
+        },
+        {
+          "id": "store",
+          "label": "Filebeat / Indexer"
+        }
+      ],
+      "messages": [
+        {
+          "from": "agent",
+          "to": "manager",
+          "label": "FIM event -> configured 100200/100201 trigger"
+        },
+        {
+          "from": "manager",
+          "to": "vt",
+          "label": "Hash reputation request through integration"
+        },
+        {
+          "from": "vt",
+          "to": "manager",
+          "label": "Reputation event -> rule 87105 when matched"
+        },
+        {
+          "from": "manager",
+          "to": "execd",
+          "label": "Dispatch configured local remove-threat response"
+        },
+        {
+          "from": "execd",
+          "to": "ar",
+          "label": "Read bounded JSON add; delete is a no-op"
+        },
+        {
+          "from": "ar",
+          "to": "ar",
+          "label": "Require rule 87105 and approved path; derive agent/path/md5 keys"
+        },
+        {
+          "from": "ar",
+          "to": "execd",
+          "label": "check_keys handshake"
+        },
+        {
+          "from": "execd",
+          "to": "ar",
+          "label": "abort -> return; continue -> proceed; otherwise reject"
+        },
+        {
+          "from": "ar",
+          "to": "ar",
+          "label": "Open no-follow single-link regular file under pinned parent"
+        },
+        {
+          "from": "ar",
+          "to": "ar",
+          "label": "Compare source MD5 and stable descriptor/name identity"
+        },
+        {
+          "from": "ar",
+          "to": "ar",
+          "label": "os.unlink(basename, dir_fd=parent); final name-swap risk remains"
+        },
+        {
+          "from": "ar",
+          "to": "agent",
+          "label": "Write success/error log; log is not independent completion evidence"
+        },
+        {
+          "from": "agent",
+          "to": "manager",
+          "label": "Recollect log; configured success/failure rules may match"
+        },
+        {
+          "from": "manager",
+          "to": "store",
+          "label": "alerts.json -> Filebeat -> Indexer -> Dashboard"
+        }
+      ]
+    },
+    {
+      "id": "fig07_yara_sequence",
+      "title": "UC-07 - bounded Linux YARA scan sequence",
+      "caption_ar": "فحص واصف ملف ثابت دون recursion أو shell. يتحقق الكود من المحفزات والمعاملات وثقة الملف التنفيذي والقواعد والمهلة وهوية الملف بعد الفحص. 108001 خاص بالمطابقة الإيجابية؛ scan_complete سجل تدقيق ذاتي لا شاهد سببي مستقل.",
+      "status": "Linux code path; failure/abort branches described, no measured timing",
+      "sources": [
+        "wazuh/agents/linux/active-response/soc_ar.py",
+        "wazuh/manager/rules/local_rules.xml",
+        "tests/test_security.py"
+      ],
+      "kind": "sequence",
+      "participants": [
+        {
+          "id": "agent",
+          "label": "Agent"
+        },
+        {
+          "id": "manager",
+          "label": "Manager"
+        },
+        {
+          "id": "ar",
+          "label": "soc_ar yara"
+        },
+        {
+          "id": "yara",
+          "label": "YARA process"
+        },
+        {
+          "id": "store",
+          "label": "Filebeat / Indexer"
+        }
+      ],
+      "messages": [
+        {
+          "from": "agent",
+          "to": "manager",
+          "label": "FIM event -> configured Linux trigger 100300 or 100301"
+        },
+        {
+          "from": "manager",
+          "to": "ar",
+          "label": "AR add with exact approved extra_args; delete -> no-op"
+        },
+        {
+          "from": "ar",
+          "to": "ar",
+          "label": "Require allowed path; pin regular single-link file without following links"
+        },
+        {
+          "from": "ar",
+          "to": "ar",
+          "label": "Wait for stable identity; reject if not stable within bounded loop"
+        },
+        {
+          "from": "ar",
+          "to": "ar",
+          "label": "Check root-owned non-writable regular binary and rule file"
+        },
+        {
+          "from": "ar",
+          "to": "yara",
+          "label": "yara -w -a 10 -l 100 RULES /proc/self/fd/FD; no shell or recursion"
+        },
+        {
+          "from": "yara",
+          "to": "ar",
+          "label": "25 s subprocess timeout; CPU/address-space limits; require exit 0"
+        },
+        {
+          "from": "ar",
+          "to": "ar",
+          "label": "Recheck file identity; validate each rule name and descriptor output"
+        },
+        {
+          "from": "ar",
+          "to": "agent",
+          "label": "Write match lines and scan_complete audit; failures logged separately"
+        },
+        {
+          "from": "agent",
+          "to": "manager",
+          "label": "yara_decoder / 108001 for positive match, not every completed scan"
+        },
+        {
+          "from": "manager",
+          "to": "store",
+          "label": "alerts.json -> Filebeat -> Indexer -> Dashboard"
+        }
+      ]
+    },
+    {
+      "id": "fig08_topology",
+      "title": "Historical lab topology - not current cloud inventory",
+      "caption_ar": "إعادة رسم التصميم التاريخي دون تحويله إلى جرد سحابي حالي. العناوين أدناه مرجع docs/02_ARCHITECTURE فقط؛ يجب التحقق المؤرخ من الأنظمة والإصدارات والمنافذ والتشفير قبل أي نشر أو قياس.",
+      "status": "HISTORICAL DESIGN ONLY - addresses are not current deployment assertions",
+      "sources": [
+        "docs/02_ARCHITECTURE.md",
+        "docs/lab/CLOUD_ENV_ACCESS.md"
+      ],
+      "kind": "graph",
+      "nodes": [
+        {
+          "id": "linux",
+          "x": 60,
+          "y": 170,
+          "kind": "actor",
+          "lines": [
+            "Historical kali1",
+            "192.168.100.108",
+            "Agent / Suricata / YARA"
+          ]
+        },
+        {
+          "id": "server",
+          "x": 800,
+          "y": 170,
+          "kind": "process",
+          "lines": [
+            "Historical wazuh-server",
+            "192.168.100.105",
+            "Manager / Indexer / UI"
+          ]
+        },
+        {
+          "id": "windows",
+          "x": 60,
+          "y": 390,
+          "kind": "actor",
+          "lines": [
+            "Historical win1",
+            "192.168.100.106",
+            "Windows Agent"
+          ]
+        },
+        {
+          "id": "browser",
+          "x": 800,
+          "y": 390,
+          "kind": "actor",
+          "lines": [
+            "Analyst browser",
+            "Dashboard access"
+          ]
+        },
+        {
+          "id": "lab",
+          "x": 60,
+          "y": 610,
+          "kind": "store",
+          "lines": [
+            "Historical VMware design",
+            "192.168.100.0/24",
+            "Not live cloud inventory"
+          ]
+        },
+        {
+          "id": "vt",
+          "x": 800,
+          "y": 610,
+          "kind": "actor",
+          "lines": [
+            "VirusTotal service",
+            "External HTTPS access"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "linux",
+          "to": "server",
+          "label": "1514 events / 1515 enrollment",
+          "points": [
+            [
+              360,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            580,
+            208
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "windows",
+          "to": "server",
+          "label": "1514 events / 1515 enrollment",
+          "points": [
+            [
+              360,
+              440
+            ],
+            [
+              580,
+              440
+            ],
+            [
+              580,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            580,
+            324
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "browser",
+          "to": "server",
+          "label": "HTTPS access",
+          "points": [
+            [
+              950,
+              390
+            ],
+            [
+              950,
+              270
+            ]
+          ],
+          "label_at": [
+            950,
+            325
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "server",
+          "to": "vt",
+          "label": "integration request",
+          "points": [
+            [
+              1100,
+              220
+            ],
+            [
+              1130,
+              220
+            ],
+            [
+              1130,
+              660
+            ],
+            [
+              1100,
+              660
+            ]
+          ],
+          "label_at": [
+            950,
+            565
+          ],
+          "direction": "both"
+        }
+      ],
+      "height": 820
+    },
+    {
+      "id": "fig09_actors",
+      "title": "Actors, use cases and authority boundaries",
+      "caption_ar": "خريطة فاعلين وحالات استخدام وليست مخطط صلاحيات RBAC منفذاً. المسؤول يضبط النشر؛ المشغّل يجري المحاكاة المصرح بها؛ المحلل يراجع؛ والمراجع البشري يوسم ويحكم مستقلاً. AI استشاري ولا يمتلك سلطة AR. UC-12/13 مقترحان وليسا قبولاً منفذاً.",
+      "status": "Implemented contracts / design view; native acceptance pending",
+      "sources": [
+        "tests/TEST_PLAN.md",
+        "docs/DEMO_SCRIPT.md",
+        "docs/lab/UC-14_ai_analyst.md"
+      ],
+      "kind": "graph",
+      "nodes": [
+        {
+          "id": "admin",
+          "x": 60,
+          "y": 170,
+          "kind": "actor",
+          "lines": [
+            "SOC administrator",
+            "Deployment / configuration"
+          ]
+        },
+        {
+          "id": "enroll",
+          "x": 800,
+          "y": 170,
+          "kind": "process",
+          "lines": [
+            "UC-01",
+            "Agent enrollment / health"
+          ]
+        },
+        {
+          "id": "operator",
+          "x": 60,
+          "y": 370,
+          "kind": "actor",
+          "lines": [
+            "Authorized lab operator",
+            "Controlled test scenarios"
+          ]
+        },
+        {
+          "id": "detect",
+          "x": 800,
+          "y": 370,
+          "kind": "process",
+          "lines": [
+            "UC-02..09 / UC-11",
+            "Detection / configured AR"
+          ]
+        },
+        {
+          "id": "analyst",
+          "x": 60,
+          "y": 570,
+          "kind": "actor",
+          "lines": [
+            "Security analyst",
+            "Investigates / reviews"
+          ]
+        },
+        {
+          "id": "advice",
+          "x": 800,
+          "y": 570,
+          "kind": "process",
+          "lines": [
+            "UC-10 / UC-14",
+            "Notifications / AI advice"
+          ]
+        },
+        {
+          "id": "reviewer",
+          "x": 60,
+          "y": 770,
+          "kind": "actor",
+          "lines": [
+            "Human evaluator",
+            "Labels / adjudication"
+          ]
+        },
+        {
+          "id": "c4",
+          "x": 800,
+          "y": 770,
+          "kind": "process",
+          "lines": [
+            "C4 evaluation",
+            "Frozen planned denominator"
+          ]
+        },
+        {
+          "id": "future",
+          "x": 60,
+          "y": 970,
+          "kind": "pending",
+          "lines": [
+            "UC-12 / UC-13",
+            "Network / mobile visibility"
+          ]
+        },
+        {
+          "id": "gate",
+          "x": 800,
+          "y": 970,
+          "kind": "pending",
+          "lines": [
+            "Scope + samples + acceptance",
+            "Not implemented by drawing"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "admin",
+          "to": "enroll",
+          "label": "configure / inspect",
+          "points": [
+            [
+              360,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            580,
+            208
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "operator",
+          "to": "detect",
+          "label": "authorized experiments",
+          "points": [
+            [
+              360,
+              420
+            ],
+            [
+              800,
+              420
+            ]
+          ],
+          "label_at": [
+            580,
+            408
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "analyst",
+          "to": "advice",
+          "label": "review, never model execution",
+          "points": [
+            [
+              360,
+              620
+            ],
+            [
+              800,
+              620
+            ]
+          ],
+          "label_at": [
+            580,
+            608
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "reviewer",
+          "to": "c4",
+          "label": "independent labels / reviews",
+          "points": [
+            [
+              360,
+              820
+            ],
+            [
+              800,
+              820
+            ]
+          ],
+          "label_at": [
+            580,
+            808
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "future",
+          "to": "gate",
+          "label": "requires separate work",
+          "points": [
+            [
+              360,
+              1020
+            ],
+            [
+              800,
+              1020
+            ]
+          ],
+          "label_at": [
+            580,
+            1008
+          ],
+          "direction": "forward"
+        }
+      ],
+      "height": 1180
+    },
+    {
+      "id": "fig10_ai_sequence",
+      "title": "UC-14 - advisory evidence and evaluation sequence",
+      "caption_ar": "المدخلات المنقحة والمعرفة المثبتة تدخل مسار المحلل. gold وrubric لا يرسلان إلى النموذج. سجل intent يسبق العامل، ويحفظ الفشل/الرفض/الانقطاع ولا يعيد المحاولة خفية. التحقق من البايتات لا يثبت هوية النموذج أو استقلال البشر. لا سهم نحو AR.",
+      "status": "Advisory-only pipeline; original inference and human C4 acceptance pending",
+      "sources": [
+        "ai_agent/runner.py",
+        "ai_agent/analyst.py",
+        "ai_agent/evaluate.py",
+        "ai_agent/report.py"
+      ],
+      "kind": "sequence",
+      "participants": [
+        {
+          "id": "operator",
+          "label": "Operator"
+        },
+        {
+          "id": "runner",
+          "label": "Runner / store"
+        },
+        {
+          "id": "worker",
+          "label": "Analyst worker"
+        },
+        {
+          "id": "model",
+          "label": "Optional Ollama"
+        },
+        {
+          "id": "human",
+          "label": "Human reviewer"
+        },
+        {
+          "id": "eval",
+          "label": "Evaluator / report"
+        }
+      ],
+      "messages": [
+        {
+          "from": "operator",
+          "to": "runner",
+          "label": "Prepare pinned batch, code/config identity and private evidence store"
+        },
+        {
+          "from": "runner",
+          "to": "runner",
+          "label": "Persist intent before bounded worker launch"
+        },
+        {
+          "from": "runner",
+          "to": "worker",
+          "label": "Sanitized input + pinned knowledge; no gold labels or rubric"
+        },
+        {
+          "from": "worker",
+          "to": "model",
+          "label": "Explicit opt-in loopback request; offline default does not infer"
+        },
+        {
+          "from": "model",
+          "to": "worker",
+          "label": "Advisory output; execution_authority=none"
+        },
+        {
+          "from": "worker",
+          "to": "runner",
+          "label": "Validated output or explicit noncompleted status; no inference from refusal prose"
+        },
+        {
+          "from": "runner",
+          "to": "runner",
+          "label": "Persist bounded artifacts and terminal; missing terminal is interrupted"
+        },
+        {
+          "from": "runner",
+          "to": "eval",
+          "label": "Export with offline byte verification; keep full planned denominator"
+        },
+        {
+          "from": "human",
+          "to": "eval",
+          "label": "Gold labels and output-hash-bound claim adjudication"
+        },
+        {
+          "from": "eval",
+          "to": "operator",
+          "label": "Private report; missing reviews are not zero unsupported claims"
+        }
+      ]
+    },
+    {
+      "id": "fig11_measurement_model",
+      "title": "Measurement logical records - not SQL tables",
+      "caption_ar": "نموذج علاقات منطقي لعقود JSON/JSONL، لا جداول SQL أو مفاتيح أجنبية ينفذها OpenSearch. run_id/trial_id هوية المحاولة؛ manifest يصف الساعات والتخطيط؛ التنبيهات تربط بالهوية والنافذة والمحددات؛ مخازن المراقبين تحفظ بايتات مستقلة. t4/t5 ما زالا عملاً محلياً.",
+      "status": "Implemented contracts / design view; native acceptance pending",
+      "sources": [
+        "scripts/measure/mttd.py",
+        "scripts/measure/trial_runner.py",
+        "scripts/measure/source_observer.py",
+        "scripts/measure/visibility_observer.py",
+        "scripts/measure/recovery.py"
+      ],
+      "kind": "graph",
+      "nodes": [
+        {
+          "id": "manifest",
+          "x": 60,
+          "y": 170,
+          "kind": "store",
+          "lines": [
+            "Run manifest",
+            "run_id / devices / clock_map",
+            "Predeclared plan"
+          ]
+        },
+        {
+          "id": "attempt",
+          "x": 800,
+          "y": 170,
+          "kind": "store",
+          "lines": [
+            "Attempt JSONL",
+            "run_id + trial_id",
+            "t0 / selectors / exclusions"
+          ]
+        },
+        {
+          "id": "clock",
+          "x": 60,
+          "y": 390,
+          "kind": "store",
+          "lines": [
+            "Device clock records",
+            "clock_ref / offset",
+            "precision / uncertainty"
+          ]
+        },
+        {
+          "id": "alert",
+          "x": 800,
+          "y": 390,
+          "kind": "store",
+          "lines": [
+            "Original alert records",
+            "Identity + timestamp",
+            "Selected by trial contract"
+          ]
+        },
+        {
+          "id": "source",
+          "x": 60,
+          "y": 610,
+          "kind": "store",
+          "lines": [
+            "Source evidence store",
+            "intent / polls / snapshots",
+            "Bound spec + file hash"
+          ]
+        },
+        {
+          "id": "observer",
+          "x": 800,
+          "y": 610,
+          "kind": "store",
+          "lines": [
+            "Visibility evidence store",
+            "identity / responses / polls",
+            "Bound t2 -> observed t3"
+          ]
+        },
+        {
+          "id": "recovery",
+          "x": 60,
+          "y": 830,
+          "kind": "store",
+          "lines": [
+            "Recovery snapshots",
+            "journal / pending / manifest",
+            "Prefix + canonical bindings"
+          ]
+        },
+        {
+          "id": "report",
+          "x": 800,
+          "y": 830,
+          "kind": "store",
+          "lines": [
+            "Derived measurement report",
+            "All-attempt denominator",
+            "Null missing timestamps"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "manifest",
+          "to": "attempt",
+          "label": "one run : many attempts",
+          "points": [
+            [
+              360,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            580,
+            208
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "manifest",
+          "to": "clock",
+          "label": "one run : device map",
+          "points": [
+            [
+              210,
+              270
+            ],
+            [
+              210,
+              390
+            ]
+          ],
+          "label_at": [
+            210,
+            325
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "attempt",
+          "to": "alert",
+          "label": "zero or more candidate alerts",
+          "points": [
+            [
+              950,
+              270
+            ],
+            [
+              950,
+              390
+            ]
+          ],
+          "label_at": [
+            950,
+            325
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "clock",
+          "to": "source",
+          "label": "device / clock binding",
+          "points": [
+            [
+              210,
+              490
+            ],
+            [
+              210,
+              610
+            ]
+          ],
+          "label_at": [
+            210,
+            545
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "alert",
+          "to": "observer",
+          "label": "expected alert identity",
+          "points": [
+            [
+              950,
+              490
+            ],
+            [
+              950,
+              610
+            ]
+          ],
+          "label_at": [
+            950,
+            545
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "attempt",
+          "to": "report",
+          "label": "derived outcomes",
+          "points": [
+            [
+              1100,
+              220
+            ],
+            [
+              1130,
+              220
+            ],
+            [
+              1130,
+              880
+            ],
+            [
+              1100,
+              880
+            ]
+          ],
+          "label_at": [
+            950,
+            785
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "source",
+          "to": "attempt",
+          "label": "source_binding + verified export",
+          "points": [
+            [
+              360,
+              660
+            ],
+            [
+              550,
+              660
+            ],
+            [
+              550,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            560,
+            560
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "recovery",
+          "to": "attempt",
+          "label": "pending path + journal prefix",
+          "points": [
+            [
+              360,
+              880
+            ],
+            [
+              610,
+              880
+            ],
+            [
+              610,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            590,
+            790
+          ],
+          "direction": "none"
+        }
+      ],
+      "height": 1040
+    },
+    {
+      "id": "fig12_c4_model",
+      "title": "C4 logical entities and cardinalities",
+      "caption_ar": "عقود C4 الفعلية: cases داخل manifest؛ لكل case صفر أو محاولة واحدة، ولكل completed attempt صفر أو مراجعة واحدة مربوطة ببصمة الجواب. batch_id يجمع حالات من نفس المدخلات؛ تكرار المصدر لا يصنع عينة مستقلة. provenance يتضمن rubric لكنه لا يرسل إلى النموذج.",
+      "status": "Implemented contracts / design view; native acceptance pending",
+      "sources": [
+        "ai_agent/evaluate.py",
+        "ai_agent/runner.py",
+        "ai_agent/report.py"
+      ],
+      "kind": "graph",
+      "nodes": [
+        {
+          "id": "manifest",
+          "x": 60,
+          "y": 170,
+          "kind": "store",
+          "lines": [
+            "Evaluation manifest",
+            "evaluation_id / provenance",
+            "dataset_kind / declarations"
+          ]
+        },
+        {
+          "id": "case",
+          "x": 800,
+          "y": 170,
+          "kind": "store",
+          "lines": [
+            "Case (planned)",
+            "case_id, batch_id, alert_ref",
+            "input_sha256 / gold"
+          ]
+        },
+        {
+          "id": "batch",
+          "x": 60,
+          "y": 390,
+          "kind": "store",
+          "lines": [
+            "Batch grouping",
+            "batch_id -> input_sha256",
+            "Many cases may share input"
+          ]
+        },
+        {
+          "id": "attempt",
+          "x": 800,
+          "y": 390,
+          "kind": "store",
+          "lines": [
+            "Attempt (0..1 per case)",
+            "status / prediction",
+            "output_sha256 / latency"
+          ]
+        },
+        {
+          "id": "review",
+          "x": 60,
+          "y": 610,
+          "kind": "store",
+          "lines": [
+            "Review (0..1 completed case)",
+            "reviewer_ref / independent",
+            "claims / unsupported_claims"
+          ]
+        },
+        {
+          "id": "output",
+          "x": 800,
+          "y": 610,
+          "kind": "store",
+          "lines": [
+            "Shared answer artifact",
+            "output_sha256",
+            "Runner verifies actual bytes"
+          ]
+        },
+        {
+          "id": "declared",
+          "x": 60,
+          "y": 830,
+          "kind": "pending",
+          "lines": [
+            "Human / model declarations",
+            "Not authenticated by hashes",
+            "Original evaluation pending"
+          ]
+        },
+        {
+          "id": "report",
+          "x": 800,
+          "y": 830,
+          "kind": "store",
+          "lines": [
+            "C4 report",
+            "All planned + conditional",
+            "Failure / missing included"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "manifest",
+          "to": "case",
+          "label": "1 : 1..1000 planned cases",
+          "points": [
+            [
+              360,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            580,
+            208
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "case",
+          "to": "batch",
+          "label": "grouping, not a SQL table",
+          "points": [
+            [
+              800,
+              220
+            ],
+            [
+              580,
+              220
+            ],
+            [
+              580,
+              440
+            ],
+            [
+              360,
+              440
+            ]
+          ],
+          "label_at": [
+            580,
+            324
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "case",
+          "to": "attempt",
+          "label": "1 : 0..1 recorded attempt",
+          "points": [
+            [
+              950,
+              270
+            ],
+            [
+              950,
+              390
+            ]
+          ],
+          "label_at": [
+            950,
+            325
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "attempt",
+          "to": "output",
+          "label": "hash binding",
+          "points": [
+            [
+              950,
+              490
+            ],
+            [
+              950,
+              610
+            ]
+          ],
+          "label_at": [
+            950,
+            545
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "output",
+          "to": "review",
+          "label": "completed + matching output hash",
+          "points": [
+            [
+              800,
+              660
+            ],
+            [
+              360,
+              660
+            ]
+          ],
+          "label_at": [
+            580,
+            648
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "attempt",
+          "to": "report",
+          "label": "status and prediction",
+          "points": [
+            [
+              1100,
+              440
+            ],
+            [
+              1130,
+              440
+            ],
+            [
+              1130,
+              880
+            ],
+            [
+              1100,
+              880
+            ]
+          ],
+          "label_at": [
+            950,
+            785
+          ],
+          "direction": "none"
+        }
+      ],
+      "height": 1040
+    },
+    {
+      "id": "fig13_storage",
+      "title": "Storage zones and document model",
+      "caption_ar": "Wazuh Indexer مخزن وثائق OpenSearch؛ id داخل التنبيه ليس افتراضاً أنه _id الفهرس. السجلات الخاصة وJSONL ليست قاعدة علائقية. مخازن الأدلة 0700 والملفات 0600 في أدوات الأدلة، ولا يعمم ذلك على كل ملفات Wazuh. Git يحوي كوداً وتصميماً لا أسراراً أو سجلات خام.",
+      "status": "Implemented contracts / design view; native acceptance pending",
+      "sources": [
+        "docs/02_ARCHITECTURE.md",
+        "scripts/measure/mttd.py",
+        "ai_agent/runner.py",
+        "scripts/measure/recovery.py"
+      ],
+      "kind": "graph",
+      "nodes": [
+        {
+          "id": "logs",
+          "x": 60,
+          "y": 170,
+          "kind": "store",
+          "lines": [
+            "Endpoint logs / events",
+            "Operational sensitive data"
+          ]
+        },
+        {
+          "id": "manager",
+          "x": 800,
+          "y": 170,
+          "kind": "store",
+          "lines": [
+            "Manager alerts.json",
+            "id / timestamp / rule / agent",
+            "syscheck or data fields"
+          ]
+        },
+        {
+          "id": "git",
+          "x": 60,
+          "y": 390,
+          "kind": "store",
+          "lines": [
+            "Git repository",
+            "Code / configs / diagrams",
+            "No raw logs or credentials"
+          ]
+        },
+        {
+          "id": "index",
+          "x": 800,
+          "y": 390,
+          "kind": "store",
+          "lines": [
+            "Indexer document",
+            "_index / _id / _source",
+            "No SQL foreign keys"
+          ]
+        },
+        {
+          "id": "evidence",
+          "x": 60,
+          "y": 610,
+          "kind": "store",
+          "lines": [
+            "Private evidence directories",
+            "0700 directories / 0600 files",
+            "intent + snapshots + terminal"
+          ]
+        },
+        {
+          "id": "dashboard",
+          "x": 800,
+          "y": 610,
+          "kind": "process",
+          "lines": [
+            "Dashboard / query client",
+            "Searches indexed documents"
+          ]
+        },
+        {
+          "id": "journal",
+          "x": 60,
+          "y": 830,
+          "kind": "store",
+          "lines": [
+            "Attempt journal JSONL",
+            "Separate from detection logs",
+            "Failures / exclusions kept"
+          ]
+        },
+        {
+          "id": "reports",
+          "x": 800,
+          "y": 830,
+          "kind": "store",
+          "lines": [
+            "Derived reports",
+            "Sanitized / access-controlled",
+            "Not authenticity certificates"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "logs",
+          "to": "manager",
+          "label": "agent collection / analysis",
+          "points": [
+            [
+              360,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            580,
+            208
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "manager",
+          "to": "index",
+          "label": "Filebeat",
+          "points": [
+            [
+              950,
+              270
+            ],
+            [
+              950,
+              390
+            ]
+          ],
+          "label_at": [
+            950,
+            325
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "index",
+          "to": "dashboard",
+          "label": "query and presentation",
+          "points": [
+            [
+              950,
+              490
+            ],
+            [
+              950,
+              610
+            ]
+          ],
+          "label_at": [
+            950,
+            545
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "evidence",
+          "to": "journal",
+          "label": "verified observation import",
+          "points": [
+            [
+              210,
+              710
+            ],
+            [
+              210,
+              830
+            ]
+          ],
+          "label_at": [
+            210,
+            765
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "journal",
+          "to": "reports",
+          "label": "offline calculation",
+          "points": [
+            [
+              360,
+              880
+            ],
+            [
+              800,
+              880
+            ]
+          ],
+          "label_at": [
+            580,
+            868
+          ],
+          "direction": "forward"
+        }
+      ],
+      "height": 1040
+    },
+    {
+      "id": "fig14_recovery",
+      "title": "Interrupted trial recovery activity",
+      "caption_ar": "نشاط الاستعادة غير الهدامة. يفحص الربط والبادئة ويشتق سجلاً جديداً؛ الصف المنشور يحفظ مرة واحدة، والمنقطع لا يختلق له بدء أو خروج أو أزمنة مفقودة. أي رفض أو إخفاق يبقي الأدلة الأصلية؛ تصريح توقف المشغّل ليس إثبات موت العمليات.",
+      "status": "Design / workflow; not evidence that every stage has passed",
+      "sources": [
+        "scripts/measure/recovery.py",
+        "scripts/measure/trial_runner.py",
+        "tests/test_recovery.py"
+      ],
+      "kind": "graph",
+      "nodes": [
+        {
+          "id": "n0",
+          "x": 430,
+          "y": 170,
+          "kind": "actor",
+          "lines": [
+            "Operator stops collection",
+            "Pins original input hashes"
+          ]
+        },
+        {
+          "id": "n1",
+          "x": 430,
+          "y": 350,
+          "kind": "process",
+          "lines": [
+            "Lock original journal",
+            "Snapshot original bytes"
+          ]
+        },
+        {
+          "id": "n2",
+          "x": 430,
+          "y": 530,
+          "kind": "decision",
+          "lines": [
+            "Validate manifest + pending",
+            "Journal path / prefix binding"
+          ]
+        },
+        {
+          "id": "n3",
+          "x": 430,
+          "y": 710,
+          "kind": "decision",
+          "lines": [
+            "Existing final row?",
+            "Preserve once, never replace"
+          ]
+        },
+        {
+          "id": "n4",
+          "x": 430,
+          "y": 890,
+          "kind": "process",
+          "lines": [
+            "Otherwise append interrupted",
+            "Keep t0; no invented t1..t6"
+          ]
+        },
+        {
+          "id": "n5",
+          "x": 430,
+          "y": 1070,
+          "kind": "store",
+          "lines": [
+            "Seal derived attempts.jsonl",
+            "Original inputs unchanged"
+          ]
+        },
+        {
+          "id": "n6",
+          "x": 430,
+          "y": 1250,
+          "kind": "process",
+          "lines": [
+            "Offline export verification",
+            "No command replay or alerts"
+          ]
+        },
+        {
+          "id": "n7",
+          "x": 430,
+          "y": 1430,
+          "kind": "store",
+          "lines": [
+            "New continuation journal",
+            "Exclusive private destination"
+          ]
+        }
+      ],
+      "edges": [
+        {
+          "from": "n0",
+          "to": "n1",
+          "label": "next stage",
+          "points": [
+            [
+              580,
+              270
+            ],
+            [
+              580,
+              350
+            ]
+          ],
+          "label_at": [
+            580,
+            305
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n1",
+          "to": "n2",
+          "label": "next stage",
+          "points": [
+            [
+              580,
+              450
+            ],
+            [
+              580,
+              530
+            ]
+          ],
+          "label_at": [
+            580,
+            485
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n2",
+          "to": "n3",
+          "label": "next stage",
+          "points": [
+            [
+              580,
+              630
+            ],
+            [
+              580,
+              710
+            ]
+          ],
+          "label_at": [
+            580,
+            665
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n3",
+          "to": "n4",
+          "label": "no published final row",
+          "points": [
+            [
+              580,
+              810
+            ],
+            [
+              580,
+              890
+            ]
+          ],
+          "label_at": [
+            580,
+            845
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n4",
+          "to": "n5",
+          "label": "next stage",
+          "points": [
+            [
+              580,
+              990
+            ],
+            [
+              580,
+              1070
+            ]
+          ],
+          "label_at": [
+            580,
+            1025
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n5",
+          "to": "n6",
+          "label": "next stage",
+          "points": [
+            [
+              580,
+              1170
+            ],
+            [
+              580,
+              1250
+            ]
+          ],
+          "label_at": [
+            580,
+            1205
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n6",
+          "to": "n7",
+          "label": "next stage",
+          "points": [
+            [
+              580,
+              1350
+            ],
+            [
+              580,
+              1430
+            ]
+          ],
+          "label_at": [
+            580,
+            1385
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n3",
+          "to": "n5",
+          "label": "existing final row: preserve once",
+          "points": [
+            [
+              730,
+              760
+            ],
+            [
+              970,
+              760
+            ],
+            [
+              970,
+              1120
+            ],
+            [
+              730,
+              1120
+            ]
+          ],
+          "label_at": [
+            895,
+            930
+          ],
+          "direction": "forward"
+        }
+      ],
+      "height": 1640
+    },
+    {
+      "id": "fig15_timeline",
+      "title": "Independent measurement stages and evidence types",
+      "caption_ar": "خريطة تعريفات وليست محوراً زمنياً بمقياس أو رسماً لنتائج. event/action_confirmed من M2-A يثبت فعل الملف ولا يملأ t1. t2 وt6 من التنبيهات الأصلية، وt3 مراقب ظهور مستقل. t4/t5 غير منفذين بعد، ولا يثبت اختفاء الملف وحده سببية الحذف.",
+      "status": "Definition cards only - no time axis, durations or cross-lane ordering",
+      "sources": [
+        "scripts/measure/mttd.py",
+        "scripts/measure/trial_runner.py",
+        "scripts/measure/source_observer.py",
+        "scripts/measure/visibility_observer.py"
+      ],
+      "kind": "graph",
+      "nodes": [
+        {
+          "id": "n0",
+          "x": 60,
+          "y": 170,
+          "kind": "process",
+          "lines": [
+            "t0: action launch intent",
+            "Durable trial journal"
+          ]
+        },
+        {
+          "id": "n1",
+          "x": 800,
+          "y": 170,
+          "kind": "process",
+          "lines": [
+            "t1: native source timestamp",
+            "Not poll time or file mtime"
+          ]
+        },
+        {
+          "id": "n2",
+          "x": 60,
+          "y": 370,
+          "kind": "process",
+          "lines": [
+            "t2: manager alert",
+            "UC-03 t2_prime separately"
+          ]
+        },
+        {
+          "id": "n3",
+          "x": 800,
+          "y": 370,
+          "kind": "process",
+          "lines": [
+            "t3: first observed visibility",
+            "Requires prior negative poll"
+          ]
+        },
+        {
+          "id": "n4",
+          "x": 60,
+          "y": 570,
+          "kind": "pending",
+          "lines": [
+            "t4: actual AR start",
+            "Instrumentation not yet built"
+          ]
+        },
+        {
+          "id": "n5",
+          "x": 800,
+          "y": 570,
+          "kind": "pending",
+          "lines": [
+            "t5: independent completion",
+            "Causal evidence not yet built"
+          ]
+        },
+        {
+          "id": "n6",
+          "x": 60,
+          "y": 770,
+          "kind": "process",
+          "lines": [
+            "t6: manager confirmation",
+            "Not proof of t5 by itself"
+          ]
+        }
+      ],
+      "edges": [],
+      "height": 980
+    }
+  ]
+}

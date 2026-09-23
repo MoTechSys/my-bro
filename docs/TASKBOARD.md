@@ -1,9 +1,57 @@
 # 📋 TASKBOARD — لوحة المهام المشتركة (Claude + Astra)
 
+> **الحالة الحاكمة للاستئناف — 2026-09-23:** اقرأ [الملخص الموحد](../CONTEXT_RESUME.md#session-handoff-2026-09-23) قبل السجل أدناه. الإصدار السابق المتحقق `0ccbd84`: **872 اختبارًا بلا skips محليًا وفي CI**. رأس جولة التوثيق ونتائجه اللاحقة في PR28. Collector وLinux/procfs وWindows service منفذة، ومراجعاتها مكتملة ومحكّمة؛ لا توجد مراجعة معلقة. التالي برمجيًا: **Windows canary/source والتخزين الخاص الأصلي، ثم controller timestamps**، ثم t4/t5 وISSUE-068 والتكامل والتدقيق الأكاديمي. لا قبول Windows أصلي أو نتائج تجريبية، ولا اكتمال شامل. عبارات «الأحدث/التالي/running» في اللقطات السابقة لا تتجاوز هذا الملخص.
+
+> **تحديث خدمة Windows — 2026-09-23:** أضيف منتجPowerShell للقراءة فقط ومستوردWindowsservice الخاص علىLinux، معهويةboot/PID/creation ونسخةالمنتج وصورةالبرنامج وحدودالوقت. **34 اختبارًا جديدًا و872 كليًا ناجحة على6fe661c بلاskips محليًا**؛ PowerShell7.4.13 اختُبرparser/core معCIM mocks علىLinux، لاWindows أصلي. المراجعة9dbf6ede وذيلها انتهيا وحُكما. Windowscanary/مخزنه وتوقيتcontroller ما زالا برمجةمحلية، وكذلكt4/t5 وISSUE-068 والتكامل وبقيةالتدقيق. لا نشر أوتجاربأصلية؛ السجلات التالية تاريخية.
+
+> **حجز أدلة Windows — 2026-09-23 [AI]:** متابعة طلب الاستكمال بدقة. منتج PowerShell قراءة فقط لخدمةWazuhSvc وهوية عمليتها، مع مستورد Linux خاص يعيد التحقق من البايتات ويربطه بجامعUC-01. لا تشغيلWindows أوrestart أوenrollment في هذه الجلسة؛ اختبارات parser/import وبنية المنتج ومراجعة مستقلة. شاهدcanary الخاص بـWindows وتوقيتcontroller الأصلي لا يعدان منجزين بمجرد لقطة الخدمة.
+
+> **تحديث محول عمليات Linux — 2026-09-23:** أضيف `connection_process.py` وربطه بالجامع عبر `--kind linuxproc`؛ لا يعتمد systemd ولا ينفذ أوامر خدمة. يتحقق من الدايمونات الخمسة وهويةPID/start_ticks/boot/namespace والملف التنفيذي، ويشترط تبدلها جميعًا. **38 اختبارًا جديدًا و838 كليًا ناجحة علىc395a61**. المراجعة08768699 انتهت وحُكمت فيtests/README. التوقيت ولادة عمليات مشتقة، لا جاهزية أو قبول أصلي. Windows وcontroller وt4/t5 وISSUE-068 وبقية التدقيق باقية محليًا؛ السجلات التالية تاريخية.
+
+> **حجز محول عمليات UC-01 — 2026-09-23 [AI]:** متابعة طلب «طيب اكمل». تنفيذ محول Linux procfs لهويات دايمونات Wazuh الخمسة دون systemd أو أوامر start/stop؛ ربط المخزن والمحلل الحالي، واختبارات PID reuse والعمليات المفقودة والتوقيت والتلاعب. الملفات scripts/measure وtests ومراجع التشغيل والحالة. لا تشغيل أصلي على SOC؛ Windows/controller وt4/t5/config مسارات باقية منفصلة.
+
+> **خاتمة هذه الدفعة — 2026-09-23:** انتهت مراجعةcollector ccdc4a2c وحُكمت بنودها التسعة فيtests/README؛ لا تعاد. أضيف اتساق ساعةmanager/observer في6853581 واختباراه في414384d؛ **48 اختبارcollector و800 كليًا ناجحة على414384d**. ذكرrunning أو46/798 أدناه لقطة سابقة. محولات الدايمونات/Windows/controller وt4/t5 وISSUE-068 وبقية التدقيق ما زالت أعمالًا محلية؛ لا نشر أو قبول أصلي. رأس التسليم وCI النهائي فيPR28.
+
+> **تحديث التنفيذ — 2026-09-23:** جامع UC-01 المحدود وexport/bind موجودان مع46 اختبارًا جديدًا؛ **798 اختبارًا كليًا ناجحًا على4b85b6f**. محول Linux/systemd ليس دعمًا عامًا لوحدة Wazuh القياسية active/exited أوWindows أوالحاويات؛ محول الدايمونات وتوقيتcontroller الأصلي ما زالا برمجة محلية. المراجعة الآليةccdc4a2c للقطةc7acf13 ما زالت قيد التنفيذ عند هذا التحديث. صُحح الفصلان1/4 جزئيًا، والرسوم15SVG لم تتغير. الدليل tests/README والحالة التفصيلية CONTEXT_RESUME؛ لا نشر أوتجارب أصلية، والمشروع غير مكتمل. السجلات التالية تاريخية.
+
+> **حجز التنفيذ الشامل — 2026-09-23 [AI]:** طلب المالك أن يتولى الوكيل التنفيذ كاملًا دون إحالة البرمجة إلى فريق. أول حزمة: connection_collect.py لجمع manager polls ولقطات خدمة Linux/systemd بأوامر قراءة ثابتة، مخزن خاص وexport يعيد التحقق من البايتات، ثم bind مع source_observer والمحلل الحالي. الاختبارات والمراجعة والتوثيق مسؤولية الوكيل؛ لا اختلاق labels بشرية أو قبول أصلي. الحجز يشمل scripts/measure وtests ودلائل الحالة؛ لا نشر أو إعادة تشغيل في هذه الجلسة. بقية الحزم تظل محددة لا مخفية كعائق بيئة.
+
+> **تسليم UC-01 — 2026-09-23 [AI]:** المحللconnection_measure.py ودليله و72اختبارًا منجزة محليًا؛752إجمالًا على614f9d3. المراجعة6f1083f8 انتهت وحُكمت. انتهى حجز هذه الجولة فقط؛ T-11 يبقىIN-PROGRESS: collector وربط أدلةUC-01 أصليان، t4/t5 والسببية، ثم القبول والتجارب. لا تغيير للسحابة أوالرسوم. التفاصيل tests/README وTAKEOVER_AUDIT §10 وCONTEXT_RESUME؛ PR28 مفتوح للمراجعة وليس تصريح نشر.
+
+> **حجز UC-01 — 2026-09-23 [AI]:** متابعة طلب «استمر كمل بدقة» فوق df09bee. تنفيذ محلل offline متخصص لدورات الاتصال، بخطة دورات معلنة ومقام كامل وأدلة خدمة/حالة/حدث FIM جديد، وفصل زمن الانتقال المرصود عن التحقق الوظيفي. الملفات scripts/measure/connection_measure.py وtests/test_connection_measure.py ودليل tests/README وحالة المشروع. لا إعادة تشغيل خدمات أو SSH أو نشر. مجمع الأدلة الأصلي وربط التشغيل الحي أعمال منفصلة لا يغلقها محلل إقرارات.
+
+> **تسليم تدقيق 2026-09-23 [AI]:** مقام أدلة AR الاختياري منفذ ومحكّم؛39 اختبار AR و680 كليًا على dd87465. أُعيد تحقق15SVG؛ البحث والمعايير ومصفوفة الاكتمال في TAKEOVER_AUDIT §9. المراجعة46bbb5ff انتهت ولا تعاد. T-11/T-16/T-70 تبقى IN-PROGRESS: t4/t5 والسببية وUC-01 وISSUE-068 وبقية الفصول والمراجع؛ بعدها القبول الأصلي والبيانات والبشر. انتهى حجز هذه الجولة، لا المشروع. PR28 مفتوح للمراجعة لا اعتماد النشر.
+
+> **حجز تدقيق الاكتمال والمعايير — 2026-09-23 [AI]:** فوق b5d72e7، بطلب المالك المحفوظ في owner-messages/2026-09-23_vector_completion_audit.md. التحقق من vector SVG والبوابات والبحث الرسمي، ثم استكمال مقام AR في scripts/measure/mttd.py واختباراته بعقد اختياري معلن قبل التجربة. لا تغيير سكربت AR أو ادعاء t4/t5 أصليين؛ تحديث بحث الاستكمال وملفات الحالة ودليل الكاتب. UC-01 وحماية config تبقيان عملين محليين منفصلين.
+
+> **حجز MD/SVG — 2026-09-23 [AI]:** فوق0ed5c21؛ طلب المالك في owner-messages/2026-09-23_markdown_svg_handoff.md. الحجز: scripts/build_writer_package.py، tests/test_writer_package.py، docs/thesis/figures ومصادرها، WRITER_HANDOFF والفصل3 وأدلة التسليم. تصحيح المعمارية وVT/YARA ونماذج JSON، ثم فحص SVG ومراجعة الحزمة. لا تغيير AR أو t4/t5 ضمن حزمة الرسوم، ولا Word/PDF جديد أو تعديل سحابي.
+
+> **حجز الاستكمال والبحث — 2026-09-22 [AI]:** فوق5e98757، بتفويض المالك المحفوظ فيdocs/owner-messages/2026-09-22_complete_available_work.md. الحزم: T-70 نقلHTTP اصطناعي عبرالعامل الحقيقي، M2 دليل مصدر مستقل دون ادعاء t4/t5، ثم T-16 تنظيمالوثائق وخطةإغلاقمبنيةعلىمصادررسمية. الملفات ai_agent/tests وscripts/measure/tests وأدلتها؛ المراجعة المنفصلة قراءة فقط. لا نموذجحي أوبياناتC4أصلية أوتغييرسحابي. العمل المحلي المتبقي لا يسمى عائقبيئة.
+
 > ⚠️ **2026-09-09 — تسليم كامل:** CLAUDE أنهى كل مهامه وسلّم المشروع بالكامل إلى **ASTRA** (اقرأ `docs/HANDOFF_CLAUDE_TO_ASTRA.md`). كل مهمة "CLAUDE" أدناه أصبحت مملوكة لـ ASTRA.
+
+> **حجز متابعة T-70 — 2026-09-22 [AI]:** فوق `81700310772d1653a619ffb68d7a8929f51aca12`؛ تحقق الحساب MoTechSys وصلاحية push عبر API، وأعيد validator:469 اختباراً ناجحاً محلياً وCI للرأس نفسه3.12/3.13 ناجح. runner/importer موجودان؛ الحجز لمراجعة نافذة إلغاء إطلاق العامل وإضافة اختبارات ربط البايتات/source_record والدفعات والاستعادة، لا إعادة البناء أو تغيير عقد الامتناع خفية. الملفات: `ai_agent/runner.py` و`tests/test_ai_runner.py` وUC-14 وملفات التسليم المطلوبة. لا نموذج حي أو بيانات أصلية أو نشر سحابي؛ حفظ التاريخ المشترك والدفع fast-forward فقط.
 
 > **الحالات:** 🟢 FREE (متاح للحجز) | 🔒 [AGENT] yyyy-mm-dd (محجوز) | ◐ IN-PROGRESS (مع "المتبقي") | ✅ DONE (مع commit) | ⛔ BLOCKED (مع السبب)
 > **قاعدة:** احجز قبل أن تلمس. حدّث قبل أن تُغلق الجلسة. سطر واحد لكل مهمة. التفاصيل في `03_ROADMAP.md`.
+
+> **تسليم جولة2026-09-18 [AI]:** اكتملت حزمة التدقيق المحدودة محلياً، لا المشروع؛ T-16/T-70 IN-PROGRESS. إصلاح تكرار مصادر C4 وأخطاء HTTP مع307 اختبارات ناجحة. ROADMAP محدثة؛ تغطية المراجعة الثانية والملاحظات المرفوضة في TAKEOVER_AUDIT §8. التالي: importer/journal/deadline وفق ROADMAP §3. انتهى حجز هذه الجولة فقط؛ تبقى بوابات المعمل والأصول والفصول والتقييم الأصلي.
+
+> **حجز تنفيذ T-70 — 2026-09-18 [AI]:** بناء `ai_agent/runner.py` و`tests/test_ai_runner.py`، وربط الأدلة إلى evaluator الحالي مع مهلة subprocess كلية وسجل خاص دائم. تعديل UC-14/README/STATE/CONTEXT/ISSUES/SESSIONS/CHANGELOG للتسليم. قرار العقد: محاولة واحدة لكل batch؛ بصمة output في C4 لبايتات محتوى جواب النموذج، مشتركة بين حالات الدفعة؛ labels/rubric لا ترسل للمزود. غياب النتيجة النهائية بعد intent دائم يُستورد كفشل منقطع دون زمن مختلق أو إعادة تشغيل تلقائية. لا نشر معمل أو استنتاج تحقق هوية النموذج من تصريح المشغّل.
+
+> **تقدم تنفيذ T-70 — 2026-09-18 [AI]:** حزمة runner/importer/deadline مكتوبة ومختبرة:353 إجمالاً،46 runner؛ تشغيل الإلغاء فعلياً بعامل اصطناعي ونسل. UC-14 §11 دليل التشغيل والاستيراد والأعطال والقيود. المراجعة الآلية للقطة09e91e2 وCI النهائي يُتابعان في PR28؛ لا T-70 DONE أو نتائج أصلية. لا تعاود بناء الحزمة؛ التالي مراجعة مختصة وtransport/model/inventory/labels حقيقية.
+
+> **حجز تحكيم المراجعة — 2026-09-18 [AI]:** متابعة T-70 فوقbe5160c؛ المراجع انتهى بمراجعة ساكنة فقط للقطة09e91e2، دون اختبارات أو clone. ثبت محلياً N4: killpg بعد reap في مسار النجاح، وTimeoutExpired في cleanup يخرج قبل إغلاق stdout. الحجز: runner/tests لإصلاح ترتيب التنظيف وتشخيص الرفض بأكواد مقيدة، ثم UC-14/ISSUES/STATE/CONTEXT/SESSIONS/CHANGELOG وCI. لا تخفيف full-batch validation أو إسقاط مدخلات تالفة، ولا نشر معمل أو تحميل نموذج.
+
+> **تسليم تحكيم T-70 — 2026-09-18 [AI]:** أُنجز تحكيم المراجعة الساكنة وإصلاحN4 وتشخيصN1 المقيد؛366 اختباراً (59runner) وvalidator ناجحان. UC-14 §12 يوثق المقبول والمرفوض؛ T-70 يبقىIN-PROGRESS لتجربةtransport/model والبيانات/البشر، لا مراجعة09e91e2 معلقة. انتهى حجز التصحيحات لهذه الجولة، وCI النهائي فيPR28.
+
+> **حجز تسليم السحابة — 2026-09-18 [AI]:** تحديث CLOUD_ENV_ACCESS/STATE/CONTEXT/ISSUES/SESSIONS/CHANGELOG من إصلاح Genspark Claw وفحوص القراءة المباشرة. لا استنساخ مطلوب على الخادم؛ PR28 يحدّث من مساحة العمل الحالية. لا أسرار أو سجلات خام في Git، ولا إعادة تنفيذ الإصلاح أو reboot. فصل أدلة المشغّل عن تحقق الصحة المباشر، وحفظ بوابات إعادة تشغيل المضيف والتعافي من سقوط daemon والرجوع بحالة حديثة.
+
+> **حجز تنفيذ التكاملات — 2026-09-18 [AI]:** T-13 ثم T-12 ثم T-14: سيناريوهات محدودة لـSSH/SQLi، مولّد إعداد firewall-drop مع استثناء الإدارة، ومتكامل Telegram خاص opt-in مع حدود إرسال ومنع تكرار واختبارات. لا تعريف XML مع disabled=yes يعطل كل AR؛ شروط AR level/group/rules تراكمية OR فلا نخلطها. المصدر المثبت Wazuh v4.14.1:31103 SQLi،31104 هجوم ويب عام،31106 استجابة200؛ لا نسمّيها جميعاً SQLi. الحجز يشمل scripts/attack-emulation وwazuh/manager/integrations واختباراتهما والتوثيق الموجود؛ لا نشر أو هجمات حية في هذه الجولة.
+
+> **تسليم تنفيذ التكاملات — 2026-09-18 [AI]:** أضيفت أدوات وإعدادات SSH/SQLi وTelegram فعلياً مع50 اختباراً جديداً (17سيناريو و33إشعار)،416 إجمالاً ناجحة. عقود الاستخدام في READMEs الحالية؛ T-12/13/14 انتقلت منFREE إلىIN-PROGRESS/برمجة منفذة وقبول حي باقٍ. لا إرسال إشعار أو probe أو تغييرfirewall في هذه الجولة. لا إغلاق للمشروع من نجاحCI؛ الخطوة التالية المحلية متابعة التكامل/واجهات الأدلة، والقبول الأصلي وفق البوابات.
+
+> **حجز العمل المتوازي — 2026-09-18 [AI]:** اكتشاف فعلي لـgsk help/runtime/mesh؛ Mesh v0.1.10 متاح وdevices=[]، ولا join/serve أو تغيير صلاحيات. ثلاث مهام نصية منفصلة: مراجعة التكاملات للقطة60d5bfe، مسودة الفصل4 من الأدلة، ومسودة الفصل5 بالنتائج المتاحة والفجوات دون اختلاق قياسات. وكيل المستودع وحده يكتب ويُحكّم النتائج؛ التنفيذ المحلي المتزامن: تقرير C4 خاص offline مرتبط بالمخزن المتحقق. لا تفويض لتجاوز حدود الكتابة أو اعتماد مراجعة آلية كبشرية.
 
 | ID | المهمة | المالك الافتراضي | الحالة | ملفات المخرجات | ملاحظات |
 |----|--------|:---:|--------|----------------|---------|
@@ -12,27 +60,67 @@
 | T-03 | بروتوكول التعاون + TASKBOARD + SESSIONS_LOG | CLAUDE | ✅ DONE | `COLLABORATION_PROTOCOL.md`, `docs/TASKBOARD.md`, `docs/SESSIONS_LOG.md` | — |
 | T-10 | **خطة الاختبار المُقاس** (P2.1): بروتوكول لكل UC-01..08 — الخطوات، المتوقَّع، كيفية قياس MTTD/AR-latency/FP | ASTRA | ✅ DONE [ASTRA] 2026-09-09 — PR #6 | `tests/TEST_PLAN.md` | مكتملة توثيقياً مع مراجعة ثابتة، بلا نتائج معملية. المتبقي بالضبط: حجز T-11 لعقد سجل المحاولات + المصدر + alerts.json، مراجعة سلامة AR ضمن T-15، ثم PILOT5 ثم30 لكل UC أو أكثر حسب SD وbaseline≥12h وفق v3/PR #24 (ISSUE-051). ISSUE-019 وT-23 يبقيان معلقين على النتائج الفعلية |
 | T-11 | أداة قياس بسجل محاولات مستقل + تنبيهات + أدلة مصدر وmanifest للوقت والإعداد | ASTRA | IN-PROGRESS [ASTRA] 2026-09-09 — متابعة v3 §5 بتوجيه المستخدم؛ حجز metrics/runner/tests | `scripts/measure/mttd.py`, اختبارات وعقد الإدخال | PR #24: عقد v2 و8 مقاييس+D_VT وNTP session وإحصاء stdlib وrunner محمي وTEST_PLAN/README؛ 145 اختباراً محلياً وvalidate_all ناجحة. v3.1 floor30/baseline12h/EICAR فريد/G2-0 دقة timestamp؛ ISSUE-050..063؛ التالي أولاً G2-0 على alerts.json الأصلي ثم native observers/UC-01/مقام نجاح AR الشامل ومراجعة تقنية/إحصائية وPILOT معملية؛ IN-PROGRESS لا اكتمال |
-| T-12 | **UC-09 SQL Injection** — runbook + إعداد + سكربت محاكاة | ASTRA | 🟢 FREE | `docs/lab/UC-09_sql_injection.md`, `scripts/attack-emulation/sqli_test.sh` | قواعد 31103/31104 (built-in) ؛ يُغلق ISSUE-007 |
-| T-13 | **UC-11 SSH brute-force + firewall-drop AR** — runbook + إعداد | ASTRA | 🟢 FREE | `docs/lab/UC-11_ssh_bruteforce_ar.md`, `wazuh/manager/ossec.conf.d/50-ar-firewall-drop.xml` | قواعد 5710/5712/5763 built-in ؛ AR `firewall-drop` مدمج |
-| T-14 | **UC-10 Telegram notification** عند level ≥ 12 | ASTRA | 🟢 FREE | `docs/lab/UC-10_telegram.md`, `wazuh/manager/integrations/custom-telegram.py`, `…/60-integration-telegram.xml` | لا توكن حقيقي في الريبو ؛ يُغلق ISSUE-016 |
+| T-12 | UC-09 SQL Injection — سيناريو محدود وعقد إدخال وتحقق | AI | IN-PROGRESS 2026-09-18 — الكود والاختبارات منفذة؛ القبول الحي باقٍ | `scripts/attack-emulation/lab_scenarios.py`, `tests/test_lab_scenarios.py`, README المجاور | طلب ثابت preview افتراضياً و--lab صريح؛ RFC1918 وحدود وقت/عدد.31103 SQLi،31104 ويب عام،31106 HTTP200 لا دليل استغلال. Apache collector موجود؛ native logs/alerts/index وPILOT متبقية |
+| T-13 | UC-11 SSH + firewall-drop — سيناريو وإعداد محمي | AI | IN-PROGRESS 2026-09-18 — الكود والاختبارات منفذة؛ القبول الحي باقٍ | `lab_scenarios.py` ssh/ssh-response، `60-localfile-sshd.xml`، الاختبارات والدليل | لا كلمات مرور أو أوامر بعيدة؛ host pin إلزامي، حتى12 اتصالاً وسقف25ث. XML مولد باختيار صريح واستثناء الإدارة،5712/5763 وtimeout60 وlocation=local دون OR موسع. مصدرsshd/الحظر/إلغاء الحظر والإدارة تحتاج تحققاً أصلياً |
+| T-14 | UC-10 Telegram notification عند level≥12 | AI | IN-PROGRESS 2026-09-18 — المتكامل وXML و35 اختباراً منفذة؛ قفلfork مصحح؛ إرسال أصلي باقٍ | `wazuh/manager/integrations/custom-telegram.py`, `60-integration-telegram.xml`, `tests/test_telegram_integration.py`, `wazuh/README.md` | config خاص وopt-in، HMAC بدل الهويات، no raw logs،TLS ثابت بلاproxy/redirect،مهلة كلية،intent دائم ودقة uncertain/no-retry وحصص. ABI4.14.1 مدروس؛ لا توكن أصلي أو إرسال فعلي أو native acceptance |
 | T-15 | مراجعة أمنية لكل سكربتات `wazuh/agents/**/active-response` و`scripts/**` (quoting, injection, perms) — **أولوية عالية** بعد ISSUE-036 | ASTRA | ◐ IN-PROGRESS [ASTRA] 2026-09-09 — PR #14 | `tests/SECURITY_REVIEW.md` + fixes + `tests/test_security.py` | نُفذت إصلاحات AR ومراجعة scripts كاملة و19 اختباراً محلياً. المتبقي بالضبط: مراجعة Claude مكتملة #17 وR1/R3 وواجهات runbooks مصححة؛ المتبقي ضبط ACL/allowlists وبناء Windows واختبار Wazuh/YARA الأصلي؛ مخاطر السباق في التقرير غير مغلقة. لا نشر قبل البوابات |
 | T-20 | **الفصل 2** — الإطار النظري والدراسات السابقة (SOC/SIEM/IDS/FIM/AR/MITRE + مقارنة Wazuh/Splunk/ELK/OSSEC + ≥10 مراجع IEEE) | CLAUDE | ✅ DONE (v1 مسودة كاملة، 3,100 كلمة، 15 مرجعاً مُتحقَّقاً) | `docs/thesis/ch2_literature_review.md` | تحتاج مراجعة الفريق + مرجع محلي إن وُجد |
 | T-21 | **الفصل 3** — إكمال §3.1–3.5 + إعادة صياغة §3.6 وفق النموذج الستّي (بلا Zeek/Kibana) + مخططات DFD L1/L2 (Mermaid) | CLAUDE | ✅ DONE (v1: 11 قسماً، 6 مخططات Mermaid، 6 جداول) | `docs/thesis/ch3_methodology.md` | يعتمد `docs/05`؛ الأشكال تُصدَّر PNG في T-25 |
-| T-22 | **الفصل 4** — التنفيذ: كل UC على الخط الستّي، من S5 + runbooks + لقطات | ASTRA | 🟢 FREE | `docs/thesis/ch4_implementation.md` | يعتمد UC-01..08 |
-| T-23 | **الفصل 5** — النتائج (جدول T-11) + الخاتمة + Future Work (AI, TheHive, Zeek, network devices, phones) | ASTRA | ⛔ BLOCKED (يعتمد T-11 نتائج فعلية) | `docs/thesis/ch5_results_conclusion.md` | — |
+| T-22 | الفصل4 — التنفيذ | AI | IN-PROGRESS — مسودة مصححة v1 موجودة | `docs/thesis/ch4_implementation.md` | فصل الأدلة والكود والسحابة؛ الرسوم وتدقيق الأصول والقبول النهائي متبقية |
+| T-23 | الفصل5 — النتائج والمناقشة | AI | IN-PROGRESS — مسودة مصححة v2 موجودة؛ نتائج أصلية متبقية | `docs/thesis/ch5_results_conclusion.md` | منهجية ومصفوفة أدلة وحدود واستنتاجات شرطية؛ لا أرقام فعالية مختلقة |
 | T-24 | توحيد الفصل 1 مع الواقع (ISSUE-001/002/003/015): تعديل جدول 1.1 | CLAUDE | ✅ DONE (v2: نص S4 حرفياً + 9 تصحيحات موثَّقة في §1.8) | `docs/thesis/ch1_introduction.md` | تصحيح #1 (OVA) قابل للنقض بجواب Q1 |
-| T-25 | تجميع DOCX نهائي بقالب الجامعة (بعد Q6) | ASTRA | ⛔ BLOCKED (Q6 القالب) | `docs/thesis/build/` | — |
+| T-25 | تسليم Markdown/SVG للكاتب وفق طلب2026-09-23 | AI | IMPLEMENTED-LOCAL —36 اختبار writer | `docs/thesis/WRITER_HANDOFF.md`, figures, build_writer_package.py | MD هو المطلوب الحالي؛ التنسيق الجامعي النهائي والمراجعة البشرية منفصلان، لا Word/PDF جديد |
 | T-30 | Demo Script للجنة (10–15 دقيقة، 4 هجمات حية، خطة بديلة) | CLAUDE | ✅ DONE [CLAUDE] 2026-09-09 (v1: §0–§9، 4 هجمات مرجَّعة بمعرّفات القواعد، خطة B، Q&A، checklist) | `docs/DEMO_SCRIPT.md` | **توثيقي؛ يحتاج dry-run بشري ×2 + أرقام Δt من T-11 (ASTRA يعبّئ §6)** |
 | T-31 | UC-12 أجهزة الشبكة عبر Syslog — **تصميم + تنفيذ** decoders/قواعد 100400+ | ASTRA (كان CLAUDE→ASTRA) | 🟢 FREE | `extension/UC-12_network_syslog_design.md`, `wazuh/manager/rules/local_rules_network.xml` | تنفيذه يعتمد Q5 |
 | T-32 | الملخص التنفيذي + المقدمة العامة + الخاتمة الأدبية للرسالة | ASTRA (كان CLAUDE) | 🟢 FREE | `docs/thesis/front_matter.md` | بعد ch4/ch5 |
 | T-33 | مراجعة لغوية/منطقية للفصلَين 4 و5 | ASTRA (كان CLAUDE) — أو الفريق البشري | ⛔ BLOCKED (T-22/T-23) | تعليقات في ISSUES | — |
-| T-40 | نقل CI: `.github/workflows-pending/validate.yml` → `.github/workflows/` (يحتاج صلاحية workflows — المستخدم يدوياً) | USER | ⛔ BLOCKED (توكن) | — | — |
+| T-40 | تفعيل CI والتحقق من matrix للإصدارين | AI بتفويض المالك | DONE — مثبت على095cd86 في2026-09-11، PR28 | `.github/workflows/validate.yml` وسجل التفعيل | [تشغيل PR](https://github.com/MoTechSys/my-bro/actions/runs/34598831817) و[push](https://github.com/MoTechSys/my-bro/actions/runs/34598830852) ناجحان؛ سجلا3.12/3.13 يؤكدان212 اختباراً لكل منهما. CI لا يغلق بوابة native؛ كل تعديل تالٍ يحتاج فحصه الخاص |
 | T-16 | تدقيق الاستلام وتوحيد التخطيط والتوثيق وواجهات runbooks/demo | ASTRA | IN-PROGRESS [ASTRA] 2026-09-09 — حجز بتوجيه المستخدم | docs/، README، البروتوكول، tests/README | PR #19 مدموج: الخطة والواجهات وR1/R3؛ T-17 قرأ نص الأصول وch3؛ المتبقي الفصول 1–2 والمراجع وبقية الصور وتصحيحات FR/NFR والافتراضات وفق TAKEOVER_AUDIT |
 | T-17 | دراسة نية صاحب المشروع من الأصول والصوتيات وبحث رسمي للنماذج ومخطط مقترح | ASTRA | IN-REVIEW [ASTRA] 2026-09-09 — دراسة ومخططات في PR #22 | docs/INTENT_STUDY_AND_BLUEPRINT.md، allocation، سجل تغطية | نص الأصول والصوت ومصادر رسمية ومصفوفة 13FR/8NFR؛ المتبقي تأكيد صاحب المشروع D1–D7 ومراجعة مستقلة؛ لا تغيير نطاق أو قبول معملي من دمج الدراسة |
-| T-60 | **بيئة سحابية G2**: نشر Wazuh 4.14.1 Docker + kali1 agent + قواعدنا؛ توثيق الوصول | CLAUDE | ◐ IN-PROGRESS [CLAUDE] 2026-09-09 — المكدّس حيّ، agent 001 active، FIM realtime؛ **المتبقي:** AR scripts داخل kali1، VT key، PILOT UC-02/06/08، قرار auditd/Suricata | `docs/lab/CLOUD_ENV_ACCESS.md` | أي وكيل يكمل من §8 |
+| T-60 | استقرار المعمل السحابي G2 | AI؛ التنفيذالبعيد Genspark Claw | IN-PROGRESS 2026-09-18 — انتقالinit/volumesمنفذوصحةالجمعمتحققةقراءةً | `docs/lab/CLOUD_ENV_ACCESS.md` §11 | kali1-init حالياً؛0zombie و5خدمات وhealthy/progress=true؛هويةالنسخةوالجاريتطابقان. restart/crash/canary×2 مبلغةمنالمشغّل. المتبقيreboot وتعافيdaemon والرجوعالمتوافق، ثمقبولAR/PILOT. لااستنساخGitأوإعادةنسخةعلىالخادم |
+| T-62 | إدارة دورة حياة الوكيل وفاحص الصحة | AI | IN-PROGRESS 2026-09-18 — الفاحصنجحعلىالبديلة؛المشرفغيرمعتمد | `scripts/lab/agent_health.py`, `scripts/lab/agent_lifecycle.py`, `tests/test_agent_lifecycle.py` | لا نساوينشرinitبنشرالمشرف؛Healthcheckغيرمهيأ،وتعافيdaemonمنفردغيرمختبر. ISSUE-068 قبلنشرالمشرف،و081للرجوعالمتوافق؛366اختباراًكلياًليستقبولاًمعملياً |
 | T-61 | **WireGuard** سحابة↔معمل محلي (لـWindows/MikroTik/هاتف) | وكيل السحابة + بشري | 🟢 FREE | `docs/lab/WIREGUARD_SETUP.md` | يفتح UC-04 كامل، 12، 13، Windows |
 | T-50 | **M0 رؤية الهاتف من الشبكة** (DHCP/DNS من الراوتر + Suricata) — يلبّي S6 صراحة؛ يُوصَف "رؤية شبكية" لا "مراقبة هاتف" | ASTRA | 🟢 FREE (بعد D3 + T-31 + T-61) | `docs/lab/UC-13_mobile_network_visibility.md` | MASTER_PLAN_v3 §2.4 |
 | T-51 | **Coverage Matrix** (مصدر × يُرى × لا يُرى × دليل) لكل الأجهزة | ASTRA | 🟢 FREE (بعد G4) | `docs/lab/COVERAGE_MATRIX.md` | MASTER_PLAN_v3 §6 G4 |
 | T-52 | **ADR-013**: اعتماد قرارات D1–D7 + تحديث docs/05 §5 MoSCoW (UC-12→SHOULD، M0→SHOULD) | CLAUDE | 🟢 FREE (ينتظر المستخدم) | `docs/DECISIONS.md`, `docs/05_*` | INTENT_STUDY §11 |
 | S-01 | [جانبية] مكتبة مراجع 30–40 IEEE مُتحقَّقة عبر Crossref | وكيل ثالث | 🟢 FREE — برومبت جاهز | `docs/thesis/REFERENCES_LIBRARY.md` | `docs/prompts/SIDE_TASK_01_references.md` |
-| T-70 | **AI Agent للتحليل الأمني** (ADR-014): L1 شرح، L2 ترابط سلاسل الهجوم، L3 اقتراح بموافقة بشرية؛ RAG على MITRE+قواعدنا؛ تنقيح؛ model-agnostic + Ollama؛ قياس C4 على 30 تنبيهاً مُعلَّماً | CLAUDE/ASTRA | 🟢 FREE — **أولوية عالية بقرار المستخدم** | `ai_agent/` + `docs/lab/UC-14_ai_analyst.md` + ch4 قسم | يعتمد بيئة السحابة + مفتاح API من المستخدم أو Ollama |
+| T-70 | محلل AI استشاري وفق ADR-014: L1/L2/L3 وRAG وC4 | AI بتوجيه المستخدم | IN-PROGRESS [AI] 2026-09-22 — runner/importer موجودان؛ إصلاح إلغاء الإطلاق و72runner/482 إجمالاً، دون تجربة أصلية | `ai_agent/{analyst,knowledge,evaluate,runner,report}.py`, `ai_agent/mitre_subset.json`, `tests/test_ai_*.py`, `docs/lab/UC-14_ai_analyst.md` | نواةoffline بلا تنفيذ، MITRE v19.2 مثبت لثلاث تقنيات وشروح مشروطة ببصمةXML، عقد جرد اختياري، evaluator بمقام كامل وتحكيم بشري وWilson مشروط. تحديث CONTEXT_RESUME/STATE/SESSIONS يحفظ الاستئناف. runner/importer والمهلة وتحكيم المراجعة منفذة مع59 اختباراً (366 إجمالاً)؛ المتبقي بالضبط: مراجعة بشرية مختصة وtransport/native، جرد حقيقي ونموذج حي و30 labels بشرية ونتائجC4 وتكامل/واجهة؛ لا dataset أو inference أصلي ولا إغلاقT-70. آخرCI لكلSHA فيPR28 |
+
+> **تسليم العمل المتوازي 2026-09-18 [AI]:** report موثق ومختبر وواجهة اصطناعية صُيرت؛ مراجعة التكاملات منتهية ومحكمة،F1 مصحح؛434 اختباراً إجمالاً. ch4/ch5 مدمجان وch3 §3.10 مصحح؛ Word/PDF مراجعة موجودان وليس T-25 نهائياً. المتبقي الرسوم/المراجع/القالب وnative observers والقياسات والنموذج والبشر؛ التفاصيل فيCONTEXT_RESUME.
+
+> **حجز M1/T-11 — 2026-09-18 [AI]:** فوق1cd6bc3؛ visibility_observer.py واختباراته، tests/README وTEST_PLAN وSTATE/CONTEXT/ROADMAP/ISSUES/CHANGELOG/SESSIONS. التنفيذ مراقب HTTPS قراءة فقط لهوية t2 معروفة؛ يشترط سلبية سابقة، يحفظ الإخفاق ولا يختلق أول ظهور. M2/t4/t5 منفصلة؛ تفاصيل خطة الاستئناف ROADMAP §8.
+
+> **تقدم M1/T-11 — 2026-09-18 [AI]:** implementation/local-tested: visibility_observer.py و25 اختباراً مع export إلىtrial_runner، وإصلاحcleanup فيtrial_runner بثلاث اختبارات.462 إجمالاً. مراجعة d21f2fcc للقطةd850d4e جارية؛ القبول الحقيقي للساعات/CA/Index متبقٍ. M2المصدر/t4/t5 والسببية التالي؛ خطةحزمكلالمشروع فيROADMAP §8. لا FREE للمراقب ولا DONE للقياس.
+
+> **تحكيمM1 مكتمل — 2026-09-18 [AI]:** مراجعةd21f2fcc انتهت وحكمت؛31اختبارمراقب +127قياس،469 إجمالاً. حفظterminalمحمي، alarmcleanup وأكوادمقيدة وبصماتحساب/CA وsummary، وclock_refالمقدممطابقللmanifest. التاليM2، لا إعادةمهمةالمراجعة؛ M1 قبولحيمازالغيرمكتمل.
+
+> **تسليم متابعة T-70 — 2026-09-22 [AI]:** انتهى حجز هذه الجولة: bd67699 إصلاحنافذةPopen،9084325 اختباراتالبايتات/source_record/عزلالدفعات/استعادةكلartifact،72runner و482 إجمالاً. CI push9084325 ناجح3.12/3.13 معقراءةالسجلات؛ رأسالتوثيقوCI فيPR28. T-70 IN-PROGRESS: التالي اختبارtransportمحلي اصطناعي بالـCLI ثمموارد/رخصة/هويةنموذج وجرد و30labels بشرية وتحكيمC4. لا إعادةبناء أوتشغيلحي ضمنياً؛ M2وبواباتالسحابة مستقلة.
+
+## تسليم الاستكمال المحلي — 2026-09-22 [AI]
+
+M2-A منفذ محلياً في 69a25f6/e819196 مع تقوية 67ae769/959deea؛36 اختبار مصدر و 134 قياس و 75runner،545 إجمالاً ناجحة. تحكيم المراجعتين مكتمل في tests/README و UC-14؛ لا مراجعة معلقة. T-11/T-70/T-16 تبقى IN-PROGRESS. انتهت حزمة source فقط، لا حجز جديد من متعاون؛ التالي pending recovery و M2-B/M3 و D1 وحماية config. احتفاظ بالفشل وعدم إعادة الهوية، لا native/نموذج/بيانات C4. CONTEXT_RESUME هو سجل الاستئناف الحاكم و PR28 يحفظ الرأس النهائي و CI.
+
+## تقدم محلي — 2026-09-23 [AI]
+
+بتوجيهالمالك «كمله بدقه يالله»: أُنجز recovery.py مع 46 اختباراً و manifest/journal binding واحتفاظالإلغاء و continuation journal؛ pipeline مراجعةالرسالةمع 13 اختباراًوتصدير DOCX/PDF فعلي.605 اختباراتمحليةناجحة؛ مراجعة 66ea9527 انتهتوحُكمت. T-11/T-16/T-25 تبقى IN-PROGRESS؛ التالي M2-B/M3 و ISSUE-068 والرسوموالمراجعوالنهائي،لا إعادةبناءالاستعادةأوال pipeline. AR لميتغيربهذهالجولة؛بقيةالبواباتالأصليةباقية.
+
+## تسليم حزمة الكاتب — 2026-09-23 [AI]
+
+حزمة MD/SVG منفذة: 15 مخططاً متجهياً، ومصدر JSON قابل للتحرير، وMermaid وفهرس ودليل للكاتب. صُححت المخططات الثمانية في الفصل الثالث، وأُضيفت أداة تغليف Markdown مع manifest و36 اختباراً جديداً؛ نجح 641 اختباراً محلياً على3abb755. انتهت مراجعة bdb07323 وحُكمت؛ لا تعاد، ولا يُعاد تسليم Word/PDF بدلاً من طلب المالك.
+
+ينتهي حجز هذه الحزمة بعد التحقق والنشر؛ T-16 وT-11 وT-70 ليست مكتملة. التالي: M2-B/t4/t5 ثم M3 وISSUE-068 وتدقيق الفصول والمراجع. البوابات الخارجية باقية. المصدر الحاكم WRITER_HANDOFF وCONTEXT_RESUME؛ الرأس النهائي وCI في PR28.
+
+
+## إقفال توثيقي وترتيب الحجز التالي — 2026-09-23
+
+طلب المالك محفوظ في `owner-messages/2026-09-23_session_documentation_handoff.md`. جولة AI الحالية محصورة في ملفات الاستئناف والحالة والبروتوكول وسجل التدقيق؛ لا حجز برمجة أو تشغيل SOC. ينتهي حجز التوثيق عند التسليم الموثق في PR28. حجوزات collector/procfs/Windows service السابقة منتهية لهذا التنفيذ المحلي؛ لا مراجع ينتظر الرد.
+
+| المسار | الحالة الحالية التي تتجاوز وصف اللقطات القديمة | الخطوة التالية |
+|---|---|---|
+| T-11 | IN-PROGRESS؛ observers/recovery/AR denominator وUC-01 evaluator/collector وlinuxproc وWindows service منفذة محليًا | Windows source/private persistence ثم controller، ثم t4/t5 والتكامل والقبول الأصلي |
+| T-16 / T-22 / T-23 | IN-PROGRESS؛ الفصول الخمسة موجودة وتصحيحات جزئية، وملخص استئناف موحد | بقية المصادر/الصور/الادعاءات ونتائج أصلية قبل الإغلاق |
+| T-25 | IMPLEMENTED-LOCAL؛ 15 SVG و15 Mermaid وcatalog وMarkdown | قبول بشري وتنسيق نهائي؛ ليس PNG أوWord/PDF بديلًا للطلب |
+| T-70 | IN-PROGRESS؛ أدواتAI وtransport الاصطناعي موجودة | نموذج/ترخيص/موارد/هوية وجرد وlabels وC4 أصلية والتكامل المتبقي |
+| T-62 / ISSUE-068 | IN-PROGRESS؛ guard لا يُخفف | تصميم حمايةconfig واختبارات ثم قبول ونشر مصرح |
+
+المعيار التفصيلي وخطوات البداية في أول CONTEXT_RESUME؛ لا تتغير الحالات العامة إلىDONE بسبب هذه الجولة.

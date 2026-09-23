@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant operator as Operator
+    participant runner as Runner / store
+    participant worker as Analyst worker
+    participant model as Optional Ollama
+    participant human as Human reviewer
+    participant eval as Evaluator / report
+    operator->>runner: Prepare pinned batch, code/config identity and private evidence store
+    runner->>runner: Persist intent before bounded worker launch
+    runner->>worker: Sanitized input + pinned knowledge#59; no gold labels or rubric
+    worker->>model: Explicit opt-in loopback request#59; offline default does not infer
+    model->>worker: Advisory output#59; execution_authority=none
+    worker->>runner: Validated output or explicit noncompleted status#59; no inference from refusal prose
+    runner->>runner: Persist bounded artifacts and terminal#59; missing terminal is interrupted
+    runner->>eval: Export with offline byte verification#59; keep full planned denominator
+    human->>eval: Gold labels and output-hash-bound claim adjudication
+    eval->>operator: Private report#59; missing reviews are not zero unsupported claims

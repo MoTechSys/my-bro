@@ -1,0 +1,24 @@
+flowchart TB
+    sensors["Endpoints / Suricata / FIM, audit, web, processes"]
+    agent["Wazuh Agent / syscheck / logcollector"]
+    rules["Decoders + Rules + CDB / Selected MITRE annotations"]
+    manager["Wazuh Manager / Decode / match / route"]
+    ar["Endpoint Active Response / Configured rules only"]
+    alerts["alerts.json / Manager alert records"]
+    advisory["AI advisory pipeline / execution_authority=none"]
+    filebeat["Filebeat / Alert shipping"]
+    human["Security analyst / Reviews advice / alerts"]
+    index["Wazuh Indexer / OpenSearch documents"]
+    report["Private AI report / Not an execution interface"]
+    dashboard["Wazuh Dashboard / Search / visualization"]
+    sensors -->|"events / EVE"| agent
+    agent -->|"collected events"| manager
+    rules -->|"matching configuration"| manager
+    manager -->|"AR dispatch"| ar
+    manager -->|"alerts"| alerts
+    alerts -->|"JSON records"| filebeat
+    filebeat -->|"indexing"| index
+    index -->|"queries / results"| dashboard
+    advisory -->|"advice only"| human
+    human -->|"review"| report
+    alerts -->|"controlled sanitized export"| advisory

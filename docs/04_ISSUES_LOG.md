@@ -1,5 +1,9 @@
 # 04 — سجل الأخطاء والتعارضات (Issues Log)
 
+> **الحالة الحاكمة للاستئناف — 2026-09-23:** اقرأ [الملخص الموحد](../CONTEXT_RESUME.md#session-handoff-2026-09-23) قبل السجل أدناه. الإصدار السابق المتحقق `0ccbd84`: **872 اختبارًا بلا skips محليًا وفي CI**. رأس جولة التوثيق ونتائجه اللاحقة في PR28. Collector وLinux/procfs وWindows service منفذة، ومراجعاتها مكتملة ومحكّمة؛ لا توجد مراجعة معلقة. التالي برمجيًا: **Windows canary/source والتخزين الخاص الأصلي، ثم controller timestamps**، ثم t4/t5 وISSUE-068 والتكامل والتدقيق الأكاديمي. لا قبول Windows أصلي أو نتائج تجريبية، ولا اكتمال شامل. عبارات «الأحدث/التالي/running» في اللقطات السابقة لا تتجاوز هذا الملخص.
+
+> **خاتمة هذه الدفعة — 2026-09-23:** انتهت مراجعةcollector ccdc4a2c وحُكمت بنودها التسعة فيtests/README؛ لا تعاد. أضيف اتساق ساعةmanager/observer في6853581 واختباراه في414384d؛ **48 اختبارcollector و800 كليًا ناجحة على414384d**. ذكرrunning أو46/798 أدناه لقطة سابقة. محولات الدايمونات/Windows/controller وt4/t5 وISSUE-068 وبقية التدقيق ما زالت أعمالًا محلية؛ لا نشر أو قبول أصلي. رأس التسليم وCI النهائي فيPR28.
+
 > كل خطأ اكتُشف في المصادر أو الإعدادات أو الرسالة. **لا يُحذف أي بند** — يُغلق بتغيير حالته وذكر الـ commit.
 > الحالات: `OPEN` | `FIXED-IN-REPO` (أُصلح في `wazuh/` أو `docs/`، لم يُطبَّق على المعمل بعد) | `NEEDS-LAB` (يحتاج تنفيذاً على الأجهزة) | `NEEDS-USER` (يحتاج جواباً من الفريق) | `CLOSED`.
 > الخطورة: 🔴 يمنع التشغيل/يضر بالتقييم | 🟠 خطأ واقعي يجب تصحيحه | 🟡 تحسين/توضيح.
@@ -133,3 +137,220 @@ ISSUE-058 — NEEDS-USER: تفويض GitHub رفض آخر push وgh api user ب�
 متابعة v3.1 في PR24: ISSUE-058 CLOSED — الربط المجدد دفع12c95b5 بنجاح دون استخدام التوكن المنشور. ISSUE-060 FIXED-IN-REPO/NEEDS-LAB — اسم EICAR فريد، ربط selectors ثابت واختبارات mocks؛ سلوك execd/dedup لم يتحقق أصلياً. ISSUE-061 NEEDS-LAB — أداة فحص الصيغة وG2-0 موثقتان، لا نتيجة دقة أصلية. ISSUE-059/062 OPEN لمهام log_format والجدولة المتداخلة، لا إغلاق ضمن البنود الأربعة الحالية.
 
 ISSUE-063 — OPEN منهجياً: v3.1 plan_math يستعمل Wilson–Hilferty تقريبياً ويسميه exact-style، وMWU power مشتق من normal two-sided/ARE تحت افتراضات توزيع؛ §5 بقي فيه floor20 وبند budget قديم بعد تعديل §9. صُححت تسميات helper وfloor في§5 إلى30، ووسم budget تاريخياً؛ mttd يبقى exactPoisson. الحسابات والتقرير لا يدعيان power مضمونة أو non-inferiority. حجم الجدول النهائي حسب UC/OS والجرد ما زال يحتاج مراجعة، دون تعديل خفي لنتائج أو نطاق.
+
+## تدقيق السحابة 2026-09-11 — [AI]، PR #28
+
+| ID | الخطورة | الدليل والمشكلة | الحالة ومعيار الإغلاق |
+|---|---|---|---|
+| ISSUE-064 | عالية لاعتماد المعمل | CLOUD_ENV_ACCESS §9: PID 1=tail؛ 19 zombie مع 5 خدمات Wazuh حية؛ Init=null، RestartPolicy=no، Healthcheck=null. العدادات تتقدم، لذلك التوقف الكلي المبلغ عنه ليس الحالة المثبتة الآن. غياب reaper يفسر تراكم zombie ولا يثبت سبب خروج الخدمات أصلاً | OPEN/NEEDS-LAB — حفظ الحالة ثم init مع إدارة خدمات وفحص صحة وتعافٍ فعلي؛ اختبار إعادة التشغيل والاستعادة ثم canary. لم يُنفذ إصلاح؛ قيود الجلسة تمنع الكتابة على /home/work |
+| ISSUE-065 | عالية لفقد البيانات | `docker inspect kali1`: Mounts=[]؛ إعدادات الوكيل وهويته ليست محفوظة في volume ظاهر. إعادة الإنشاء العمياء من الصورة قد تفقد التعديلات وهوية agent 001 | OPEN/NEEDS-LAB — نسخة خاصة قابلة للاستعادة من الحالة قبل أي حذف، نموذج تخزين وصلاحيات مختبر، وعدم تشغيل هويتين متطابقتين. لا أسرار أو أرشيف حاوية في Git |
+| ISSUE-066 | متوسطة للقياس والتوثيق | kali1 فعلياً Ubuntu 24.04.4 لا Kali؛ active وHTTP401/302 وNTP=yes وتقدم العدادات لا تثبت كل UC أو دقة الساعة أو الوصول للفهرس. alerts.json اليومي فارغ؛ AR/YARA غير موجودين في المسارات المحددة | OPEN/NEEDS-LAB — فصل الجرد السلبي عن canary/PILOT، إثبات المصدر والتنبيه والفهرسة والساعة بهوية فريدة بعد إصلاح064/065؛ ثم نشر المكونات الناقصة وفق بوابة الأمان. 145 اختباراً محلياً ناجحاً لا يغلق هذا البند |
+
+ISSUE-061: أحدث تدقيق لم يستخرج تنبيهاً حياً جديداً ولم يقس دقة توليد timestamp. ظهور ثلاث خانات كسرية في المثال التاريخي يثبت التمثيل فقط؛ لا يبرر وحده إغلاق بوابة دقة الساعة/المصدر. يبقى القبول المعملي NEEDS-LAB كما في متابعة PR24، مع حفظ السجلات التاريخية أعلاه.
+
+متابعة T-62 / PR #28 في 2026-09-11:
+
+- ISSUE-064: مرشح داخل المستودع `agent_lifecycle.py` مع حراسة init/root وبدء/إيقاف محدود ومراقبة تقدم الجمع؛ `agent_health.py` رفض البيئة المعيبة فعلياً عبر stdin دون تعديلها. 59 حالة محلية جديدة ناجحة. **الحالة OPEN/NEEDS-LAB**: لا نشر أو تعافٍ/استعادة أصلي ولا اختبار جانب healthy في حاوية مُصلحة.
+- ISSUE-065: لم يتغير Mounts=[] ولم تحفظ/ترحّل بيانات الحاوية من هذه الجلسة. عقد النشر يشترط إعداداً وهوية محفوظين قبل استبدال entrypoint؛ الفاحص ليس أداة backup. **OPEN**.
+- ISSUE-066: الأداة تفصل progress عن healthy وعن canary/deployment، وتوثق timezone صريحة وحداثة ACK/state. التشغيل الحي10:08:45–10:09:50 UTC أثبت `progress_verified=true` و`healthy=false`؛ لا استنتاج MTTD أو نشر/فهرسة/AR. **OPEN للقبول الكامل**.
+- ISSUE-038/T-40: أعيد اختبار محاولة تفعيل CI؛ رفض GitHub App صراحة الكتابة إلى `.github/workflows/validate.yml` لغياب workflows permission. المرشح المؤمّن محفوظ في workflows-pending؛ الفاحص المحلي يشغّل الاختبارات فعلًا، لكن **CI ما زال NEEDS-USER** لمنح Workflows:write وتأكيد نتائج Actions. لا الالتفاف على الرفض بتوكنات أخرى ولا ادعاء نجاح CI.
+
+
+## متابعة تسليم مشغّل السحابة — 2026-09-11، [AI]
+
+| ID | الدليل والقرار | الحالة |
+|---|---|---|
+| ISSUE-067 | عيب progress اللاصق في المشرف أُعيد إنتاجه: تعافٍ بعد65ث يتبعه خروج خاطئ75ث. أصلح في e40990f بفصل عداد health لكل poll عن عداد progress لكل نافذة65ث، بحد افتراضي نافذتين وتصفير عند النجاح. اختبارات التعافي/التجمد/الفشل المستقل/السجلات ناجحة | FIXED-IN-REPO / NEEDS-LAB — لا نشر أو قبول تعافٍ أصلي |
+| ISSUE-068 | guard الحالي يرفض config الفعلي: ossec.conf0664 root:104، /var/ossec/etc0770 uid101:104. الرقعة تقترح وجود ملف عادي فقط، وتتبع symlink، بلا تحقق حماية. config قد يحدد أوامر تشغيل؛ عدم تنفيذه مباشرة من Python ليس سبباً لإلغاء سلامته. أبقي شرط protected وأضيف اختبار يثبته | OPEN — تصميم حماية للإعداد ومساره دون تعطيل تحديث shared/state أو تغيير شامل للصلاحيات، مع اختبار Wazuh/ACL وrollback؛ عائق نشر معلن |
+
+- ISSUE-065: تحقق12:01 UTC من backup الذي أنشأه وكيل السحابة: directory0700؛ أرشيف etc يحوي28 مدخلاً، state35؛ gzip -t ناجح لكليهما. client.keys محفوظ ويطابق الحالي بالمقارنة في الذاكرة بلا طباعة قيمته/بصمته. صورة backup موجودة؛ Docker inspect أبلغ Size=142868515 بايت (ليس تأكيداً لرقم533MB في التسليم). لا استعادة تجريبية ولا إثبات اتساق لقطة حية شاملة؛ يبقى OPEN.
+- مصدر الرقعة الفعلي لا يطابق وصف الخطأ في التقرير تماماً: الخطأ المعاد إنتاجه NameError لـmock غير المستورد (60/61)، وليس AGENT_CONFIG_REQUIRED. الإصلاح المعتمد لا يخفف حماية config ولا يحتاج mock الإضافي. 212 اختباراً وvalidator ناجحان بعد التعديل.
+- المراجعة الآلية المنفصلة اكتملت بحسب التسليم السابق، ولا تعني قبول native. تأكدت ملاحظة progress باختبار مستقل عن تقريرها؛ الادعاءات الأخرى تحتاج تقييم الأدلة لا تطبيقاً آلياً.
+- مزامنة GitHub: fetch عام دون credentials أكد main=e51dd7d وheadPR28=480384e. gh يعرض alabasi2025 لا الحساب المتفق عليه MoTechSys؛ لا push/PR write بهذه الهوية ولا توكن مكشوف مستعمل. تحديث PR الفعلي معلق؛ كل تعديلات هذه الجلسة committed محلياً. لا force-push أو تغيير تاريخ منشور.
+
+
+### استعادة اعتماد المستودع وتقديم CI — 2026-09-11
+
+- عائق رفع التغييرات عبر الحساب المقصود زال من جهة المصادقة: API تحقق من MoTechSys ومن push وصلاحية workflow. الاعتماد مؤقت ولم يحفظ أو يستبدل إعداد حساب gh الآخر. سُحب main والتطوير دون إسقاط عمل متعاون.
+- ISSUE-038/T-40: رفض GitHub App السابق محفوظ كتاريخ؛ اعتماد المالك المتحقق يسمح بطلب التفعيل الآن. workflow نُقل إلى المسار الفعّال، ونجاح التشغيل لكلا الإصدارين على PR SHA مطلوب قبل CLOSED. نتائج التشغيل وروابطها في PR وسجل الجلسات.
+- ISSUE-067 إصلاح محلي مختبر ضمن الحزمة؛ ISSUE-068 لا يزال عائق نشر حقيقي. لا تغير صلاحيات GitHub نطاق الكتابة للسحابة، ولا تعوض النسخة الاحتياطية تجربة استعادة عملية.
+
+
+### إثبات إغلاق عائق CI/الرفع — 2026-09-11
+
+ISSUE-038/T-40: CLOSED/DONE على `095cd869f08a23d88f7ed3d9d434db816c04fb37`. دفع fast-forward ناجح إلى فرع PR28 بعد fetch والتحقق من ancestry؛ لا تعديل للتاريخ المنشور. تشغيل [PR](https://github.com/MoTechSys/my-bro/actions/runs/34598831817) و[push](https://github.com/MoTechSys/my-bro/actions/runs/34598830852) كلاهما success، ولكل منهما job3.12 و3.13 ناجحان. قرئت سجلات PR مباشرة:212 اختباراً وALL CHECKS PASSED لكل إصدار، وليس مجرد status أو نجاح محلي. لا يغيّر هذا صلاحيات GitHub App القديم؛ اعتماد المالك المؤقت منفصل ولم يحفظ في Git config. أي تعديل تالٍ يخضع لفحص جديد، وروابطه في PR. ISSUE-064..068 وبوابات المعمل لا تغلق بنتائج CI.
+
+
+## متابعة T-70 — 2026-09-11
+
+| ID | الدليل والقرار | الحالة |
+|---|---|---|
+| ISSUE-069 | اختبار على7033616 أثبت أن محول Python يغير context المعطى له كان يغير معرفة التحقق ذاتها، فيمر MITRE غير مسند.5da888b يعزل نسخ سياق النتيجة/المزود، مع اختبارات عدم تغيير المراجع وMITRE والمدخل الأصلي، ورفض findings مكررة | FIXED-IN-REPO — المحول شفرة موثوقة، وليست هذه آلية sandbox أو قبولاً أمنياً مستقلاً |
+| ISSUE-070 | T-70 الحالي يسترجع metadata القواعد فقط ويستبعد النص الحر؛ لا corpus MITRE مستقل أو جرد مؤرخ أو inference/C4. schema والمراجع الصحيحة لا تضمن صدق السرد؛ التوقيت والأنماط قد تعيد التعرف رغم aliases. Socket timeout ليس سقف wall-clock شاملاً | OPEN/NEEDS-LAB — corpus مراجَع ومثبت وقياس الخصوصية/الموارد والمراجعة البشرية و30 تنبيهاً معلماً؛ UC-14 يحدد البوابات. لا رفع النواة إلى حالة اكتمال |
+
+- توثيق ADR-002/ADR-014 ومواضع AI future-only في docs/05 وSTART صُحح ليتبع قرار المستخدم المعتمد؛ لا تغيير جديد للنطاق أو وعد بجودة نموذج غير مختبر.
+- محاولة consult_advisor أعادت أنه متاح فقط داخل Super Agent Sandbox؛ لا تقرير مستقل وصل. المراجعة ذاتية، والاختبارات258 محلية (46 للمحلل) لا تعوض C4 أو اختبارات التعافي السحابي.
+
+## متابعة المعرفة وC4 — 2026-09-11 [AI]
+
+| ID | الدليل والقرار | الحالة |
+|---|---|---|
+| ISSUE-070 (تحديث، لا حذف للسجل السابق) | حزمة MITRE v19.2 ذات provenance في01f3f94، الاسترجاع وعقد الجرد فيdb1eab9، evaluator في120efba/5744011؛43 اختباراً إضافياً فوق258، مجموع301. لم تعد المعرفة/audit الحسابي مجرد خطة | PARTIAL — لا جرد حي أو inference أو30 labels بشرية؛ wall-clock deadline والخصوصية والمراجعة/القبول لا تزال مفتوحة |
+| ISSUE-071 | تعريفات MITRE الرسمية: YARA match في108001 لا يثبت user execution لـT1204.002، وNetcat listener في100051 لا يثبت non-standard protocol/port pairing لـT1571؛ annotation ليس gold | OPEN-SEMANTIC — الشروح المثبتة تحذر صراحة، لا تغيير للقواعد؛ مطلوب تحكيم بشري/دليل سلوكي قبل تعديل mapping أو اعتماد نتائجMITRE |
+| ISSUE-072 | مراجعة ذاتية لـ120efba: cluster_id مختلفة كانت تسمح بـWilson رغم اشتراك التنبيهات في inference batch واحدة | FIXED-IN-REPO في5744011 مع regression؛ الفاصل يُحجب عند تكرارbatch أوcluster أو عدم التصريح بالاستقلال. لا cluster-bootstrap؛ كل ما تبقى مشروط بصدق التصميم لا تحققاً من الاستقلال |
+| ISSUE-073 | evaluator يربط normalized predictions وhash declarations ولا يقرأ artifacts الأصلية للتحقق من الإسقاط أوحفظ attempt journal؛ تزييف تصريحات real/human/hash يظل ممكناً خارج حد الأداة | OPEN — flags التحقق/القبولfalse وعقدUC-14 §10 يطلب تدقيقاً خارجياً. التالي importer/runner durable ومثبت artifacts، عدم تمريرgold للمزود، حفظ الفشل والمهل، ثم مراجعة مستقلة وتجربة فعلية |
+
+لا نتائجC4 أوغياب هلاوس مثبتاً من301 اختباراً؛ لا إغلاقT-70 أوبواباتالسحابة. رموز reviewers/labelers والـhashes قد تسمح بالربط؛ لا حفظraw exports أوinventory خاص أوPAT فيGit.
+
+
+## تدقيق 2026-09-18 [AI] — PR28
+
+التفاصيل وإعادة الإنتاج والتحكيم في TAKEOVER_AUDIT §8. أرقام commits أدناه checkpoints قبل جمع تغييرات الجلسة؛ الرأس النهائي في PR28.
+
+| ID | الخطورة والدليل | الإجراء والحالة |
+|---|---|---|
+| ISSUE-074 | عالية لصلاحية التقييم: نفس input_sha256 وalert_ref تحت أسماء batch/cluster جديدة تقبل n=30 وWilson رغم مصدر واحد؛ أُعيد إنتاجها على4f62a15 | FIXED-IN-REPO فيa2ba875: رفض DUPLICATE_SOURCE_ALERT وحجب الفواصل للمصدر المشترك ولو اختلفت refs؛ أربعة اختبارات جديدة. لا تحقق artifacts أو إثبات استقلال |
+| ISSUE-075 | متوسطة للمتانة والخصوصية: HTTPException مثل BadStatusLine تخرج من Ollama وقد تعرض traceback بنص الخادم؛ إثبات mock | FIXED-IN-REPO فيd13ff7f: خطأ عام دون stdout جزئي؛ اختبارات open/read بثلاثة أنواع وCLI. لا يغلق deadline ضمن070 |
+| ISSUE-076 | متوسطة: ROADMAP القديمة تقول AI مستقبلي وعينة10/baseline ساعة وCI غير مفعّل؛ MASTER_PLAN/docs02/docs05 وبعض الفصول غير متسقة | PARTIAL: ROADMAP مصححة في1a0eba6، وتنبيه تاريخي في MASTER_PLAN/docs02. docs05 والفصول وFR/NFR تحتاج مراجعة وADR عند تغيير متطلب. لا اعتماد OVA أو V5 أو دقة الساعة من أمثلة قديمة |
+| ISSUE-077 | منخفضة، توافق: load_rules يرفض ملفاً بتعريف XML بسبب لفه كمقاطع؛ القواعد الافتراضية وBOM وحده يعملان | OPEN: حسم دعم full XML بجانب fragments مع اختبارات DTD/encoding؛ ادعاء فشل BOM أو تعطل الافتراضي مرفوض |
+| ISSUE-078 | منخفضة، عقد Python داخلي: analyze({}) يرفع KeyError؛ ليس مسار CLI الحالي الذي يبني context | OPEN: تحقق صريح عند توسيع API؛ لا fallback يصنف سياقاً تالفاً كدفعة فارغة سليمة |
+
+ISSUE-070/073: تبقى مهلة wall-clock والمستورد وسجل المحاولات والتجربة الأصلية مفتوحة. مراجعة Wazuh4.14.7 لا تعني ترقية السحابة4.14.1 أو إثبات صحة جردها اليوم. نجاح307 اختبارات أو CI لا يغلق T-15/11/60/62/70.
+
+
+## تنفيذ سجل AI — 2026-09-18 [AI]
+
+- ISSUE-070/073 — PARTIAL: runner/importer/مهلة كلية منفذة في هذه الجولة،46 اختباراً جديداً و353 إجمالاً محلياً ناجحة. snapshots/intent/terminal تربط البايتات بالسياق والإسقاط، لا توقع المصدر أو البشر أو weights. مباشر analyst يبقى socket-timeout-only. تجربة النموذج/transport/الموارد/الخصوصية و30labels وتحكيمC4 مفتوحة.
+- مراجعة ذاتية: رفض unknown batch files، وتمييز orphan output غير المرتبط بterminal عن verified artifacts؛ SIGINT/SIGTERM فعليان مع نسل worker ناجحان. SIGKILL/انقطاع الطاقة والـACL/retention والحصة وإشراف init خارج الاعتماد المحلي.
+- مراجعة آلية منفصلة للقطة09e91e2 تُتابع في PR28؛ لا إغلاق بند بمجرد إرسال المراجعة. UC-14 §11 يحدد العقود. لا قبول معمل أو نشر أو C4 أصلي.
+
+
+## تحكيم مراجعة runner — 2026-09-18 [AI]
+
+| ID | الدليل والإجراء | الحالة |
+|---|---|---|
+| ISSUE-079 | N4: على be5160c كان returncode مثبتاً قبل killpg؛ حقن TimeoutExpired في wait التنظيف يفلت وstdout مفتوح.74ddb8f يستخدم WNOWAIT، ويرسل إشارة المجموعة قبل reap، ويؤجل إشارات التنظيف ويغلق stdout ويسجل cleanup_failed | FIXED-IN-REPO؛7 اختبارات إضافية، بما فيها إشارة ونسل عمليات فعليان. لا PID reuse أو D-state أصلي مفروض، ولا ضمان SIGKILL |
+| ISSUE-080 | N1: rejected دون سبب تحقق محفوظ.2e316e3 يضيف validation_code مقيداً وterminal v2 وإعادة تحقق عند export، مع6 اختبارات إضافية | FIXED-IN-REPO؛ رفض الدفعة كاملة مقصود، لا قبول جزئي. الأرشيف v1 يحتاج كوده الأصلي |
+
+المراجعة6e1a4dd4 مكتملة ساكنة فقط للقطة09e91e2؛ UC-14 §12 يحكم كل بند. K1/K2 عولجا سابقاً؛ المراجع لم ير اختبارات knowledge الموجودة. N2 يخلط idle30 مع سقف العملية؛ تشخيص النقل العام قيد موثق، لا خرق deadline. في N3/N5 وrefinement رُفض تغيير العقد أو إخفاء المدخل التالف. git ls-files يثبت أن rules/pack متتبعان خلافاً للتقرير.366 اختباراً وvalidator ناجحان؛ ISSUE-070/073 تبقيان PARTIAL حتى البيانات والنموذج والتحكيم والنشر المصرح به.
+
+
+## استلام إصلاح السحابة — 2026-09-18 [AI]
+
+- ISSUE-064 — PARTIAL-VERIFIED: المشغّلنفذinit+restart، وتحققناهذهالجلسة من0zombie و5خدمات وتقدم65ث. crash/restart لكاملالحاوية مبلغانمنالمشغّل، لا اختبارdaemonمنفرد؛Healthcheckغيرمهيأ. لايغلقT-62 أو يثبتنشرالمشرف.
+- ISSUE-065 — PARTIAL-VERIFIED:3volumes وصورةرجوعوالقديمةالمتوقفةوالنسخة35مدخلاً موجودة؛مفتاحالأرشيفوالحاويةيطابقانالنسخةبالذاكرةدونكشف. لا ضماناستعادةحالةقديمةبعدتقدمrids؛rebootوالرجوعالمتوافقمتبقيان،لا إعادةنسخغيرلازمة.
+- ISSUE-066 — محدّث: الفاحصيؤكدhealthy/progress=true؛canary×2 وHITS=1بعدالنقل/الانهيار موثقانبتقريرالمشغّل، لاإعادةاستعلاممستقلةهنا. لاPILOT أوقياسدقةساعةأونجاحARمنذلك.
+- ISSUE-068 — يبقىOPENلنشرagent_lifecycle: إصلاحملكيةتلقيمvolumes لايثبتتوافقحمايةconfigللمشرف. لاchown شامل ولاguardمخفف.
+- ISSUE-081 — OPEN-VERIFICATION: خطةstopالجديدة/startالقديمةتمنعهويةمتزامنة لكنها لا تثبت صلاحيةstateالقديمة بعداستمرارالجمع. مراجعةآليةمزامنةالحالةوالملكيةوrids ثم اختباررجوعمتوافقمطلوب؛لم يُثبتفشل فعلي أوينفذrollbackهنا.
+
+مصدرالأدلةوالبصماتوالتمييزبينالمشغّلوفحصنا فيCLOUD_ENV_ACCESS §11؛لا أسرارأوسجلاتخامفيGit، ولاصلاحياتخادمناقصةمزَعومة.
+
+
+## تنفيذ التكاملات — 2026-09-18 [AI]
+
+- ISSUE-007/016: انتقلت فجوة SQLi/الإشعار إلى تنفيذ برمجي مختبر، لا إغلاق معملي. T-12/13/14 تحتاج native input/rules/firewall unblock وTelegram test receipt. الدليل في scripts/attack-emulation/README.md وwazuh/README.md.
+- ISSUE-082: مصدر Integrator4.14.1 يضيف debug/options/timeout/retries وحقول redirection بعد الوسائط الثلاثة الأساسية. أُصلح المحول لقبول الصيغة المقيدة مع اختبارات، ورفض أسرار argv/options؛ FIXED-IN-REPO/NEEDS-NATIVE.
+- ISSUE-083: disabled=yes علىmanager يعطل AR عموماً، وlevel/group/rules تعمل OR لا AND. مولد SSH يتجنب التوسيع ويطلب استثناء الإدارة، ولا يغيّر المدير بنفسه؛ FIXED-IN-REPO/NEEDS-NATIVE.
+- ISSUE-084:31104 هجوم ويب عام وليس SQLi؛31103 SQLi وقد يظهر31106 معHTTP200. صحح دليل السيناريو وفق مصدر4.14.1؛ لا تفسير HTTP200 كنجاح استغلال. مصادر القواعد وبصماتها في الدليل.
+- حدود الإشعارات: HMAC ليس إخفاء هوية مطلقاً، unknown ليس فشلاً مؤكداً ولا يعاد تلقائياً، وامتلاء الحصة يوقف الإرسال صراحة. ملفات state لا تثبت أصالة بشرية.416 اختباراً ناجحاً؛ لا probe أو إرسال خارجي أو نشر حي.
+
+
+## التقرير والرسالة وتحكيم التكاملات — 2026-09-18 [AI]
+
+- ISSUE-085 — FIXED-IN-REPO/NEEDS-NATIVE: worker Telegram يرث directory flock مع fork رغم O_CLOEXEC. أُعيد إنتاج استمرار القفل بعد إغلاق fd الأب؛ أصلح d5386e9 بإغلاق نسخة الطفل دون LOCK_UN. اختباران جديدان؛ ليست تجربة SIGKILL/Wazuh أصلية. تحكيم F1..F5 في wazuh/README؛ العنوان09e91e2 في التقرير خطأ، المدخل60d5bfe.
+- ISSUE-086 — FIXED-IN-DRAFT: ch3 §3.10 حمل10 محاولات/ساعة baseline ومعنى AR قديم؛ استبدل بـTEST_PLAN الجاري (PILOT5،floor30،12h،t0..t6 وVT،Wilson/Poisson منفصلان)، وصحح نطاقAI/التكاملات في§3.9. المسودتان4/5 تميزان الأدلة الأصلية عن الكود؛ لا إغلاق ISSUE-019 أوتدقيقكل ch1–3 والمراجع.
+- ISSUE-087 — OPEN-FINAL-FORMAT: تصدير Word/PDF مراجعة ناجح، لكن قالبجامعة/خط/هوامش/رسومMermaid ومراجعةجميع43صفحة غيرمكتملة. فحصتالعناوينالخمس وXML وصفحتي1/43 بصرياً فقط. لا تدّعِ T-25 DONE.
+-434 اختباراً محلياً وvalidator ناجحان؛ تقريرC4 يثبت بايتات موجودة لا أصالة أو نموذجاً أوتحكيماًبشرياً. لا صور اصطناعية أو أرقام اختبار تدخل النتائج الأصلية.
+
+
+## M1 والقياس — 2026-09-18 [AI]
+
+- ISSUE-088 — PARTIAL/NEEDS-NATIVE: كانت ملفات observers تستورد دون مولّد t3. أضيف visibility_observer: هويةt2معروفة، سلبية سابقة، فحص1s، مهلة كلية، private evidence/export متحقق.25 اختباراً؛ القبول الأصلي وmapping/CA والساعة وربطهويةt2الجارية متبقية. preexisting لا يصبح وقتاً مفبركاً أو صفاً محذوفاً.
+- ISSUE-089 — FIXED-IN-REPO/NEEDS-NATIVE: trial_runner.execute كان يحصد القائد قبلkillpg، أُعيد إنتاج returncode=0 عند الإشارة. أصلح في79ba0ef بـWNOWAIT والحصد بعد الإشارة وانتظارcleanup محدود معmask؛ ثلاث اختبارات. no native PID-reuse/D-state claim؛ SIGCHLDافتراضي وإشراف خارجي مطلوبان.
+- ISSUE-090 — FIXED-IN-REPO: self-review لـM1 صحح نافذة الرصد لتشملclosing poll عندseconds، ومنعSIGALRMالمحجوب وuserinfoالفارغ.25 اختبارمراقب ناجح؛ ليست ساعة موثوقة أو ضمانة hard-real-time. مراجعة d21f2fcc للقطةd850d4e أقدم منبعضالإصلاحات وما زالت جارية عندالتسجيل؛ يلزمتحكيمها لا إعادةمهمة.
+- T-11 غير مكتمل: source/t4/t5/UC01 ومقامAR الأصلي وPILOT/MEASURED/baseline متبقية.462 اختباراً ناجحاً لا تغلقISSUE-019.
+
+
+## تحكيمM1 مكتمل — 2026-09-18 [AI]
+
+ISSUE-091 — FIXED-IN-REPO/NEEDS-NATIVE: مراجعةd21f2fcc انتهت ساكنة فقط. قُبلت معالجةpendingSIGALRM وحمايةterminal وأكوادالفشل وبصماتprincipal/CA وclock_ref؛31اختبارمراقب و127قياس،469 إجمالاً. رُفض تعديلسماحالجدولة/المهلةليخفيبطءالحفظ، وحُفظJSONLمعإضافةsummaryاختياري. لا passwordhash أوإثباتهويةمنالبصمات، ولا إغلاقبواباتالساعة/Indexer. التفصيللكلبند فيtests/README؛ حالةrunningالسابقةتاريخية.
+
+## متابعة T-70 — 2026-09-22 [AI]
+
+- **ISSUE-092 — FIXED-IN-REPO / NEEDS-NATIVE:** على8170031، SIGINT/SIGTERM داخلPopen أو بينعودته وإسناده يتركانproc=None فيالتنظيف رغموجودعاملحي وstdoutمفتوح. إعادةإنتاجمحليةبعاملPythonاصطناعي؛ اختبارالانحدارفشل4subcases علىالدالةالقديمة. bd6769998015469688e57cd5f63ae75233b97fa2 يؤجلأولإلغاءعبرمعالجمؤقت حتىالإسناد ثميمررهللمعالجالأصلي؛ لا توريثmaskجديد أوpreexec_fn.6اختبارات جديدة للإشاراتالفعلية واستعادةالمعالج/mask ورفضnon-main-thread.
+- 908432575d9eae6b4ab78cad5ea2deaba8437f4f يضيف7اختبارات: بايتاتCRLF/LF،source_record/ترتيبالحالات،عزلالدفعات/تبديلها،فشلثم نجاحمعمقاممفقود،استعادةإلغاءالإطلاق،حدودالحفظ،رفضنصيمحفوظ. **482 اختباراً وvalidator ناجحان محلياً وعلىCI push35779096256 لكلاPython3.12/3.13**؛ سجلاتالعددقُرئت. ليستتجاربpower-loss أونموذج.
+- **توضيحالعقد:** main-thread/ملكيةحصريةلمعالجاتالإشارات وحصدالأبناء. SIG_IGN محفوظ؛ SIG_DFL المستلم أثناءالإطلاق يتحولإلىKeyboardInterruptللتنظيف. عقودmanifest/terminal/evaluator لمتتغير؛ تغييرcode_sha256 يتطلبالكودالأصليللأرشيف، لا ترحيلصامت.
+- ISSUE-070/073 تبقيانPARTIAL: transport/model/موارد/خصوصية/جرد/بشر/C4 أصلية غيرمختبرة. لا يغلقهذا ISSUE-068 أو071 أوWindows/الاستعادة/canary. SIGKILL/D-state/نسلخارجالمجموعة ومشرفخارجي/ACL/retention خارجالإثبات. لا مراجعةمستقلةجديدة؛ التاليUC-14 §14.
+
+## M2-A والنقل وتحكيم المراجعات — 2026-09-22 [AI]
+
+- **ISSUE-093 — FIXED-IN-REPO / NEEDS-NATIVE:** قبل 8e0916a، قبلت HTTPResponse.read(limit) جسم JSON تاماً رغم قصره عن Content-Length. أضيفت 17 حالة HTTP/CLI اصطناعية، ورفض framing أو encoding غير المقبول و CL الناقص أوالمكرر. close-delimited لا يثبت عدم القطع؛ ورفض CL المكرر اختيار أشد من RFC. UC-14 §15.
+- **ISSUE-094 — FIXED-IN-REPO / NEEDS-NATIVE:** أضيف منتج أدلة M2-A مع snapshots و intent و export و binding، و 36 اختباراً. لا t1/t4/t5 أو هوية كاتب منوقت poll. قبول Linux والساعة و ACL والمصدر الأصلي باقٍ؛ tests/README §M2-A.
+- **ISSUE-095 — FIXED-IN-REPO:** نافذة إلغاء Popen في trial_runner أُعيد إنتاجها بطفل حي. d632a2c يعيد استخدام الحارس ويغلقها؛ أربع حالات إشارة فعلية وفشل spawn. لا ضمان D-state أو SIGKILL أو نسل خارج المجموعة.
+- **ISSUE-096 — FIXED-IN-REPO:** فحص تعارض source producer شمل صفوف تجارب أخرى. أُعيد إنتاج الرفض على 0c6b2d0، وصحح 67ae769 فلترة الهوية قبل الفحص. أضيف اختبار rotation ورفض كتابة output داخل مخزن المصدر.
+- **ISSUE-097 — PARTIAL / LOCAL_PENDING:** أضيف sync لأسماء journal/pending، واختُبر قبل الإطلاق وبعد إزالة pending، مع parent خاص. الإلغاء الخارجي يعطي 130 ويحفظ النية. pending يتعمد منع تشغيل لاحق على journal نفسه. دليل المراجعة اليدوية موجود؛ أداة الاستعادة الآلية المتكاملة مازالت عملاً محلياً. لا حذف تلقائي أو إعادة هجمة أو ادعاء اختبار انقطاع طاقة.
+- **ISSUE-098 — FIXED-IN-REPO:** تدقيق ذاتي أثبت fd متسرباً عند عودة timed directory-open قبل إسناده.959deea يحصر الواصفات داخل sample، واختبار e8aef17 يفشل على الدالة القديمة 3a5850d. لا تعميم إلى كل سباقات الإشارات على مستوى syscall.
+- مراجعة ee00bee5: F1/F2 وفرضية final-symlink من F3 مرفوضة بدليل؛ F5 عولج لاختبارات runner. بقية حدود التشخيص والثقة موثقة في UC-14 §16. مراجعة d1598bba منتهية ومحكّمة في tests/README؛ ليست اعتماداً بشرياً أو شهادة للإصلاحات اللاحقة.
+- 545 اختباراً محلياً على e8aef17؛ بوابات C4 و native و ISSUE-068 والرسالة و M2-B/M3 مازالت غير مغلقة. لا تستمد نسبة إنجاز من عدد الاختبارات.
+
+## الاستعادة والتصدير — 2026-09-23
+
+- **ISSUE-097 — FIXED-IN-REPO / NEEDS-NATIVE:** استعادة pending و continuation journal منفذانفي recovery.py؛46 اختباراً،مع المقام الكامل ورفضالجزئي والتكرار وربط البايتات. تصريح توقف المشغّل ليس إثبات عملية،ولا SIGKILL/power-lossacceptance. الدليل والتحكيم في tests/README.
+- **ISSUE-099 — FIXED-IN-REPO:** ربط pending بالـ journal لم يكفِ في النسخة الأولى؛ أضيف مسار وبصمة وطول البادئة في a59f594 وفحصها في 297adf6. لا يقبل journal آخرأومقلَّصحتىمع pins حديثة. legacy صريحومحدودبـ v2.
+- **ISSUE-100 — FIXED-IN-REPO:** الإلغاء داخل الجمع كان COLLECTION_FAILED وحذف pending بعد صف الفشل؛62636cc يميز COLLECTION_INTERRUPTED ويحفظ النية ويعيد 130،وتثبت الاستعادة عدم إضافة صف ثانٍ. لم يكن الصف المنشور مفقوداً في السلوك القديم.
+- **ISSUE-101 — PARTIAL / LOCAL_PENDING:** pipeline مراجعةالرسالةنُفذ واختُبر،لكنالرسوم 8 والمراجعوالتنسيقالجامعيو frontmatter وفحصكلالصفحاتمازالتناقصة. لا تُعلن النسخة المصدّرة نهائية.
+- ملاحظتا ASCII/newline و pending الفارغ في المراجعة مرفوضتان باختبارات على الاعتماديات الفعلية. تشخيص RECOVERY_INTERNAL_ERROR أضيف دون تسريب نص حر.605 اختباراتمحلية؛لا قبول SOC منالعدد.
+
+## ISSUE-102 — المخططات القديمة لا تطابق كود AR أو حدود الأدلة
+
+الحالة: **FIXED-IN-REPO جزئياً** في نطاق الفصل الثالث وحزمة الأشكال؛ مراجعة بقية الفصول والمراجع ما زالت مفتوحة.
+
+رسمت النسخة القديمة `rm -f` وYARA مع recursion، وحذفت Filebeat من المسار، وافترضت تأكيد كل إجراء وتغطية MITRE لكل تنبيه. صحح886817e النص والمخططات الثمانية؛ 15 ملف SVG ومصادرها موجودة الآن. قوّى138a260 و3abb755 النشر واتجاهات التدفق وقراءة تعريفات الأزمنة بعد مراجعة bdb07323 وفحص بصري.
+
+نجح36 اختبار writer و641 اختباراً إجمالاً محلياً؛ لا قبول native أو ادعاء مخطط SQL. تفاصيل F1–F8 وحدود الذرية والتغطية في WRITER_HANDOFF §10.
+
+
+## ISSUE-103 — AR declared-evidence review and documentation drift (2026-09-23)
+
+**FIXED-IN-REPO** for F3/F6 and diagnostics; not native acceptance. Review46bbb5ff (snapshot5bd2feb) was static only. Reproduced UC-07 accepting VT as FIM and v1 silently ignoring ar_policies; fixed in fb4100a. Added exclusion_details without reassigning ambiguous raw ownership, an explicit conditional-trigger denominator scope, and per-attempt clock source/differences. Added12 regressions,39 AR tests total. Full adjudication (F1–F9) is in tests/README. Fresh-checkout fixture corrected in83ebff9.
+
+**OPEN** for the full academic/reference audit: ch2 Rev.2 supersession, YARA versus containment, and unsupported product/performance/novelty claims were qualified; TEST_PLAN AI status and ch5/WRITER_HANDOFF implementation state were refreshed. This does not validate all papers, licensing, figures or original claims. t4/t5/causality, UC-01, ISSUE-068 and native/human/data requirements remain open; see TAKEOVER_AUDIT §9.
+
+
+## ISSUE-104 — UC-01 evidence semantics and review (2026-09-23)
+
+**FIXED-IN-REPO, not native acceptance.** Added connection_measure.py and72 synthetic tests. Reproduced: scheduler jitter tolerating a wall-clock jump beyond declared error; whitespace-only provenance; arbitrary canary rule semantics; combining early active with a later event without corroboration; repeated old service instance and missing cycle continuity. Fixes: df1616b,2d66b6d,ce1b057,cf0be3f,614f9d3. Independent static review6f1083f8 is complete; full adjudication and limitations in tests/README.
+
+**OPEN local implementation:** native read-only collector, service/clock/canary evidence byte binding, controlled evidence store and acceptance integration. Configuration hashes and fixed clock-domain metadata do not authenticate declarations. Five original cycles per eligible OS, reviewed clocks and native/human acceptance are still absent. Do not close T-11 from752 local tests.
+
+
+## ISSUE-105 — UC-01 collector validation and service compatibility (2026-09-23)
+
+**PARTIAL / LOCAL_PENDING.** Implemented bounded read-only collection, private byte replay and source/service/manager binding (a5fca55).46 regressions (c7acf13,df53b47,0d6742f); fixed bool/int equality, missing source, canonical service timestamp (9429515), and definite future start relative to snapshot (523359a). Full798 tests pass on4b85b6f. Reviewccdc4a2c targets c7acf13 and remains pending at this entry.
+
+Versioned Wazuh service source shows Type=forking, RemainAfterExit=yes and no PIDFile. The strict active/running/MainPID adapter does not cover every stock deployment; active/exited must not be relabeled as daemon liveness. Multi-daemon/container/Windows adapter and original controller timing remain programming work; native acceptance, clocks/config/authenticity are also unverified. No weakening of guards.
+
+## ISSUE-106 — Introduction/implementation chapter drift (2026-09-23)
+
+**PARTIAL FIXED-IN-REPO.** Chapters1/4 aligned with ADR014 and existing tools/vector figures; removed OVA-from-prompt reasoning from operative claims, qualified unmeasured economics/time benefits and current-version assumptions, separated YARA from containment and conditional network scope from exclusion. Historical author change log retained and labeled. Full image/reference audit and current-cloud diagram remain open; no new experiment or human academic approval.
+
+
+## ISSUE-107 — Linux daemon evidence instead of systemd-only snapshots (2026-09-23)
+
+**IMPLEMENTED-IN-REPO / NEEDS-NATIVE.** connection_process.py and linuxproc collector integration now support fixed five-daemon procfs evidence without systemd.38 tests,838 total on c395a61; report08768699 completed and adjudicated in tests/README. Identity is not PID alone; binary inode/path/protection, boot/time namespaces and both scans must match. Binder rejects partial replacement or namespace changes and uses latest required daemon birth, not readiness.
+
+State D may be physically alive but violates the documented R/S gate; diagnostic corrected to PROC_DAEMON_STATE_REJECTED. No hidden retry or broadened acceptance. Native executable/comm/kernel/ACL/hidepid validation remains open. Windows and controller evidence remain local programming, as do t4/t5 and ISSUE-068. This partially advances ISSUE-105 without claiming complete native collection or deployment.
+
+
+## ISSUE-108 — Windows service evidence and producer contract (2026-09-23)
+
+**SERVICE ADAPTER IMPLEMENTED / NATIVE AND SOURCE WORK OPEN.** Added PowerShell producer, offline validator and private Linux importer/exporter.34 tests,872 total on6fe661c with no local skips. Actual Linux PowerShell parser and mocked capture core are exercised; no Windows native CIM/NTFS/PowerShell5.1 acceptance. Consumer/source-boundary mocks are explicitly not original end-to-end evidence.
+
+Review9dbf6ede plus continuation adjudicated in tests/README. Fixed producer agreement, DateTime-kind ambiguity, PID matching, stream cleanup and aggregate-completion checks. Kept strict producer-version attestation and nonverification flags; stale birth cannot become functional success. Windows canary/native persistence and controller timestamps remain programming work. Exact host case and narrow no-arguments service-image paths are deliberate limits. No service control or deployment.
+
+
+## ISSUE-109 — انجراف مؤشرات الاستئناف بين اللقطات (2026-09-23)
+
+**FIXED-IN-REPO للمؤشرات الحالية / التدقيق الشامل يبقى OPEN.** كانت بعض مداخل التوثيق تعرض752 أو6fe661c كآخر تحقق، وتعرض مهامcollector/Windows أومراجعات منتهية كأنها باقية. أضيف ملخص حاكم قابل للقراءة في CONTEXT_RESUME، بروابط0ccbd84/CI/الحزمة؛ وصُححت مؤشراتSTATE وSTART_HERE وREADME وأضيفت حالة TASKBOARD الحالية. بقيت السجلات التاريخية وأدلة المؤلفين محفوظة ومعلّمة.
+
+أضيف تنبيه حاكم للبروتوكول القديم: لا إعادة كتابة للتاريخ المنشور أو دمج PR تلقائيًا. لا تساوي هذه المعالجة تدقيق جميع الفصول/المراجع/الصور أو إغلاقISSUE-068 و105..108. جولة توثيق فقط؛ نتائج التحقق للرأس اللاحق مثبتة في PR28.

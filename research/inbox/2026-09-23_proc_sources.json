@@ -1,0 +1,42 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/fs/proc/stat.c",
+    "resolved_url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/fs/proc/stat.c",
+    "retrieved_utc": "2026-09-23T04:44:27.739483+00:00",
+    "bytes": 5897,
+    "content_type": "text/plain; charset=utf-8",
+    "sha256": "d4692d68f90f318cc6d09d182baffffb36f7d0a3367da2c77b1e654d08cd0382",
+    "archive": "research/inbox/2026-09-23_proc_linux_stat.gz",
+    "archive_sha256": "ab8b546f749f96c6b8dcece383ccea7c0f95746787e3c19ff0b003353a70ccbb"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/fs/proc/array.c",
+    "resolved_url": "https://raw.githubusercontent.com/torvalds/linux/v6.12/fs/proc/array.c",
+    "retrieved_utc": "2026-09-23T04:44:27.760142+00:00",
+    "bytes": 23234,
+    "content_type": "text/plain; charset=utf-8",
+    "sha256": "23fa35a9e22158c2bee2bf183c748b82438e4919571eac9c04a4028d24764549",
+    "archive": "research/inbox/2026-09-23_proc_linux_array.gz",
+    "archive_sha256": "53955288e64166dae9616c78d99a722fee58f6643d7eeab0015c49446bc83ee1"
+  },
+  {
+    "url": "https://man7.org/linux/man-pages/man5/proc_pid_stat.5.html",
+    "resolved_url": "https://man7.org/linux/man-pages/man5/proc_pid_stat.5.html",
+    "retrieved_utc": "2026-09-23T04:44:28.149065+00:00",
+    "bytes": 20647,
+    "content_type": "text/html",
+    "sha256": "0f04d78946538fd84db1536845abeb236da51a04844989f34ea7ee7cb0b6700f",
+    "archive": "research/inbox/2026-09-23_proc_proc_pid_stat.gz",
+    "archive_sha256": "78be216060047904056f265d0c35e5e85eb997fd177f1b3672608a44c51bba6c"
+  },
+  {
+    "url": "https://man7.org/linux/man-pages/man5/proc_stat.5.html",
+    "resolved_url": "https://man7.org/linux/man-pages/man5/proc_stat.5.html",
+    "retrieved_utc": "2026-09-23T04:44:28.469777+00:00",
+    "bytes": 11780,
+    "content_type": "text/html",
+    "sha256": "3f0b831fc0708a4e11e9dd2ec729f45677afeb353cba76261aa03004c1c4818d",
+    "archive": "research/inbox/2026-09-23_proc_proc_stat.gz",
+    "archive_sha256": "e782267701f8a63adae938b066f4fdc7f61c64f721ba18df62ff3f445ee2a225"
+  }
+]

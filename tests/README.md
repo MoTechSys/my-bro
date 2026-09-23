@@ -1,5 +1,7 @@
 # tests — الاختبارات وعقد القياس
 
+> **الحالة الحاكمة للاستئناف — 2026-09-23:** اقرأ [الملخص الموحد](../CONTEXT_RESUME.md#session-handoff-2026-09-23) قبل السجل أدناه. الإصدار السابق المتحقق `0ccbd84`: **872 اختبارًا بلا skips محليًا وفي CI**. رأس جولة التوثيق ونتائجه اللاحقة في PR28. Collector وLinux/procfs وWindows service منفذة، ومراجعاتها مكتملة ومحكّمة؛ لا توجد مراجعة معلقة. التالي برمجيًا: **Windows canary/source والتخزين الخاص الأصلي، ثم controller timestamps**، ثم t4/t5 وISSUE-068 والتكامل والتدقيق الأكاديمي. لا قبول Windows أصلي أو نتائج تجريبية، ولا اكتمال شامل. عبارات «الأحدث/التالي/running» في اللقطات السابقة لا تتجاوز هذا الملخص.
+
 > ASTRA؛ 2026-09-09؛ PR #24. **T-11 IN-PROGRESS** حتى المراجعة وPILOT معملية. عقد v2 وفق MASTER_PLAN v3.1 §5/§9؛ التعارضات ISSUE-050..057. لا نتائج SOC فعلية.
 
 - TEST_PLAN.md: خمس PILOT، ثم30 لكل UC أو عدد أعلى وفق SD؛ baseline≥12h لكل OS/config؛ لا تجميع exposure مرتين.
@@ -137,6 +139,111 @@ python3 -B scripts/measure/mttd.py --inspect-alert-timestamps --alerts native-al
 
 لا journal/manifest مع وضع الفحص؛ تقرير hash/أمثلة خام وعدد الخانات لكل manager. هذه أداة فحص **صيغة** لا إثبات accuracy/resolution أو NTP. `.000` لا يثبت ساعة ms ولا ساعة ثانية. اتبع G2-0 في TEST_PLAN: مراجعة native timestamp والإصدار، حفظ الدليل، وتقييد عرض t2/t2_prime/t6 والمقاييس المشتقة عند دقة ثانية أو دقة غير محسومة. لا PILOT أو نتائج أصلية في هذا التسليم (ISSUE-061).
 
+## M1 — مراقب ظهور Indexer مستقل (2026-09-18)
+
+التنفيذ `scripts/measure/visibility_observer.py`، الاختبارات `tests/test_visibility_observer.py`. قراءة HTTPS فقط، لا تشغيل هجمة أو AR أو تغيير الإعداد. يعيد استخدام حماية المخزن من `ai_agent/runner.py`؛ لا يستدعي نموذجاً. **هذا مراقب t3 لهوية t2 معروفة، وليس مكتشف t2 تلقائياً أو مراقب t4/t5.** يجب الحصول على manager.name وagent.id وid لتنبيه t2 المختار من دليل المدير الأصلي. قد يصل التنبيه للفهرس قبل بدء هذا المراقب؛ عندئذ يسجل preexisting دون زمن، ولا تُخفى هذه الحالات من نتائج القياس. يلزم مستقبلاً ربط اكتشاف t2 الجاري بالمراقب لتقليل التأخر، دون تزوير سلبية سابقة.
+
+### عقد الإعداد والملفات
+
+أنشئ spec/config خاصين0600 ومجلد عمل جديد0700 خارج FIM وGit في بيئة تشغيل مصرح بها؛ أسلافه مملوكةroot/UIDالحالي وغير قابلة لكتابة المجموعة/الآخرين، بلاsymlink أوhardlink. لا chmod شامل على Wazuh. المفاتيح أدناه **أمثلة بنيوية تستبدل من الدليل**، وليست قياسات/صلاحيات فعلية:
+
+```json
+{
+  "schema_version": 1,
+  "run_id": "RUN_FROM_MANIFEST",
+  "trial_id": "TRIAL_FROM_JOURNAL",
+  "device": "observer",
+  "manager_name": "ACTUAL_MANAGER",
+  "agent_id": "ACTUAL_AGENT_ID",
+  "alert_id": "ACTUAL_SELECTED_T2_ID",
+  "index": "wazuh-alerts-4.x-2026.09.18",
+  "seconds": 30,
+  "precision_ms": 1,
+  "clock_ref": "REPLACE_WITH_ACTUAL_CLOCK_EVIDENCE"
+}
+```
+
+`seconds` عدد ثوانٍ صحيح2..120؛ فحص أول عند0 وآخر عندseconds (حتى121 طلباً). ينتهي مبكراً عند أول إيجابية أو خطأ، وليس مراقب تعرض baseline. `precision_ms` دقة معلنة لساعة المراقب1..100 وليست دقة تثبتها الأداة؛ لا تنسخ1 بلا دليل. run/trial/device يجب أن تطابق سجل المحاولة وclock_map.t3؛ يتولى trial_runner تحقق الهوية والنافذة. index يومي صريح واحد، لا wildcard أوalias أوauto-discovery؛ **تحقق من اسم الفهرس والإصدار الحقيقي قبل الرصد، ولا تختَر index اعتماداً على ساعة العميل فقط**. عبور منتصف الليل/تغير فهرس/تعدد مجموعات خارج هذا العقد.
+
+ملف config المنفصل، لا يُنسخ إلى مخزن الأدلة:
+
+```json
+{
+  "schema_version": 1,
+  "endpoint": "https://127.0.0.1:9200",
+  "username": "PRIVATE_READ_ONLY_USER",
+  "password": "PRIVATE_PASSWORD",
+  "ca_pem": null
+}
+```
+
+endpoint أصلHTTPS بعنوانIPv4 حرفي loopback أوRFC1918؛ لاDNS/روابط عامة/userinfo/query/fragment/path. المثال ليس وعداً بوجود Indexer محلي. استخدم حساباً مقيداً للبحث والقراءة في الفهرس المعتمد فقط، **لا admin**. ca_pem إماnull لجذورTLSالافتراضية أوPEMلشهادةCAالمعتمدة داخل configالخاص. يجب أن تطابقSANعنوانIP؛ لا verify=false أوتعطيلفحصالمضيف. لا بيانات اعتماد فيargv أوenv أوURL أوGit. لا proxy أوredirect، والطلبPOST إلى `_search` للقراءة فقط؛ راجع سياسة وصولIndex قبل اعتمادها.
+
+### أوامر التشغيل والاستيراد
+
+```bash
+# Offline preview: no config/credentials or network needed.
+python3 -I -B scripts/measure/visibility_observer.py preview \
+  --spec /approved/private/visibility-spec.json
+
+# Authorized read-only native observation; new empty store only.
+python3 -I -B scripts/measure/visibility_observer.py observe --lab \
+  --spec /approved/private/visibility-spec.json \
+  --config /approved/private/indexer-readonly.json \
+  --store /approved/private/visibility-store
+
+# Save the emitted intent_sha256 independently, then export offline.
+python3 -I -B scripts/measure/visibility_observer.py export \
+  --store /approved/private/visibility-store \
+  --intent-sha256 INDEPENDENTLY_RECORDED_INTENT_SHA256
+```
+
+احفظJSONLالمصدر إلى ملف جديد خاص (umask077 ومنعoverwrite)، ثم مرره إلى `trial_runner.sh --replay ... --observers FILE` مع دليل المصدر وتنبيهات المدير وبقية spec/manifest. مثال replay الكامل في §trial_runner أعلاه. لا تجمع JSONملخصobserve معobserverJSONL؛ exportفقط يعطي سطرstage=t3. لا تسجل stdoutفيملفداخلstore (مدخلغيرمتوقعيرفضexport). يقبل الاستيراد t3فقط إذاطابقت(manager_name,alert_id) تنبيهt2المختار، وبقيتنافذتهوجهازساعتهصحيحين. لا يراجع trial_runner ملفاتstoreبنفسه؛ **exportالمتحقق هو الحد الفاصل**، وإدخالJSONLمنمصدرآخر يحتاجتدقيقاًمستقلاً.
+
+| الحالة | تصدير t3 | المعنى |
+|---|---|---|
+| observed | سطر واحد | صفر نتائج صحيح سابق ثم نتيجة واحدة مطابقة |
+| preexisting | لا سطر | أول فحص إيجابي؛ أول الظهور سابق/مجهول، لا زمن مختلق |
+| not_observed | لا سطر | اكتملت فحوص0..seconds دون نتيجة، لا دليل أن الهجمة MISSED |
+| failed أوانقطاع/فساد | رفضexport | احتفظبالنيةوالسجلات؛ سجلt3مفقوداًوالسببفيالمحاولة |
+
+observe exit0للرصدobserved، exit2لـpreexisting/not_observed/failedالمحفوظ. export/preview exit0لنجاحالعملية (قديكونexportفارغاً)، exit1للرفضبرسالةعامة، argparse2، والإلغاء130. لا تعيد المحاولة بنفسstore، ولا تحذفالفاشلةأوتستبدلهابناجحة. عندفشلحفظterminalقديبقىintentجزئياً؛ ممنوع استئناف تلقائي. نسق فقدان الدليل مع سجل المحاولة كي يبقى المقام كاملاً.
+
+### ضمانات الرصد وحدوده
+
+- الاستعلام ثابت: `size=2` و`track_total_hits=true`، وحقول `term` هي id/manager.name/agent.id. يطلب `_source` هذه الحقول فقط. يجب أن تكون total.relation=eq والنتائج صفرًا أو واحدة، وكل shards ناجحة؛ يفشل عند مهلة أو نتيجة ناقصة أو ملتبسة. لا يفسر HTTP403/404 أو JSON تالفاً كسلبية.
+- الجدولة كل ثانية على monotonic، بسماح انحراف100ms؛ الفجوة ترفض الرصد. مهلة socket للخمول0.5s، ومؤقت POSIX كلي0.75s يغطي TLS والرؤوس والجسم. يلزم Linux وخيط التنفيذ الرئيسي وSIGALRM افتراضي غير محجوب بلا مؤقت موروث. لا ضمان hard-real-time ضد D-state/SIGKILL أو fsync عالق. لا ينشئ المراقب عمليات تابعة أو خدمة مستمرة.
+- timestamp_ms هو وقت ساعة العميل عند اكتمال قراءة أول جواب إيجابي، **ليس @timestamp ولا وقت إدخال الخادم**. يحتفظ بقوس من بداية آخر طلب سلبي إلى نهاية الجواب الإيجابي؛ precision_ms يشمل عرض القوس ودقة الساعة المعلنة. اختلاف wall/monotonic بأكثر من100ms يرفض، لكنه لا يثبت NTP أو دقة المولد. لا تنشر دقة ms لمجرد تمثيلها عددياً.
+- النتيجة رؤية هذا العميل لهذا الفهرس؛ replication/cache وفلترة الصلاحيات قد تؤثر. السلبية ليست غياباً مطلقاً من كل replica. يجب تثبيت ظروف التجربة، وعرض حالات preexisting بجانب العينة الموقوتة لأنها قد تسبب انحيازاً عند حذفها من المناقشة.
+- يحفظ intent مع fsync قبل الشبكة، ثم رد كل poll (حتى64KiB) وmetadata وبصمته، ثم terminal. الحد الأقصى121 طلباً: نحو7.6MiB للردود دون metadata. ضع حصة كلية لكل التجارب؛ لا يدير السكربت retention بين المخازن.
+- يعيد export التحقق من بايتات الردود، والتوقيت، وهوية الاستعلام، وبصمات الكود، وterminal وقائمة الملفات، دون config سري. احتفظ بإصدار الكود الأصلي لاستيراد أدلته؛ لا تعيد كتابة الأرشيف لتقبله نسخة أحدث. نفس UID قد يزوّر حزمة متسقة؛ البصمات ليست توقيعاً أو إثبات هوية خادم أو ساعة.
+- لا يطبع الردود أو نصوص أخطاء HTTP أو الأسرار. المخزن خاص لأن الهوية والردود قد تكون حساسة رغم تصغير `_source`. لا ترفع الخام أو الإعدادات أو بيانات الاعتماد إلى Git أو مهام المراجعة.
+- يعتمد الملف على ترتيب المستودع `scripts/measure/` و`ai_agent/`؛ ليس ملفاً منفرداً قابلاً للنسخ دون تبعياته. نشره لا يحتاج نسخ `.git` أو الأسرار. هذه الجلسة لم تنشره على مضيف آخر.
+
+مصدر عقد المفاتيح: [Wazuh v4.14.1 template](https://github.com/wazuh/wazuh/blob/v4.14.1/extensions/elasticsearch/7.x/wazuh-template.json)، قرئ في2026-09-18، SHA256 `31a60d5812fb0b5cd7c2d58556b88f57f7fc2f2221dd7b6b32f2256b13ea2886`. الحقول id وmanager.name وagent.id من نوع keyword. هذا لا يتحقق من mapping المنشور. الاختبارات مصطنعة محلياً؛ لا قبول Indexer أو T-11 أو قياس SOC أصلي من نجاحها.
+
+### إصلاح تنظيف عامل التجربة المرتبط — 2026-09-18
+
+أثناء ربط M1 أُعيد إنتاج خطأ في `trial_runner.execute`: كانت `wait` تحصد القائد قبل `killpg`، ما يحرر PID مبكراً. أصبح يستخدم Linux `waitid(WNOWAIT)` ثم يرسل الإشارة للمجموعة قبل الحصد، وينتظر التنظيف حتى ثانيتين مع تأجيل SIGINT/SIGTERM خلاله. فشل التنظيف يرفع WORKER_CLEANUP_FAILED ويسجل مسار المحاولة INVALID؛ لا يدعي نجاح الاستجابة. يلزم SIGCHLD افتراضي وعدم وجود waiter آخر. تظل العمليات التي تغادر المجموعة، وD-state وSIGKILL للوالد، وإعادة حصاد الأحفاد مسؤولية إشراف خارجي. ثلاث regressions إضافية؛ لم نجبر إعادة استخدام PID أو D-state فعلياً.
+
+
+
+### تحكيم مراجعة M1 المنفصلة — 2026-09-18
+
+[المهمة d21f2fcc](https://www.genspark.ai/agents?id=d21f2fcc-8a16-5d27-8e73-37253fbd1cde) انتهت: تفتيش ساكن لأربعة ملفات مرفقة عندd850d4e، لا clone أو اختبارات لدى المراجع ولا قبول بشري. نُفذت الاختبارات والتعديلات التالية هنا. لا تُعامل أرقام الخطورة المقترحة كأحكام نهائية دون هذا التحكيم.
+
+| البند | الحكم وما تغير |
+|---|---|
+| R1 بطء fsync يسبب فجوة | السلوك صحيح: شرط1s/100ms يشمل تكلفة الحفظ؛ الفجوة ليست قياساً صالحاً تحت هذا العقد. رُفض توسيع السماح تعويضاً لبطء التخزين. لا تُحذف الأدلة عند الرفض؛ يحتفظ بها وتبقى المحاولة في المقام. اختيار تخزين مناسب أو تغيير بروتوكول معلن قبل تجربة جديدة، لا قبول انتقائي بعد النتائج. |
+| R2 حافة مؤقت الطلب | قُبل إصلاح تنظيف المؤقت: تعطيل أثر handler عند الانتهاء، حجبSIGALRM، disarm وتصريف pending ثم استعادة handler/mask. اختبار يرسلSIGALRM فعلياً عندdisarm تحقق من الاستعادة. رُفض توسيع REQUEST_OVERRUN: الحد المقاس الكلي يظل750ms ولو خرج النقل قبلها بقليل؛ هذا رفض محافظ موثق لا ادعاء أن كل نقل ينتهي عند نفس اللحظة. |
+| R3 إشارة أثناءterminal | قُبل حجبSIGINT/SIGTERM خلال حفظterminal/fsync ثم استعادةmask. اختبار فعلي يرسلSIGTERM مرتين داخل الحفظ، ويتحقق من سجل كامل قبل تسليم الإلغاء. الانقطاع أثناء ملفاتpoll أوSIGKILL/انقطاع الطاقة ما زال قد يترك حزمة جزئية مرفوضة، لا تعهد crash-proof. |
+| R4 export فارغ لحالتين | لا نغير JSONL الافتراضي لأن trial_runner يستورد صفوفمراقب لاenvelopes. أضيف `export --summary` لإظهار status/observer والبصمات؛ الافتراضي بلاصف عندpreexisting/not_observed. لا يُعتبرexit0 وحده قياسt3. |
+| R5 سبب فشل عام | أضيف REQUEST_DEADLINE وقائمة ثابتة لأخطاء الجدولة/الساعة/هويةالجواب/اكتمالالبحث/الحجم. النصوص غير المعروفة تبقى OBSERVATION_FAILED بلا تسريبexception؛ فشل الرصد ليس حكم MISSED علىالهجمة. |
+| R6 حسابالقراءةوCA | أضيف principal_sha256 لاسمحسابالقراءة وca_sha256 للشهادةالصريحة وtrust_mode. لا password أوhashلها. البصمات مربوطة بintentالمتوقع وتظهر فيsummary؛ بصمةاسم حساب قابلة للتخمين وليست إخفاءهوية قوياً. system_default لا يجمد حزمةجذورالنظام؛ سجّل إصدارها/سياسةRBAC ضمنmanifestالنشر. لا تحققهويةحسابأوخادممنالبصماتوحدها. |
+| ملاحظةclock_refفيالمستهلك | عندما يوجدclock_refفيصفobserver، يجب أن يطابقdevice.clock_refفيmanifest. M1يرسلهدائماً؛ الصفوفالخارجيةالقديمةبدونالحقلتبقىعلىعقدهاالأقدم. اختباررفضالمخالفةواستيرادM1الصحيحناجحان. precisionيشملقوسالرصد، لذا لا نساويهبرقمNTPوحده. |
+
+31 اختباراً للمراقب،127 للقياس،469 إجمالاً ناجحة محلياً. ربط--summary اختياري، لا تمررخرجهإلى--observers. أعلامacceptance تبقىfalse. تمييزالمحاولاتالفاشلةوحفظالمدخلاتلاتغنيانعنمعمل/مزامنة/تحكيمبشري؛ لا تجربةIndexerأصليةفيهذهالجولة.
+
 ## المتبقي قبل قبول T-11
 
 اعتماد native collectors ودليل الساعة/المصدر/بدء AR/الاكتمال/رؤية API على المعمل؛ UC-01 اتصال؛ مراجعة تقنية وإحصائية مستقلة؛ PILOT n=5، ثم measured وbaseline وفق النتائج؛ مقام نجاح AR الشامل وتصدير النتائج للرسالة من أدلة حقيقية. لا تغيير لسكربتات الأمن ولا ادعاء قبول Windows/Wazuh/YARA بهذه الاختبارات.
@@ -220,3 +327,582 @@ source_ref/clock_ref/coverage_ref/config_sha256 بيانات إقرار من ا�
 4. اختبارات الشروط الجديدة ومراجعة مستقلة ثم PILOT معملية؛ تهيئة تصدير الرسوم/الجداول للفصل الخامس من أدلة فعلية فقط.
 
 تحقق PR #20 التاريخي: 34 قياس +19 أمان=53. العدد الحالي موضح في قسم v2؛ لا نتائج SOC فعلية.
+
+## M2-A — مراقب أدلة المصدر وربطه بالقياس (2026-09-22)
+
+**الحالة:** تنفيذ محلي مع 36 اختبار مصدر، لا قبول أصلي. الكود `scripts/measure/source_observer.py`، والربط في `trial_runner.py`. جميع المخازن والأمثلة هنا خاصة؛ لا ترفع spec أو snapshots الأصلية إلى Git. لا يشغّل المراقب هجمة، ولا يكتب محتوى الملف المستهدف أو ينشئه أو يحذفه. القراءة قد تحدث access time وفق نظام الملفات؛ ليست أداة حفظ جنائي تمنع كل تغيير metadata.
+
+### عقد الإدخال والخصوصية
+
+Linux، عملية CLI رئيسية واحدة، SIGALRM افتراضي وغير محجوب ولا timer قائم، مع ملكية حصرية لمعالجات الإشارات. الجهاز/الساعة معتمدان في manifest، ولا يكفي اسم `clock_ref` لإثبات صحة الساعة.
+
+مثال هيكلي **يجب استبدال placeholders فيه قبل التشغيل**:
+
+```json
+{
+  "schema_version": 1,
+  "run_id": "APPROVED_RUN_ID",
+  "trial_id": "UNIQUE_TRIAL_ID",
+  "device": "endpoint",
+  "clock_ref": "APPROVED_CLOCK_EVIDENCE",
+  "directory": "/APPROVED/PRIVATE/TEST_DIRECTORY",
+  "filename": "unique_test_file.dat",
+  "expected_sha256": "<64 lowercase hex of approved test bytes>",
+  "seconds": 30,
+  "precision_ms": 1
+}
+```
+
+- مجلد المصدر موجود وخاصة صلاحياته؛ leaf ملك UID الجاري بلا صلاحيات group/other، وأسلافه ملك root أو UID الجاري وبلا group/other write ولا symlinks. لا تغيّر صلاحيات مسارات Wazuh تلقائياً لتجاوز الرفض؛ عالجها ضمن تصميم المعمل.
+- الملف عند ظهوره regular، single-link، ملك UID الجاري، بلا group/other permissions. حد المحتوى 65536 بايت، واسم آمن بطول 1..101، ومجلد absolute canonical. seconds integer2..120، precision_ms integer1..100؛ bool مرفوض.
+- مدة poll كل 1s، jitter مقبول 100ms، سقف قراءة شامل 750ms بمؤقت POSIX. تغير wall/monotonic غير المتوافق أو التأخر أو محتوى خاطئ أو رابط/FIFO أو تبديل هوية الملف يفشل مغلقاً. لا retries لانتظار استقرار ملف بدأ بمحتوى غير متوقع.
+- مخزن الأدلة موجود وفارغ وخاص 0700، منفصل عن شجرة المصدر في الاتجاهين؛ artifacts0600. لا تسمح aliases عبر bind mounts أو كاتب غير موثوق بنفس UID. تخزين الأدلة خارج monitored paths مسؤولية المشغّل أيضاً.
+- `expected_sha256` لبايتات ملف الاختبار المخطط، وليس raw logs اعتباطية. يحتفظ المخزن بنسخة البايتات الفعلية؛ يلزم retention/ACL وحصة مساحة ومراجعة للخصوصية قبل القبول الحي.
+
+### التحضير والتشغيل والتصدير
+
+الأوامر التالية من جذر مستودع SOC. المتغيرات تشير إلى **مسارات خاصة معتمدة**؛ لا تُشغّل observe على معمل دون التفويض والبوابات. أعد المجلدات و spec الخاص مسبقاً وفق العقد، ولا تستخدم `.git` لحفظ أدلة التشغيل.
+
+```bash
+python3 -B scripts/measure/source_observer.py preview --spec "$SOURCE_SPEC"
+python3 -B scripts/measure/source_observer.py observe --lab --spec "$SOURCE_SPEC" --store "$SOURCE_STORE"
+python3 -B scripts/measure/source_observer.py export --store "$SOURCE_STORE" --intent-sha256 "$INTENT_SHA256" --summary
+```
+
+1. preview لا يقرأ المصدر؛ يعيد `source_spec_sha256` و`target_key`. بصمة spec لتمثيل JSON canonical (`r.json_bytes`) بعد التحقق، لا لمسافات الملف الأصلي. سجلهما في `attempt.source_binding` قبل الفعل، وثبت manifest وهوية trial ومساراً لا يعاد استخدامه بين التجارب.
+2. ابدأ المراقب **قبل** فعل الاختبار في عملية مستقلة تحت إشراف المشغّل. intent يحفظ قبل قراءة المصدر؛ انتظر السلبية الأولى المنشورة قبل إطلاق الفعل المعتمد. لا يكفي أن تكون العملية قد بدأت، ولا تسجل سلبية تخمينية إن كان الملف قد ظهر.
+3. احتفظ خارج المخزن ببصمة **بايتات intent.json الأصلية**؛ يمكنك الحصول عليها أثناء التشغيل بعد النشر أو من نتيجة observe. لا تعِد حساب قيمة ثقة جديدة من مخزن مشكوك فيه لتجاوز رفض importer.
+4. observe يعيد 0 عند observed و 2 عند failed/preexisting/not_observed؛ الإلغاء CLI يعيد 130. أخطاء الإدخال/المخزن ترفض برمز 1. خروج 0 هنا يثبت عقد الرصد فقط، لا الكشف أو AR.
+5. export العادي يعطي صف JSONL فقط عند observed؛ لا صف عند preexisting/not_observed. `--summary` يوضح الحالة؛ عند failed أو intent بلا terminal يعطي `artifacts_verified=false` و observer=null، وليس فحصاً جزئياً ناجحاً. terminal تالف يُرفض ولا يتحول تلقائياً إلى فشل موثوق.
+
+المخزن: `intent.json` يحوي spec وبصمات الكود، ثم `poll-NNN.json` للتوقيت/الهوية والسلبية أو الإيجابية، و`poll-NNN.bin` عند وجود محتوى، ثم `terminal.json`. fsync للملف والدليل بعد كل نشر، وقفل nonblocking على inode الدليل. الفشل أو snapshot جزئي يبقي الأصل دون overwrite. التصدير لا يفتح المصدر أو الشبكة، لكنه يقرأ الكود الحالي لمقارنة البصمات؛ الأرشيف القديم يحتاج نسخته الأصلية من الكود.
+
+### ربط محاولة القياس
+
+إضافة إلى attempt ذي schema_version2 المعتمد، أضف:
+
+```json
+"source_binding": {
+  "source_spec_sha256": "<canonical hash returned by preview>",
+  "target_key": {"syscheck.path": "/APPROVED/PRIVATE/TEST_DIRECTORY/unique_test_file.dat"}
+}
+```
+
+الربط الحالي مخصص لملف: يجب أن يطابق `stage_selectors.t2.target_key.syscheck.path`، وأي حقول path معروفة في target_key وبقية stage selectors. `device == clock_map.t1` و clock_ref مطابقان للـ manifest؛ run_id/trial_id يطابقان المحاولة. مع `--eicar-dir` يجب إعداد المسار المولد الفريد نفسه، لا نقل placeholder إلى binding.
+
+```bash
+python3 -B scripts/measure/trial_runner.py --replay \
+  --spec "$TRIAL_SPEC" --manifest "$MANIFEST" --alerts "$ALERT_EXPORT" \
+  --source-store "$SOURCE_STORE" --source-intent-sha256 "$INTENT_SHA256" \
+  --output "$ATTEMPTS_JOURNAL"
+```
+
+- journal داخل parent خاص موثوق؛ لا يكون داخل مخزن المصدر أو alias لأي input. live يبقى `--lab` واختيار أمر مستقل معتمَد، ولا يبدأ المراقب ضمنياً.
+- `--source-store` و`--source-intent-sha256` مطلوبان معاً؛ binding دون مخزن يرفض. importer يقرأ snapshots ويعيد حساب البايتات والهوية والتوقيت، ولا يثق بصف JSONL موسوم `soc-source-file-v1` وحده.
+- صفوف legacy للمراقبين تبقى operator-supplied، ليست مصادقة مستقلة. clock_ref إن قُدم يتحقق حتى لمرحلة event. عند binding لا يسمح لصف legacy event آخر للمحاولة نفسها أن يستبدل الدليل. صفوف تجارب أخرى في ملفات rotation تُتجاهل بعد فحص JSON، ولا تسبب تعارضاً غير متعلق بالهوية.
+- event الصحيح داخل نافذة القياس يجعل event_valid=true **دون ملء t1**. إذا غاب تنبيه الحساس يبقى MISSED في المقام، لا INVALID بسبب غياب الحساس وحده. غياب دليل المصدر أو فساده لا يصبح MISSED آلياً؛ يحتفظ runner بمحاولة مستبعدة/فاشلة وبسببها.
+- أول poll إيجابي يعطي preexisting بلا event. التوقيت المصدّر هو نهاية الرصد الإيجابي مع القوس من بداية السلبية السابقة والدقة المحافظة، **ليس لحظة إنشاء الملف أو هوية الكاتب**. الربط يثبت ملف المحاولة المعلن لا أن AR تسبب بوجوده/اختفائه؛ لا ت 1/t4/t5 أو زمن مصدر مختلق.
+
+### استعادة الانقطاع وحدود الديمومة
+
+- source intent بلا terminal: summary فشل منقطع، ولا event أو إعادة رصد بنفس المخزن. لا تزيل الملفات ولا تصلح hashes. صفوف ناجحة يعاد بناؤها من snapshots؛ ملفات إضافية/ناقصة/متغيرة ترفض.
+- trial journal: اسم journal و pending يزامنان في الدليل قبل الإطلاق، وبعد كتابة السطر ومحو pending. فشل sync قبل الإطلاق يمنع الأمر ويبقي النية. SIGINT/SIGTERM عند Popen يؤجلان حتى امتلاك الكائن ثم killpg قبل reap؛ cleanup محدود 2s. الإلغاء خارج المنطقة الداخلية يعطي 130 ويحفظ pending؛ داخلها يسجل failure وفق العقد الموجود.
+- `.pending` سابق يمنع كل كتابة جديدة إلى journal نفسه عمداً حتى المراجعة. **لا تمسحه، ولا تعِد الهجمة، ولا تعتبر عدم وجود صف دليلاً على عدم الإطلاق.** راجع وجود عملية باقية عبر المشرف الموثوق، لا عبر PID قديم وحده؛ احفظ journal و pending ومدخلات manifest/spec الأصلية وبصماتها في موقع خاص خارج Git. تحقق من اكتمال آخر سطر ومن عدم وجود الهوية بالفعل في journal قبل بناء سجل فشل مشتق منفصل. لا تعيد كتابة الأصل أو دمج سطر جزئي؛ وثق أن pending لا يثبت هل نُفذ الأمر فعلياً ولا زمن خروجه. الاستعادة الآلية والتحقق من نسخها وربطها بالتقرير الكامل **LOCAL_PENDING**؛ هذه خطوات مراجعة يدوية وليست أداة استعادة منفذة.
+- timeout يعني أن المشغّل **لم يلاحظ الخروج قبل deadline**، لا أنه قاس لحظة خروج العملية. قد تخرج العملية قرب الحد بين poll ين؛ لا نستبدل هذه الحالة برمز 0 لاحق ثم نزعم خروجاً ضمن المهلة. startup/cleanup/fsync وجدولة OS ليست hard-real-time.
+- SIGKILL/power-loss/D-state ونسل يغادر process group، دقة الساعة، سلامة filesystem و ACL ومشرف init، وصدق المشغّل/كاتب بنفس UID خارج الضمان. اختبارات fault injection ليست اختبارات انقطاع طاقة.
+- عدم تناظر مقصود حالياً: source export --summary يعرض فشل غير متحقق الأجزاء؛ M1 visibility export يرفض terminal ذي reason حتى مع summary. لا تتوقع واجهة تعافٍ متطابقة أو تعمم سلوك أحدهما على الآخر.
+
+### تحكيم المراجعة المستقلة d1598bba
+
+المهمة [d1598bba](https://www.genspark.ai/agents?id=d1598bba-abfd-5ef1-bb04-3f2c4ff797c1) منتهية فعلياً؛ نطاقها لقطة 2a50f77 ونص خمسة ملفات مع runner1–190. المراجع لم ينفذ اختبارات. النص الأصلي و JSON في `research/inbox/2026-09-22_m2_review_result.*`. الحكم التالي للمنفذ مدعوم بالفحوص، وليس شهادة من المراجع على الإصلاحات اللاحقة.
+
+| البند | الحكم والأدلة |
+|---|---|
+| F1 إطلاق Popen | مقبول ومُعاد الإنتاج بطفل Python حقيقي؛ d632a2c أصلح نافذة الإلغاء، وأربع حالات SIGINT/SIGTERM تتحقق من kill/reap واستعادة المعالج. |
+| F2 pending والإلغاء الخارجي | جزئي: pending يتعمد منع rerun وكانت قاعدة الاحتفاظ موثقة مسبقاً؛ لا يعالج بحذف تلقائي. أضيف خروج 130 ورسالة محدودة مع بقاء النية واختبار عدم overwrite. الاستعادة الآلية مازالت LOCAL_PENDING/ISSUE-097. |
+| F3 خروج قرب deadline | نرفض تحويل timeout إلى نجاح استناداً إلى wait بعد انتهاء المهلة؛ لا يثبت زمن الخروج. الحد هو موعد ملاحظة الخروج، لا توقيت kernel. قيد دقة polling موثق أعلاه؛ لا نزعم معرفة ما حدث قبل deadline من رمز cleanup. |
+| F4 تعارض صفوف تجارب أخرى | مقبول: الدالة القديمة 0c6b2d0 رفضت صفاً غير متعلق بـ SOURCE_STORE_REQUIRED، والحالية تقبل الدليل المرتبط وتتجاهل صفوف الهوية الأخرى. إصلاح 67ae769 واختبار rotation. |
+| F5 غياب window_start بعد استبعاد الساعة | المثال المقدم غير قابل للوصول عبر CLI كما وصف: preflight في m.analyze_v2/validate_trial يطلب نافذة صالحة قبل الإطلاق. الاختبار الموجود يحفظ SESSION_CLOCK_LIMIT_EXCEEDED ويمنع الأمر. لا نعدل collect لفرضية تتجاهل preflight؛ فساد مدخلات آخر قد يسجل فشلاً صريحاً. |
+| F6 fsync للدليل | مقبول في جوهره؛ وصف المراجع لـ pending بأنه write_once غير دقيق، إذ كان secure_open/write_all. أضيف sync_parent بعد نشر pending وقبل الأمر وبعد unlink، مع فحص parent خاص. اختبارات ترتيب ومزامنة واصف الدليل وفشل sync موجودة، دون ادعاء اختبار انقطاع طاقة. |
+| F7 analyst socket timeout | قيد صحيح موثق أصلاً في UC-14؛ المسار المباشر لا يملك مهلة العامل تلقائياً. استخدم runner لجمع أدلة C4 المحدودة؛ لا ندعي منع التنقيط في المسار المباشر. |
+| F8 اختلاف summary بين M1 و M2 | توضيح مقبول، موثق أعلاه. كلا المسارين يمنع إنتاج event/t3 من فشل، ولم تُغيّر واجهة M1. |
+
+تدقيق ذاتي إضافي لا ننسبه للمراجع:959deea يغلق fd داخل الاستدعاء الموقّت. اختبار العودة من timed call فشل فعلياً على الدالة القديمة 3a5850d ونجح على الجديدة، مع تنظيف الواصف في الاختبار السلبي. يبقى محدوداً بنافذة العودة المختبرة، لا كل سباقات الإشارات في المكتبات.
+
+**بوابة الإغلاق:**545 اختباراً محلياً على e8aef17، وتحقق CI للرأس النهائي في PR28. منها 36 للمصدر و 134 للقياس و 75 للـ runner. المراجعة الساكنة المستقلة محكّمة، لكنها ليست قبولاً حياً أو مراجعة إحصائية بشرية. M2-B/t4/t5 و M3/UC-01 ومقام AR و pending recovery و D1 مازالت أعمالاً محلية؛ لا تعاود بناء M2-A بدلاً عنها.
+
+## استعادة pending إلى سجل متابعة خاص — 2026-09-23
+
+**منفذ محلياً:** `scripts/measure/recovery.py` مع 46 اختباراً. هذه استعادة offline لا تشغّل أمراً، ولا تحذف pending أو تعدّل journal الأصلي. لا تحاول إثبات موت عملية من PID محفوظ. `--operator-stopped` تصريح من المشغّل بعد فحصه المستقل، وليس فحصاً آلياً؛ يبقى `process_cleanup_verified=false`.
+
+### العقود
+
+- يحتاج journal وملف `journal.pending` المجاور و manifest، مع SHA256 خارجي لكل ملف. الملفات regular أحادية الرابط، ملك UID الجاري، بلا group/other permissions؛ parent خاص 0700 وأسلاف موثوقة بلا symlinks. يرفض symlink و FIFO والروابط المتعددة والملفات العامة.
+- تؤخذ نسخة من journal تحت قفل flock غير منتظر متوافق مع trial_runner، وتتحقق هوية الواصف والاسم قبل القراءة وبعدها. manifest و pending بلا قفل مستقل؛ شرط توقف الكاتب وصدق المشغّل وحدود same-UID صريحة.
+- حد كل مدخل 2MiB، وحد كل JSONL20000 سطر، وخرج مشتق حتى 4MiB وفق حد storage الحالي. السطر الجزئي أو JSON التالف أوهوية متكررة يرفض كله؛ لا إسقاط لأسطر مجهولة أوضمّها إلى سطر جديد.
+- منذ c954e95، pending يثبت بصمة manifest الكانونية؛ منذ a59f594 يثبت أيضاً مسار journal وطول وبصمة كامل البادئة الموجودة قبل المحاولة، تحت القفل. يتحقق importer من هذه العلاقة لا من hashes منفصلة فقط. يسمح بعد البادئة بصفر أوصف نهائي واحد مطابق للمحاولة؛ تقليص البادئة أوتغييرها أوإضافة صف غير متعلق يرفض.
+- pending أقدم يفتقر إلى أحد الربطين يحتاج `--allow-legacy-unbound` صراحة، وتظهر قوة الربط كـ`operator_pinned_legacy`. العلم يخص نقص binding في **schema_version2/manifest.version2** فقط؛ لا يرقّي صيغة v1 ولا يثبت أن manifest استُعمل تاريخياً.
+- إن لم تكن المحاولة في journal، يُلحق صف مشتق واحد بحالة INVALID وسبب INTERRUPTED_AFTER_PREPARED_INTENT، أويحفظ الاستبعاد المسبق وسببه. يحتفظ t0 الأصلي فقط؛ t1..t6 و exit_code و timed_out و execution_started لا تُختلق. النافذة الموروثة معلنة `predeclared_not_observed`.
+- إن كان الصف النهائي منشوراً بالفعل، يتحقق من هوية المحاولة وإعداداتها و t0 و runner، ثم يحفظ journal **ببايتاته نفسها** دون استبدال الصف أوتكراره. ينطبق ذلك على COLLECTED و COLLECTION_FAILED و COLLECTION_INTERRUPTED و RECOVERED_INTERRUPTED وفق شروطها.
+- السجل المشتق يحتفظ بجميع المحاولات السابقة؛ لا تجمعه مرة أخرى مع الأصل لأن ذلك يكرر المقام. أداة mttd هي التي تحلل هذا السجل الكامل مع تصديرات التنبيهات الأصلية. recovery لا يقرأ التنبيهات ولا ينشر تقرير دقة/كشف؛ استعمال analyze_v2 داخله للتحقق فقط.
+
+### التشغيل
+
+المسارات التالية يحددها المشغّل داخل موقع خاص معتمد. أوقف الكاتب وتحقق من بقاء الأبناء عبر المشرف المعتمد أولاً، واحفظ hashes خارج المخزن. لا تمرر ملفاً خاماً حساساً في Git.
+
+```bash
+python3 -B scripts/measure/recovery.py recover \
+  --journal "$ORIGINAL_JOURNAL" --manifest "$MANIFEST" --store "$RECOVERY_STORE" \
+  --journal-sha256 "$JOURNAL_HASH" --pending-sha256 "$PENDING_HASH" \
+  --manifest-sha256 "$MANIFEST_HASH" --operator-stopped
+
+python3 -B scripts/measure/recovery.py export \
+  --store "$RECOVERY_STORE" --intent-sha256 "$RECOVERY_INTENT_HASH" --summary
+
+python3 -B scripts/measure/recovery.py export \
+  --store "$RECOVERY_STORE" --intent-sha256 "$RECOVERY_INTENT_HASH" \
+  --output "$NEW_CONTINUATION_JOURNAL"
+```
+
+المخزن يجب أن يكون جديداً وفارغاً وخاصاً. `--output` ينشئ ملفاً0600 حصرياً ويزامن الملف والدليل؛ يرفض الأصل و manifest و pending ومخزن الاستعادة وأي destination له pending. **استخدم هذا الخيار بدلاً من shell redirection فوق ملف قائم.** تابع التجارب الجديدة فقط على سجل المتابعة، بهويات جديدة؛ اختبار CLI يثبت أن الهوية المستعادة لا تعاد وأن المقام يتزايد دون إسقاطها. الأصل و pending يبقيان للأرشفة الخاصة ولا يحذفان.
+
+نجاح recover/export يعني بناء أثر مشتق متحقق، لا نجاح التجربة. exit0 للمكتمل،2 للمحاولة المسجلة كفشل،1 لرفض الإدخال/الاستيراد؛ argparse قد يعطي 2 للخيارات الناقصة، والإلغاء 130. أخطاء القراءة/التحقق تسجل RECOVERY_REJECTED؛ الأعطال الداخلية غير المتوقعة RECOVERY_INTERNAL_ERROR بلا نص استثناء حر.
+
+### ديمومة المخزن واستيراده
+
+`intent.json` ثم لقطات `journal.jsonl` و`pending.json` و`manifest.json`، ثم `attempts.jsonl` و`terminal.json`. intent يثبت pins والكود ومسارات المصدر وتصريح توقف المشغّل. كل نشر write_once مع fsync للملف والدليل. لا retry أو overwrite لمخزن جزئي؛ إذا غاب terminal أوكان failed يعرض summary فشلاً و`artifacts_verified=false` ولا ينتج سجل متابعة. terminal تالف أو artifact زائد أوبصمة مختلفة يرفض. export يعيد خطة الاستعادة من اللقطات ويقارن النتيجة والبايتات معاً دون فتح الأصل.
+
+كل إصدار كود مثبت ببصماته؛ استيراد مخزن قديم يحتاج نسخته الأصلية من الكود. المسارات والـ argv الموجودة في آثار الاستعادة خاصة ولا ترفع إلى Git. حدود SIGKILL و D-state وصدق المشغّل و ACL و mount aliases وعدم أصالة hashes باقية. حدالحجم رفض صريح لا مبرر لحذف الأقدم من المقام.
+
+تغيير سلوك الإلغاء في trial_runner: الإلغاء داخل التنفيذ/الجمع يسجل COLLECTION_INTERRUPTED وسبباً محدوداً، يحتفظ pending ويعيد 130. إن نجح نشر الصف قبل الانقطاع، recovery يتعرف عليه كـ already_recorded. الفشل العادي يبقى COLLECTION_FAILED وفق العقد السابق.
+
+### تحكيم المراجعة المستقلة 66ea9527
+
+المهمة [66ea9527](https://www.genspark.ai/agents?id=66ea9527-804b-5057-b138-2cfcf7756369) انتهت فعلياً؛ التقرير الأصلي والنص في `research/inbox/2026-09-23_recovery_review_result.*`. راجع المراجع النص المرسل عند 724433c، ولم يجلب الشجرة أوينفذ الاختبارات. الإضافات اللاحقة، ومنها `--output` و pipeline الرسالة، ليست مشمولة بأثر رجعي.
+
+| البند | التحكيم |
+|---|---|
+| P1-1 الإلغاء الداخلي | تحسين مقبول: السلوك القديم لم يفقد المقام إذا نُشر صف الفشل، لكنه حذف pending وخلط الإلغاء بالخطأ العام.62636cc يميز الإلغاء ويحفظ pending ويعيد 130، مع اختبار مسار حقيقي واستعادة بلا تكرار. لا نستخدم عبارة «بعد التنفيذ» لأن الإلغاء قد يحدث أثناءه. |
+| P1-2 ASCII و newline | مرفوض بدليل: analyst.encoded يستخدم ensure_ascii=True ولا يضيف LF؛ runner.json_bytes يضيف LF واحداً. اختبار مسار دليل عربي يثبت round-trip والاستيراد الصحيح. لا نغيّر encoding بناء على فرضية اعتماد غائب. |
+| P1-3 pending↔journal | مقبول كتقوية فعلية: أضيف ربط مسار وبصمة وطول البادئة، لا startswith على time_ref وحده. اختبارات تغيير/فقد البادئة والمسار واللاحقة غير المتعلقة ترفض حتى مع pins جديدة. القديم لا يقبل إلا بوضع legacy صريح. |
+| P2-1 حدود الحجم | الثوابت الحالية معلومة: مدخل 2MiB و storage4MiB؛ الخرج يتحقق قبل النشر. الحدود متعمدة ومعلنة؛ المخزن فوقها يرفض ولا يقص. ليست فجوة مثبتة من افتراض قيمة اعتماد لم يُقرأ. |
+| P2-2 التشخيص | عولج بتمييز RECOVERY_INTERNAL_ERROR عن رفض الإدخال/IO، مع اختبار عدم تسريب payload الاستثناء. |
+| P2-3 فحص pending حتى already_recorded | مقصود: لا يجوز لوجود صف منشور أن يسمح بتجاوز فساد النية التي نعلن التحقق منها. الفحص لا يستبدل الصف ولا ينشر مقاييس زائفة. |
+| P2-4 تداخل المسارات | لا يُسمح للمدخل أن يكون داخل store. الاتجاه المعاكس يعني جعل ملف regular أباً للدليل، وهو غير صالح؛ يبقى parent مشترك مع أخوة ملفات مسموحاً. لا ادعاء عزل mount aliases. |
+| P2-5 تغير الكود | سلوك مثبت ومعلن: استعمل الإصدار الأصلي للأرشيف ولا تعدّل hashes. تشخيص قائمة الملفات المتغيرة تحسين لاحق، لا نطبعه كبيانات غير محدودة. |
+| P2-6 argparse | فرق واجهة موثق: نقص flags يعطي usage/2؛ أخطاء التنفيذ المحدودة JSON/1 أو 2. لا نساوي أخطاء syntax بمحاولة مسجلة. |
+| P2-7 توقف الكاتب | شرط مشغّل لا ادعاء كشف آلي؛ قفل journal يمنع الكاتب المتعاون ولا يثبت موت ذرية العملية أوتوقف same-UID writer. |
+| P2-8 الخصوصية | متفق عليه: الآثار والمسارات والـ argv خاصة، لا Git أونشر عام؛ ملفات 0600 وأدلة 0700. |
+| P2-9 pending فارغ | فرضية IndexError مرفوضة: rows(single=True) يتحقق من عدد 1 قبل [0]. أضيف اختبار الفارغ والسطرين ويثبت INPUT_ROW_COUNT. |
+| P2-10 legacy | موضح صراحة: نقص binding فقط ضمن v2؛ لا استعادة صيغة v1 أوترقية صامتة. |
+
+اختبارات الاستعادة 46، والمصدر 37، وبناء الرسالة 13؛605 إجمالاً محلياً عند 68d4e1e. ليست اختبارات انقطاع طاقة أوقبول SOC. t4/t5 و UC-01 ومقام AR الشامل مازالت أعمالاً محلية مستقلة.
+
+
+## AR — سياسة أدلة الاستجابة الاختيارية (2026-09-23)
+
+أضيفت في `mttd.py` بوابة opt-in فقط لـUC-03 وUC-07. يظل manifest.version=2 والعقد القديم صالحًا بلا سياسة؛ غيابها ينتج `POLICY_NOT_DECLARED` ونسبًا null، لا فشلًا صفريًا ولا نجاحًا. **لم يُنفذ منتج t4 أوt5، ولم تُثبت سببية الاستجابة.** اختبارات `test_ar_denominator.py` اصطناعية، لا بيانات تجربة.
+
+مقتطف يضاف إلى run واحد في manifest كامل؛ قيمه تعليمية وليست قياسات أو نافذة معتمدة:
+
+```json
+{
+  "ar_policies": {
+    "UC-03": {
+      "window_s": 120,
+      "precision_ms": {"t0": 1000, "trigger": 1000, "t4": 1000, "t5": 1000},
+      "protocol_ref": "REPLACE_WITH_PREDECLARED_REVIEWED_PROTOCOL",
+      "independent_trials": false
+    }
+  }
+}
+```
+
+- يسمح بمفتاحيUC-03 وUC-07 فقط (أحدهما أوكلاهما)، ولكل سياسة هذه الحقول الأربعة بالضبط. `window_s` عدد صحيح1..3600، وكل precision عدد صحيح1..60000 ويمثل حد±محافظًا بالميلي ثانية؛ boolean ليس عددًا صالحًا. الاستقلال boolean ومرجع البروتوكول نص غير فارغ. `{}` لا يفعلAR لأيUC.
+- ثبّت سياسة على مستوىrun قبل القياس؛ لا توجد سياسة override للمحاولة. لا تختر نافذة/دقة بعد رؤية النتائج. النصprotocol_ref لا يثبت التسجيل المسبق؛ احتفظ بنسخة مؤرخة معتمدة خارج مخرجات الحساب. هذه ليست دقة ±1ms ضمنية؛ precision يضاف إلى uncertainty الجهاز، ويطرح offset=device−UTC مرة واحدة.
+- المحفزUC-03 هو `t2_prime` منVT87105، لاFIM؛ UC-07 هو`t2` منFIM. `stage_alert_refs` الخام مطلوبة؛ timestamp مصرح وحده لا يكفي. لا يملأt6 أوexit0 قيمةt5.
+- التغطية يجب أن تستمر حتى نهاية نافذةAR كلها، حتى مع اكتمال مبكر. تنقص uncertainty المدير منobserve_until المصحح، وتضاف uncertainty/precision المحفز إلى بداية الموعد. هذا شرط بروتوكول محافظ وليس قولًا إن الاكتمال المبكر لم يحدث.
+- ترتيبt0≤trigger≤t4≤t5 مطلوب؛ الانعكاس الاسمي INVALID_TIMELINE والتداخل ضمن حدود الخطأTIMING_UNCERTAIN. interval للاكتمال = (t5−trigger)±(خطأt5+خطأtrigger). high≤window يعنيCOMPLETED_WITHIN_WINDOW، low>window يعنيCOMPLETED_LATE، والتقاطعTIMING_UNCERTAIN.
+- other states: EXCLUDED، NO_TRIGGER_OBSERVED، UNBOUND_RESPONSE_EVIDENCE، MISSING_LAUNCH_TIMESTAMP، OBSERVATION_INCOMPLETE، COMPLETION_WITHOUT_START، NO_START_OBSERVED، NO_COMPLETION_OBSERVED، OUTSIDE_OBSERVATION. هذه حالات **أدلة** وليست إثبات عدم حدوث فعل. BASELINE/non-AR →NOT_APPLICABLE؛ لا ملخصAR للـbaseline.
+
+### المقامات والقراءة الصحيحة
+
+لكل `(run_id, uc, variant, phase)` يبقى **جميع ما سُجل** في `denominator_all_recorded_attempts`، بما فيهBLOCKED/INVALID/INTERFERED/AMBIGUOUS والمفقود. البسط فقطCOMPLETED_WITHIN_WINDOW. المفقود من الخطة لا يُختلق من التنبيهات؛ راجعintent/pending/recovery واكتمال الجمع منفصلًا قبل النشر. لا تخلط PILOT وMEASURED أوالمتغيرات والأنظمة.
+
+`denominator_observed_triggers` و`documented_completion_rate_triggered_only` مقام/نسبة ثانويان **للمحفزات التي اجتازت بوابات الاستبعاد**؛ لا يدعيان إحصاء كل محفز في الجهاز. الصف المستبعد لا يُعد محفزه مقبولًا، حتى لو تضمن refs تشخيصية قبل استبعاده. لا تستخدم هذه النسبة الشرطية بدل المقام الشامل.
+
+حالة الكشف منفصلة: قد يبقىUC-07 MISSED لعدم وجود108001 بينما توجد أدلة supplied على اكتمال الفحص. لا تستنتج اكتشاف برمجية خبيثة من اكتمال الفحص. `completion_from_trigger_s` و`execution_s` وصفيان لصفوفCOMPLETED_WITHIN_WINDOW/LATE، **لا يشترطانDETECTED**؛ الملخصات القديمةmetrics_s تحتفظ بشرطDETECTED. المقاييس القديمةL_AR_trigger=t4−t2 لا تتغير؛ معيار مهلةUC-03 الجديد يبدأVT، فلا تخلط الاسمين.
+
+Wilson محجوب افتراضيًا، ولا يظهر إلا مع`independent_trials=true`؛ يظل `independence_verified=false` ويحتاج الاستقلال والتجانس مراجعة تصميم. أعلام`causality_authenticated=false` و`acceptance_approved=false` ثابتة؛ لا حق للمستخدم بتغييرها بتحريرpolicy. `completion_kind=independent_observation` شرط schema لا تصديق للشاهد أوالسببية.
+
+واجهة الحساب نفسها، على **نسخ خاصة مصرح بها**، لا على مخازن التشغيل الحية:
+
+```bash
+python3 -B scripts/measure/mttd.py --manifest PRIVATE_MANIFEST.json   --journal PRIVATE_ATTEMPTS.jsonl --alerts PRIVATE_ALERTS.jsonl
+python3 -B -m unittest discover -s tests -p test_ar_denominator.py
+```
+
+لا تشغل المثال بأسماء وهمية كأنها بيانات. CLI يرفض journal فارغًا؛ الواجهة الداخلية analyze_v2([],[],manifest) لا تختلق صفوفًا. لا رفع لسجلات خام/هويات/مفاتيح إلىGit أوحزمة الكاتب. مراجعة46bbb5ff للقطة5bd2feb انتهت وحُكمت أدناه؛ لا تعاد. لا اعتماد بشري أوnative.
+
+
+### تحكيم مراجعة AR المستقلة — 2026-09-23
+
+[46bbb5ff](https://www.genspark.ai/agents?id=46bbb5ff-865c-58c0-b6bb-9cb17585df6e) مراجعة **آلية ساكنة** للنص المرسل عند5bd2feb. لم يتمكن المراجع من فتح checkout لديه، ولم يشغّل الاختبارات؛ تقريره يصرح بذلك. الأصل الكامل في `research/inbox/2026-09-23_ar_review_result.json`. أُعيد التحقق محليًا من الملاحظات؛ ليس هذا اعتمادًا بشريًا أو قبولًا أصليًا.
+
+| البند | الحكم والإجراء | دليل الاختبار والحد |
+|---|---|---|
+| F1 اختلاف offset المحاولة عن run | السلوك قابل للإعادة، لكنه عقد v2 المقصود: تصحيح كل محاولة بقياسها الخاص، وفحص حدود المجموعتين. لم نفرض مساواة صامتة تمنع قياسات متجددة | اختبار99ms يثبت انقلاب حالة حد المهلة؛ أضيف clock_correction_source وclock_offsets_differ_from_run. تحتاج التصريحات أدلة ساعة؛ لا تضبط offset من النتيجة |
+| F2 ملكية الدليل وفقد السبب | نرفض تخصيص الدليل المشترك لـB لمجرد خطأ وقتA؛ لا يثبت ذلك أن الحدث يخصB. فقد السبب السابق صحيح وقابل للإعادة | يحتفظ exclusion_details بخطأ timestamp وأخطاء stage المكتشفة ثم ambiguity؛ يبقى الصفان مستبعدين. حجب final المشترك خطأ الوقت في المثال الأول، فأعيد الإنتاج بمتغير final منفصل |
+| F3 قبول VT بدل FIM فيUC-07 | صحيح؛ أعيد بـ87105 وكانت النتيجة COMPLETED_WITHIN_WINDOW | عند opt-in يقبل t2 من100300/100301/100303/100304 بمستوى7. اختبارات معرفات Windows ليست قبولًا للنظام الأصلي؛ بلا policy يبقى العقد السابق |
+| F4 القول إن stamp يصحح NTP | فرضية غير صحيحة: يحول time zone فقط. النوافذ والتنبيهات كلاهما على مقياس المدير الخام، ثم يصحح coverage مرة واحدة | اختبار manager+90ms قرب observe_until يؤكد الاتساق. لا تغيير لتعريف النافذة؛ ISO/Z ليس دليل دقة ساعة |
+| F5 المقام الشرطي لا يشمل المستبعد | صحيح أنه شرطي؛ المقام الشامل سليم، لكن الاسم يحتاج توضيحًا | أضيف observed_trigger_denominator_scope=non_excluded_trials_with_validated_raw_trigger؛ اختبار نجاح+محجوب يعطي .5 شاملًا و1 شرطيًا مع النطاق الصريح |
+| F6 سياسة v1 مهملة | صحيح وقابل للإعادة: exit0 بلاAR | load_runs يرفضها؛ analyze_v2 يجرد نسخة legacy فقط بعد التحقق ويحفظ الأصل لحسابAR. CLI يعيد exit2 وstdout فارغًا؛ سياسة المحاولة مرفوضة أيضًا |
+| F7 event_valid غير موثق | غير صحيح توثيقيًا: مدرج سابقًا في «المحاولة والخرج». تشخيص v1 كان مربكًا | أضيف تشخيص v2 مباشر واختبار غياب الحقل، دون تخفيف شرط الإثبات |
+| F8 exact keys تكسر الجميع عند الإضافة | ليست مشكلة حالية؛ exact keys اختيار fail-closed، والإضافة المستقبلية ليست تغييرًا منشورًا | اختبار unknown fields؛ أي ترقية تحتاج عقد توافق واختبارات ترحيل، لا schema جديد بلا سبب |
+| F9 invariant غير قابل للوصول | حارس دفاعي مقصود؛ كسره خطأ داخلي لا ينبغي إخفاؤه كتجربة عادية | أبقينا InputError وفشل التقرير بدل تقرير جزئي؛ اختبار صف داخلي غير متسق |
+
+**ملاحظات الاختبارات:** مجموعة تنبيهات فارغة تختبر غياب المحفز، لا قيمة t2 المصرح بها وحدها. شريحة FIM دونVT تختبر فقد المرحلة الخارجية، وقيود UC-03 موجودة أصلًا في validate_v2. ترتيب t5 قبل108001 مسموح: التنبيه النهائي ليس بدءAR أو اكتماله. fixture الخاص بـUC-03 يجعلVT تنبيه الكشف ومحفزAR، وt6 مستقل ولا يملأt5؛ ليست هذه سلسلة حذف أصلية. اختبار completion_kind يثبت schema فقط، كما يصرح الدليل.
+
+الإصلاح `fb4100a` ثم تصحيح fresh-checkout في `83ebff9`: **39 اختبارAR** (27+12)، و134 اختبار قياس سابق ناجحة. **680 اختبارًا كليًا في28.865s على dd87465** مع ALL CHECKS PASSED. لا يحتاج اختبارAR مجلد build موجودًا؛ ملفات CLI مؤقتة تحت جذر المستودع وتحذف تلقائيًا. CI الرأس النهائي منفصل في PR28.
+
+**تنبيه توافق:** السياسة خاصة بـrun في manifestv2؛ لا override بالمحاولة. تصحيح الوقت يستخدم offsets المحاولة، بينما قيم run تبقى مرجع فحص جلسة وليست التصحيح المطبق. اختلافهما لا يصادق على المصدر: يجب مراجعة clock_ref/time_refs والنسخ المؤرخة قبل القياس. تظل السياسة والساعات إقرارات، لا نظام مصادقة أدلة.
+
+
+## UC-01 — محلل دورات الاتصال offline (2026-09-23)
+
+`python3 -B scripts/measure/connection_measure.py --help`
+
+هذه أداة مستقلة عن `mttd.py` وعن مقام كشف الهجمات. تحلل **إقرارات أدلة** جُمعت مسبقًا، وتطابق تنبيهًا خامًا بملف تحقق فريد. لا تعيد تشغيل خدمة أو تسجيل وكيل، ولا تتصل بالمدير أو SSH أو API، ولا تنشئ ملف التحقق. مجمع الأدلة الأصلي وربط السجلات به ما زالا **عملًا برمجيًا محليًا متبقيًا**؛ الاختبارات الاصطناعية ليست قبولًا معمليًا.
+
+### خطة مسبقة وعقد ثابت
+
+مدخل `--plan` كائن JSON خاص. الحقول كاملة وصارمة، ولا تقبل مفاتيح إضافية:
+
+| الحقل | العقد |
+|---|---|
+| schema_version / kind | العدد الصحيح1 / uc01_connection_plan |
+| run_id / protocol_ref | نص غير فارغ ومرجع بروتوكول مثبت قبل التجربة؛ المرجع لا يثبت التسجيل المسبق بذاته |
+| identity | manager_name، agent_id غير000، agent_name، os=linux/windows، config_sha256 بصمة64hex |
+| clocks | أربعة أدوار: controller وendpoint وmanager وobserver؛ لكل دور offset_ms وuncertainty_ms وprecision_ms وref |
+| window_s / poll_interval_ms |300 ثانية و5000ms وفق TEST_PLAN؛ ليست معاملات لتغيير النافذة بعد رؤية النتائج |
+| coverage | start_ms/end_ms على ساعة المدير الخام وref؛ إقرار استمرارية أرشيف التنبيهات وليس إثباتًا آليًا لها |
+| cycles |5 إلى100 دورة معلنة مسبقًا؛ لكل دورة cycle_id وtarget_path فريدان، وقائمتا rule_ids وlevels من توقيعات إنشاء الملف المعتمدة أدناه |
+
+قيم الساعة صحيحة بالميلي ثانية: offset=device−UTC، والمصحح=raw−offset مرة واحدة. uncertainty غير سالب وprecision موجب ويمثل حد±محافظًا؛ القيم حتى60000 للتحقق البنيوي، لكن |offset|>100 أوuncertainty>100 يمنع نجاح الدورات المسجلة. precision ليس دقة العرض أو عدد الخانات. لكل نقطة مجال `[raw−offset−error, raw−offset+error]` حيث error=precision+uncertainty. جميع الدورات تستخدم الساعات المثبتة في هذه الخطة؛ لا override من صف المحاولة. تغير الإعداد أو قياس الساعة يستلزم خطة/run جديدة.
+
+المسار حرفي ومطلق وفق النظام، بلا `.` أو`..` أو أجزاء فارغة؛ مقارنة المسار في التنبيه exact. اختلاف حالة أحرف مسارات Windows في **الخطة** يمنع تكرار هدف واحد، لكن المطابقة الخام تظل حرفية؛ يجب تطبيع المصدر مسبقًا بطريقة مراجعة، ولا يعاد تفسير raw alert تلقائيًا. لا وصول إلى target_path من المحلل. لا تعد البصمة وحدها هوية محاولة؛ يجب اختيار ملف جديد لكل دورة قبل التنفيذ.
+
+توقيعات canary الحالية: Linux يقبل554/L5 أو100201/L7 أو100301/L7، وWindows يقبل554/L5 أو100304/L7. يجب أن تطابق levels المستويات المقابلة للقواعد المختارة؛ لا مطابقة cross-product تسمح بـ554/L7 مثلًا. VT أوحذف/تعديل ملف ليس بديلًا عن إنشاءcanary. أي قاعدة مخصصة مستقبلية تحتاج مراجعة وتحديثًا صريحًا للعقد، لا مجرد تغييرplan.
+
+ترتيب cycles هو ترتيب التنفيذ. منذ ثاني دورة يلزم old_instance مساويًا لـnew_instance من الدورة السابقة في الخطة، مع ترتيب أوقات الطلب. عدم التطابق يعطيDISCONTINUOUS_SERVICE_CHAIN للدورة الحالية؛ غياب دليل السابقة يعطيSERVICE_CHAIN_UNVERIFIED ولا يُختلق ارتباط. إعادة استخدامold_instance نفسه بين دورتين تعطيAMBIGUOUS_EVIDENCE لجميع أصحاب الدليل. إعادة استخدامnew_instance أيضًا مرفوضة؛ الربط الطبيعي بينnew السابق وold الحالي مسموح.
+
+### السجل المطبع لكل دورة
+
+`--records` ملف JSONL، صف واحد على الأكثر لكل cycle_id مخطط؛ غياب الصف مسموح ويصدر MISSING_RECORD. لا يجوز إسقاط دورة من الخطة لتجميل المعدل. مفاتيح كل صف:
+
+- schema_version=1، run_id، cycle_id.
+- exclusion_reason: null أوBLOCKED/INVALID/INTERFERED/AMBIGUOUS؛ reason=null عند عدم الاستبعاد، وإلا سبب نصي مطلوب.
+- restart: null أو كائن يحوي request_ms وcommand_end_ms وold_instance وnew_instance وservice_started_ms وservice_running وref. request على ساعةcontroller؛ نهاية أمر إعادة التشغيل عليها أيضًا، وservice_started على ساعةendpoint. نهاية الأمر وبداية الخدمة والهويتان nullable، لكن النقص يمنع إثبات إعادة تشغيل جديدة. service_running قيمةboolean.
+- canary: null أو `{created_ms, path, source_ref}`؛ الوقت من شاهد إنشاء علىendpoint، لاmtime ولاوقت عرضDashboard. source_ref مرجع شاهد مستقل محدد بالدورة، لا سجل نجاح الأمر وحده.
+- polls: مصفوفة حتى128 عينة؛ كل عينة `{start_ms, end_ms, start_monotonic_ms, end_monotonic_ms, status, manager_name, agent_id, agent_name, ref}`. كل الأزمنة صحيحة؛ wall clock علىobserver، وmonotonic من عملية مراقب واحدة دون إعادة ضبط. الحالات فقط active/disconnected/pending/never_connected/error.
+
+**هوية الخدمة ليستPID منفردًا.** يحتاج الجامع المقبل هوية incarnation مربوطة بـboot/session ووقت بداية أصلي ودليل هوية الوكيل/الإعداد؛ old_instance وnew_instance هنا نصان مصرح بهما، لا يثبت المحلل مصدرهما. command_end أوexit0 لا يثبتان service_started. إعادة استخدام new_instance أومرجعrestart أوsource_ref بين الدورات تجعل الدورات المرتبطة AMBIGUOUS_EVIDENCE حتى لو كانت إحداها مستبعدة.
+
+المثال البنيوي الكامل الاصطناعي موجود في `tests/test_connection_measure.py` داخلplan()/record()/alert()، وهو **ليس بيانات معمل ولا قالبًا لقيم ساعات أصلية**. يشغّل الاختبار دورة واحدة مكتملة وأربع دورات مفقودة عمدًا لاختبار المقام. لا يُرفع raw log أوإقرار حساس إلىGit.
+
+### التغطية والزمن والنتيجة
+
+- يبدأ الرصد قبلrequest وينتهي بعد كامل نافذة300ث مع هامش حدود الساعة؛ الاكتمال المبكر لا يلغي شرط التغطية. عدم تغطية الطرفين فيpolls أوcoverage يعطي OBSERVATION_INCOMPLETE.
+- دورة الاستطلاع5000±1000ms علىmonotonic، والطلب≤2000ms، ولا تداخل طلبات. سماح جدولة1000ms **ليس سماح خطأ ساعة**: اختلافwall/monotonic، داخل الطلب وبين الطلبات وبالنسبة لأول عينة، لا يتجاوز مجموع خطأي نقطتين علىobserver. تجاوز ذلك CLOCK_JUMP؛ فقد عينة أو تغيير ترتيبها POLL_GAP.
+- تغير هوية الوكيل أوالمدير في أي عينة يرفض الدورة؛ عينةerror ليست disconnected ولا تصلح حدًا سالبًا، وتمنع نجاحها. تداخل نوافذ300ث لدورتين مع حدود الخطأ يجعل كلتيهما OVERLAPPING_CYCLE؛ الدورات لا تشغّل بالتوازي لهذا الوكيل.
+- اتصال مرصود: أولactive بعد بدء الخدمة الأصلي، مع آخرpending/disconnected/never_connected بعد البدء، يولد transition_interval_s. بلا مشاهدة سلبية بعد البدء يبقى المجالnull وconnection_state=ACTIVE_WITHOUT_TRANSITION_BRACKET؛ لا نختلق وقت إعادة اتصال منcachedactive.
+- التحقق الوظيفي مستقل: يحتاج إعادة تشغيل جديدة ودليلservice_running، وعينة active بعد التنبيه الجديد مع احتساب حدود الساعة، وشاهد إنشاء ملف بعد بدء الخدمة ونهاية الأمر، ثم تنبيه خام جديد مطابق للهوية والمسار والقاعدة والمستوى. تنبيه سابق للإنشاء لا يُتجاوز لصالح تنبيه لاحق، بل PREEXISTING_CANARY_ALERT؛ تداخل مجال الوقت يعطيTIMING_UNCERTAIN.
+- functional_confirmation_interval_s مجال أدلة مكونات التحقق، وليس زمن أول ظهور فيIndexer: أكبر الأوقات المصححة لنهاية عينة active المؤكدة بعد تنبيهcanary، ونهاية الأمر وبدء الخدمة وتنبيه المدير، ناقص request مع حدود الخطأ. لا تكفي عينةactive قبلcanary إذا لم توجد بعدها عينة موجبة؛ الحالة ACTIVE_NOT_CORROBORATED_AFTER_CANARY. high≤300 يعنيFUNCTIONAL_EVIDENCE_WITHIN_WINDOW؛ low>300 يعنيFUNCTIONAL_EVIDENCE_LATE؛ تقاطعالحد يعطيTIMING_UNCERTAIN. لا يسمى أي منهماMTTD.
+- توجد أيضًا RESTART_UNPROVEN وNO_ACTIVE_OBSERVED وCANARY_NOT_SUPPLIED وCANARY_ALERT_NOT_OBSERVED وغيرها؛ غياب FIM لا يشخّص فشل التسجيل. connection_state منفصل عنstate الوظيفية. لا تحويل null إلى صفر.
+
+المقام **جميع الدورات المخططة**، لا المسجلة فقط ولا الناجحة. البسط FUNCTIONAL_EVIDENCE_WITHIN_WINDOW فقط؛ سجّل counts وrecorded_cycles والمفقود والاستبعاد. لاWilson افتراضيًا أوخيار لتفعيله هنا؛ خمس دورات لا تثبت استقلالًا أوفعالية عامة. `acceptance_approved=false` و`causality_authenticated=false` و`independence_verified=false` ثابتة. الناتج مطابقة بنيوية وزمنية لإقرارات وraw alert، وليس مصادقة شهود أوإثبات سببية أوأصالة.
+
+### التشغيل والخصوصية
+
+```bash
+python3 -B scripts/measure/connection_measure.py \
+  --plan PRIVATE_PLAN.json --records PRIVATE_CYCLES.jsonl --alerts PRIVATE_ALERTS.jsonl
+python3 -B -m unittest discover -s tests -p test_connection_measure.py
+```
+
+CLI على Linux يقرأ فقط: يرفض symlink النهائي وFIFO والدليل والملف متعدد الروابط أوالمملوك لـUID آخر، وأذونات المجموعة والآخرين (0600 موصى بها). الحد8MiB لكل ملف، و100 صف سجل و20000 تنبيه؛ عدد الأسطر يُقيد قبل تحليل JSON. المجلدات الوسيطة موثوقة، ولا يوجد ضمان ضد كاتب خبيث بنفس UID أوsnapshot ذري للملفات الثلاثة. استخدم صادرات ثابتة وخاصة.
+
+السطر الفارغ أوJSON تالف أوduplicate key أوNaN يفشل كليًا بـexit2 وstdout فارغ ورسالة عامة UC01_INPUT_REJECTED لا تسرب المحتوى. records/alerts الفارغان مسموحان؛ CRLF مقبول، وUnicode line separator داخل نص JSON ليس فاصل سجل. نجاح الحساب exit0 لا يعني نجاح الدورات. عند حفظ stdout، استخدم وجهة خاصة وصلاحيات مقيدة؛ لا تضعها داخلGit.
+
+الناتج يحفظinput_sha256 للمدخلات وsource_sha256 للمحلل وmttd.py، ولا ينسخ المدخلات الخام. البصمات ليست توقيع هوية؛ config_sha256 وprotocol_ref وcoverage.ref تصريحات وmetadata، ولا تثبت الإعداد المنشور أوالتسجيل المسبق أوالاستمرارية. لذلك configuration_applied_verified وprotocol_predeclaration_verified بقيمةfalse.
+
+خريطةclock_domains في الناتج توضح أدوار الوقت الثابتة أعلاه. لا يستطيع المحلل اكتشاف وضع وقتcontroller في حقلendpoint إذا زُوّر التصريح؛ إضافة اسم دور إلى السجل لا تصادق على مصدره. الجامع الأصلي وربط بايتات الأدلة مطلوبان لذلك.
+
+### مصدر القرار وحدود الإنجاز
+
+المرجع الداخلي TEST_PLAN §UC-01: خمس دورات و300ث وpoll5ث، خدمة وactive وحدث جديد؛ لا إعادة تثبيت أوتسجيل أوحذفkeys في كل دورة. روجعت [وثيقة agent_control الرسمية](https://documentation.wazuh.com/current/user-manual/reference/tools/agent-control.html) في2026-09-23: `-l` للاستعلام و`-R` يعيد التشغيل؛ لا يستخدم المحلل أيًا منهما. المصدر المؤرشف وبصماته فيresearch/inbox/2026-09-23_uc01_source.json. صفحةcurrent لا تثبت إصدار المعمل؛ default15m للانقطاع من مصدرlifecycle ليس تعريف زمن إعادة الاتصال.
+
+المنفذ: evaluator واختبارات72، والفاحص الكامل **752 اختبارًا في28.308s على614f9d3**. تحققت الرسوم31 ملفًا مشتقًا، دون تغييرها. CI الرأس النهائي وروابط التسليم تثبت فيPR28 ولا تستعار من رأس أقدم. الاختبارات اصطناعية، لا دورات خدمة فعلية أوقبولWindows.
+
+**المتبقي محليًا:** جامع قراءة فقط للخدمة والحالة وتوقيت المراقب، ربطه بالخطة وهوية الجولة وبايتات المصادر، وربطcanary أصلي بمخزن خاص، واختبارات الانقطاع والتدوير والتلاعب. لا يلغيه وجود محلل الإقرارات. **المتبقي الأصلي:** جرد وإعداد وساعات معتمدة، خمس دورات لكل نظام مؤهل تحت إشراف، ومراجعة تقنية وبشرية للأدلة. t4/t5 وISSUE-068 وتدقيق الفصول مسارات مستقلة غير مكتملة.
+
+## UC-01 collector/binder — مرشح قراءة فقط، 2026-09-23
+
+هذا القسم أحدث من عبارة «الجامع غير منفذ» في لقطة المحلل أعلاه. `connection_collect.py` ينفذ capture/export/bind، مع46 اختبارًا اصطناعيًا في0d6742f و798 اختبارًا كليًا ناجحًا على4b85b6f. **ليس جامعًا أصليًا مكتمل القبول لكل منصات المشروع**: محول الخدمة الحالي محدود بوحدات Linux/systemd التي تعرض active/running وMainPID موجبًا وInvocationID وExecMainStartTimestamp؛ Windows والحاويات دون systemd ووحدة Wazuh القياسية ذات active/exited تحتاج محول هوية عمليات إضافيًا. هذه برمجة محلية باقية، وليست عائق بيئة فقط.
+
+### الأوامر الثابتة وعقد التخزين
+
+- manager: `/var/ossec/bin/agent_control -i <plan.agent_id> -j`،64 عينة بفاصل5ث حتى315ث من الأولى. لا `-R` أوenrollment أوrestart أوcanary. غلاف JSON الأصلي error=0/data؛ تطابق id/name والحالات الأربع مطلوب. hostname المحلي يطابق manager_name حرفيًا.
+- service: `/usr/bin/systemctl show wazuh-agent.service --no-pager --property=ActiveState,SubState,InvocationID,MainPID,ExecMainStartTimestamp`، لقطة واحدة مع `/proc/sys/kernel/random/boot_id`. hostname يطابق agent_name. هوية الوحدة boot:InvocationID، لاPID منفرد. timestamp إنجليزي UTC بدقة ثانية؛ precision=1000ms على الأقل، ولا تحويل إلى دقة ميلي ثانية مختلقة.
+- الملفات التنفيذية ومساراتها المحلولة وأسلافها root-owned وغير قابلة للكتابة للمجموعة/الآخرين. fixed argv دونshell، بيئة نظيفة وstdin/stderr مغلقان؛ bounded_process بمهلة1.5ث وإخراج مقبول≤64KiB، ومدّة عينة مسجلة≤2ث. مهلة العملية لا تحد كل عمليات القرص أوfsync.
+- المخزن دليل موجود فارغ خاص0700، والأسلاف موثوقة وفقrunner.directory. ملفات0600 منتظمة أحادية الرابط، nofollow وwrite-once وfsync وقفل الدليل. لا overwrite أوretry عند فشل جزئي. لا تنقل أدلة خام أومفاتيح إلىGit.
+- الترتيب: plan.json ثمintent.json قبل أول query، ثمsample-NNN.bin وsample-NNN.json، ثمterminal.json. intent يحويschema_version=1 وkind وcycle_id وcapture_id UUID عشوائي وplan_sha256 وsource_sha256 وacceptance_approved=false. nonce يجعل لقطتين متطابقتين مختلفتين في الهوية؛ ليس توقيعًا أوأداة إثبات ترتيب.
+- metadata لكل عينة: start_ms/end_ms وstart_monotonic_ms/end_monotonic_ms وraw_sha256 وhostname وboot_id. ساعةmanager poll هيobserver؛ ساعةservice هيendpoint. offset=device−UTC، ولا تطبيقoffset أثناءcapture.
+- terminal: intent_sha256 وstatus وcount وreason. فقطcomplete/count64 أو1 قابلة للتصدير؛ failed أوpartial أوغيابterminal لا يملأ أي وقت ناجح. فشل query ينتجCAPTURE_FAILED؛ الانقطاع يتركINTERRUPTED إذا أمكن نشرterminal. kill9/تعطل القرص قد يترك مخزنًا ناقصًا مرفوضًا.
+- export يحتاج بصمةintent المتوقعة، exact plan bytes،kind/cycle، وإصدار المصادر نفسه. يرفض وقت بداية خدمة يقع قطعًا بعد مجال زمن لقطة رصدها (523359a)، ويعيدhash raw والparse والتوقيت/الفجوات ويفحص قائمة أسماء الملفات. تغير أي ملف مصدر مشارك يستلزم تشغيل أداة النسخة الأصلية لمخازنه؛ لا تعطل فحصsource hashes. ملفاتmetadata غير موقعة؛ stored_bytes_verified تعني سلامة إعادة القراءة والتحقق البنيوي، لا أصالة الوقت/المضيف.
+
+### الربط offline
+
+`--request` كائن خاص ذو مفاتيح حصرية:
+
+```json
+{"schema_version":1,"run_id":"RUN_ID","cycle_id":"CYCLE_ID","request_ms":0,"command_end_ms":0,"controller_ref":"REQUIRED_ORIGINAL_CONTROLLER_EVIDENCE_REFERENCE"}
+```
+
+الصفران أعلاه placeholders بنيوية **وليستا وقتين صالحين للتجربة**. request/end يظلان إقرارين منcontroller؛ لا يدّعي هذا الجامع تنفيذ أمر إعادة التشغيل أو تسجيل توقيته الأصلي.
+
+`--stores` كائن خاص له manager/before/after/source، كل منها `{ "path": "ABSOLUTE_PRIVATE_STORE", "sha256": "EXPECTED_INTENT_SHA256" }`. الأربع بصمات متميزة؛ قبل/بعد مخزناservice مستقلان، وsource مخزن `source_observer.py` قائم، ليس JSON محولًا يدويًا.
+
+الربط يتحقق من تصدير المخازن، ومن running وهويتين مختلفتين ولقطةقبل تقع بكامل مجال خطئها قبلrequest ولقطةبعد تقع بعدcommand_end. يطابق مصدرcanary معrun/cycle/device=endpoint/clock_ref/target_path؛ غياب الحدث أووجود الملف مسبقًا أوخطأ محتواه مرفوض. مجال آخرمشاهدةغياب يجب أن يأتي بعدcommand_end. plan.endpoint.precision_ms يغطي1000ms للخدمة وكاملbracket المصدر (فيfixture1051ms)؛ ليس معاملًا لتجميل النتائج بل حد قياس معلن قبل التجربة.
+
+الناتج **سجل دورة فقط** وفقconnection_measure، لا تقرير قبول. ref يربطrequest bytes ومخزنيbefore/after؛canary.source_ref هوintent المصدر؛كلpoll.ref يحويintent وعينة. يمر الناتج لاحقًا إلىالمحلل معraw alerts والخطة؛ غياب الأربع دورات الأخرى يبقيهاMISSING_RECORD. نجاحbind لا يعني صلاحيةكلالتوقيت أوالتغطية للتصنيف؛ classify يقرر ذلك. لاt4/t5 أوMTTD أوWilson.
+
+### التشغيل المصرح فقط
+
+هذه أوامر دليل مستقبلية، لم تُنفّذ علىSOC في التطوير:
+
+```bash
+python3 -B scripts/measure/connection_collect.py capture --lab \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --kind manager --store PRIVATE_MANAGER_STORE
+python3 -B scripts/measure/connection_collect.py capture --lab \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --kind service --store PRIVATE_SERVICE_STORE
+python3 -B scripts/measure/connection_collect.py export \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --kind manager \
+  --store PRIVATE_MANAGER_STORE --sha256 EXPECTED_INTENT_SHA256
+python3 -B scripts/measure/connection_collect.py bind \
+  --plan PRIVATE_PLAN.json --request PRIVATE_REQUEST.json --stores PRIVATE_STORE_DESCRIPTORS.json
+python3 -B -m unittest discover -s tests -p test_connection_collect.py
+```
+
+تحتاج القراءة فقط --lab فيcapture؛export/bind offline. استعمل أمكنة مخازن منفصلة عن دليلcanary؛ source_observer يرفض تداخل المصدر والمخزن. ابدأmanager قبلrequest بفترة تكفيالمجالات وينتهي بعدنافذة300ث، ولا تعتبر315ث كافية لأي بدءمتأخر أوprecisionكبير؛المحلل يفحصالتغطية. raw alerts/coverage وتسجيلكلالدورات مسؤولية بروتوكولالجمع، لايجمعهاهذاالملف.
+
+CLI لا ينشئ ملفexport تلقائيًا. عند حفظstdout استخدمumask077 وملفًا جديدًا خاصًا دونoverwrite. capturefailed يعيدexit2 وJSONfailed؛الرفض exit2 برسالةعامة UC01_COLLECTION_REJECTED؛الإلغاءexit130. لا يعنيexit0 قبولالدورة. لا ضمان ضدكاتببنفسUID أوroot أوACL غيرمراجع أوالتلاعبالمترابطبالمخزن والبصمةالمتوقعة. authenticity_verified وacceptance_approved تبقيانfalse.
+
+### المصادر والمراجعة وحدود القبول
+
+`research/inbox/2026-09-23_collector_sources.json` يحفظ المصادر المثبتة وبصماتالأصل والأرشيف وUTC: Wazuhv4.14.1 agent_control.c وملفاتagent_op/manage_agents ووحدةالخدمة، وsystemdv257 D-Bus XML. قُرئagent_control JSON وغلافه وحقولالخدمة وتوقيتExecMain ومحتوىوحدةWazuh. البحثعنprint_agent_status لم يجدتعريفه فيالملفينالمساعدينالمؤرشفين؛ لاادعاءقراءةتعريفه. هذهإصداراتمرجعية، لاتثبتالمثبتفيالمعمل.
+
+**قيدحقيقي:** وحدةWazuhالمؤرشفة Type=forking وRemainAfterExit=yes بلاPIDFile؛ قدتعرضactive/exited وMainPID=0. لايجوزتخفيفrunning لقبولهاكمشاهدةدايموناتحية. دعمهويةدايموناتمتعددة/nativeprocess أوحاويةغيرsystemd عملمحليمتبقٍ. لاsnapshotيثبتوحدهأنكلدايموناتWazuh تعملأوأنالإعدادالمعلنمطبق.
+
+المراجعةالآليةالجديدة [ccdc4a2c](https://www.genspark.ai/agents?id=ccdc4a2c-aa78-504c-9ef2-bdaf91e9df60) للقطةc7acf13 أُرسلتبنصوصكاملة، وحالتهاعندكتابةهذاالقسمrunning؛ لاتعاد. ليستاعتمادًابشريًا أوnative، والإصلاحاتاللاحقة9429515 واختباراتهاdf53b47 غيرمراجعةمستقلةبأثررجعي.46اختبارًا تغطيالمخازنالحقيقيةالاصطناعيةوالخصوصيةوالتلاعبوالانقطاعوالربطوالدقة؛798كليًامحليًا،CIكلرأسيثبتمنPR28.
+
+### تحكيم المراجعة المستقلة UC-01
+
+[6f1083f8](https://www.genspark.ai/agents?id=6f1083f8-e7fb-55ae-8d8e-ced1572216f3) انتهت على النصوص الكاملة عندbe7a45c: المحلل واختباراته وmttd.py مع مقتطف الخطة. مراجعة ساكنة، لا تشغيل مجموعة المستودع؛ الحسابات العددية التي أبلغ بها المراجع ليست قبولًا أصليًا. submission/result محفوظان فيresearch/inbox/2026-09-23_uc01_review_*.json. **لا تعاد المهمة.** الإصلاحات اللاحقة ليست مشمولة بمراجعة مستقلة بأثر رجعي.
+
+| رتبة التقرير | الحكم والإجراء | الاختبار والحد |
+|---|---|---|
+|1: old_instance والسلسلة | صحيح، أعيد إنتاج احتساب دورتين بنفسold. أضيف منع إعادة الاستخدام وربطold الحالي بـnew السابق وترتيب الخطة | ثلاثة اختبارات للسلسلة والمفقود وإعادة الاستخدام، وآخر للترتيب. الدورة السابقة الصحيحة لا تُسقط لمجردclaim غير مرتبط في التالية؛ إعادة استخدام الدليل تُسقط جميع أصحابه |
+|2: مجالات الساعة | الأدوار ثابتة فيschema الدلالي والدليل، وليست اختيارًا للمستخدم. لا يمكن رفض تزوير أصل الوقت بمجرد رقم أووسم مصرح به | خريطةclock_domains صريحة؛ اختبار تصحيح الأدوار الأربع. لا ادعاء أن ذلك يغلق ربط المصدر الأصلي |
+|3: hash/ref ليست دليل إعداد | صحيح كحد ثقة، ومذكور فيالدليل؛ لا يتغير التصنيف بمجرد تبديلconfig_sha256 | أضيفت أعلام عدم التحقق، واختبارmetadata بديلة لا تغير الدليل الوظيفي |
+|4: اعتماد helpers | يعاد استخدام strict_json/field/normalize_alerts/to_ms عمدًا. أول تطابق بعد فرزtimestamp وهوية التنبيه، لا أول سطر | اختبار ترتيب ملف معكوس، وغيابsyscheck.path كعدم تطابق؛ duplicate متضارب يفشل كليًا |
+|5/6/7/8/10 | سلوك محافظ مقصود: مقام المخطط، active وحدها لا تكفي، منع انتقاء تنبيه لاحق بدلقديم،63عينة نموذجية ضمن128، ولاMTTD/Wilson | الاختبارات الحالية تغطيها. مدد الحدود في التقرير تخص اللقطة قبل اشتراطpoll مؤكد بعدcanary |
+|9: أسبقية نزاع السلامة | موثقة الآن: إعادة استخدام الدليل، ثم overlap، ثمchain تتقدم علىstate الأصلية | state_before_integrity_check وexclusion_reason وintegrity_conflicts تحتفظ بالتشخيص؛ fields الزمنية تُمحى عند النزاع، ويثبت الاختبار بقاءالاستبعاد |
+
+مراجعة محلية موازية أضافت: فصل خطأwall clock عن scheduling jitter (df1616b،3اختبارات)، رفض مرجع أبيض وحدودJSONL قبلparse (2d66b6d،4)، توقيعاتcanary محددة لكلOS (ce1b057،3)، وactive مؤكدة بعدcanary (cf0be3f،3). تحكيم السلسلة ووضوح العقود في614f9d3 أضاف9. الإجمالي50+3+4+3+3+9=72. هذه أدلة سلوك محلي، لا مصادقة على الساعات أوالخدمة أوقبول وظيفي أصلي.
+
+
+### تحكيم مراجعة جامع UC-01 — ccdc4a2c، مكتملة
+
+المراجعة مستقلة آليًا وليست بشرية؛ راجع الوكيل النص عندc7acf13 وشغّل harness منسوخًا معstubs، ولم يشغّل اختبارات المستودع أوSOC. التقرير الأصلي محفوظ فيresearch/inbox/2026-09-23_collector_review_result.json. **انتهت وحُكمت؛ لا تعاد.** الإصلاحات اللاحقة ليست مراجعة مستقلة بأثر رجعي.
+
+| البند | الحكم والإجراء |
+|---|---|
+|01: مصدرNone | مؤكد كعيب تشخيص API، وليس تسربًا فيCLI الذي كان يرفضه أصلًا. أُصلح9429515 واختباراabsent/preexisting يطلبانSOURCE_EVENT_REQUIRED؛ wrong bytes يفشل أيضًا. |
+|02: bool/int equality | مؤكد للخدمة والنية؛ أصلح9429515 معاختباراتdf53b47. تقريرالمراجع عنcount=true للمدير لا يصفالمسار الفعلي بدقة: مساواةterminal ترفضtrue مقابل64 قبلlisting. |
+|03: مدير ومراقب علىمضيفواحد | قُبل نقص اتساقclock estimate؛6853581 يشترطoffset/uncertainty/ref متطابقة داخلnative_plan فيcapture/export/bind. تبقىprecision مختلفة لكلمنتج timestamp؛ لا نغيرأدوارالمحللالعام أوساعةcoverage. اختباران في414384d. تغييرprecision يغيرحكمclock jump بطبيعته؛ المرجعلايصادقعلىالساعة. |
+|04: plan أوسع منقبولالجلسة | اقتراح تضييقالمحلل مرفوض: قبولschema لايساويقبولالتجربة. تبقىالجلسةذاتclocklimit فيالمقام وتشخيصها صريح؛ الحد60000 بنيوي وليس ترخيصقبول. التشغيل يجب أن يراجعالساعات قبلالبدء. |
+|05: توسيعQUERY_OVERRUN إلى3500 | مرفوض:2ث حدقبولالعينة لاحدكلcleanup أوI/O. query تنتهي بعد1.5ث أوتفشل، وcleanupقديتجاوزحدالعينة فيُرفضالدليل؛ لا نوسعالبروتوكوللإخفاءفشل. الادعاءأنquery1.6ثنجاحداخلdeadline1.5ثغيرصحيح. |
+|06: عدممشاهدةسالباتصال | مرفوض كتغييرللتعريف: زمنtransition يبقىnull، لكنfunctional evidence يحتاجخدمةجديدة وcanaryغياب/إنشاء وتنبيهًا وactiveلاحقة. هذاليسنجاحreconnect timing؛ لا نفرضسالبًا مفقودًا علىمقامالتأكيدالوظيفي. |
+|07: Windows فيالمحلل | مرفوض حذفدعمالمحلل: جامعLinuxالمحدود لايحدعقدoffline العام. غياب5سجلاتيبقىMISSING_RECORD وليسنتيجةتجربةWindows؛ دعمجامعWindows عملمحليباقٍ ومعلن. |
+|08: weekday/UTC | weekday مؤكد وأصلح9429515. دعوىضرورةكونtimezone المضيفUTC غيرمثبتة: runner يفرضTZ=UTC وLANG=C.UTF-8 علىsystemctl. العقديقبلUTCفقط؛ المخرجاتالأصليةلمتختبر ولايوسعparser إلىzonesغامضة. |
+|09: precision الدنيا | رفضفرض1850علىكلخططالمحلل؛ الخدمةتفرض≥1000 والمصدرالفعلييفرضbracketهالمقاسعندbind.1100فيfixture تصريححديعلو1051وليسرقمًا أصليًا. القيدموثق واختباراتSERVICE_PRECISION/SOURCE_PRECISION تغطيه. |
+
+**التحقق بعدالتحكيم:**48اختبارcollector و800اختباركلي ناجح على414384d. حدfuture-start/snapshot في523359a وفحصstock active/exited إضافتانمحليتان. لاادعاءnative أوحل لمحولاتالدايمونات/Windows/controller أوt4/t5/config.
+
+## UC-01 Linux procfs — محول الدايمونات دون systemd
+
+**تحديث 2026-09-23:** `connection_process.py` مع تكامل `connection_collect.py --kind linuxproc` منفذان محليًا. يضيفان بديلًا محدودًا لمحول systemd، لا تخفيفًا لشرط `active/running`. الاختبارات35 فيaeba473، والفاحص الكامل835 اختبارًا ناجحًا على الرأس نفسه. المراجعة الجديدة08768699 قيد التنفيذ عند كتابة هذا القسم؛ المراجعة السابقةccdc4a2c مكتملة ولا تعاد.
+
+### ما يُقرأ وما لا يُنفذ
+
+الدايمونات المطلوبة ثابتة: `wazuh-execd` و`wazuh-agentd` و`wazuh-syscheckd` و`wazuh-logcollector` و`wazuh-modulesd`. يجب أن تظهر كل واحدة مرة واحدة في كلتا جولتي المسح، بحالةR أوS. حالاتZ/T/t/D/X ليست نجاحًا. لا ينفذ المحول shell أوsystemctl أوwazuh-control، ولا يقرأcmdline أوenviron أوclient.keys أوossec.conf، ولا ينشئcanary.
+
+يقرأ منprocfs داخل فضاء عمليات الوكيل:
+
+- `/proc/self/stat` لتطابقPID معos.getpid؛ يرفضprocfs المركب من فضاءPID غير مطابق.
+- `/proc/self/ns/pid` و`/proc/self/ns/time` قبل المسحين وبعدهما؛ يجب ثبات الهويتين. غيابtime namespace في نواة قديمة يرفض، ولا يتجاهل بصمت.
+- `/proc/sys/kernel/random/boot_id` قبل المسحين وبعدهما.
+- سطر`btime` الوحيد من`/proc/stat` قبل المسحين وبعدهما؛ يحتفظ بالسطر المختار، لا بكل عداداتCPU.
+- لكلPID رقمي: `/proc/PID/stat`. لا يحتفظ بسجلات العمليات غير المطابقة لأسماء الدايمونات؛ رفض القراءة أوالتحليل لا يتحول إلى مسح جزئي ناجح. اختفاء عملية غير مطابقة أثناء قراءةstat يُتجاوز، لكن غياب دايمون مطلوب يمنع النجاح.
+- للدايمونات فقط: `/proc/PID/exe` وبياناتinode/dev/uid/mode، مع مقارنتها بالملف الثابت `/var/ossec/bin/NAME`. اسمcomm المقتطع إلى15 حرفًا ليس هوية كافية؛ يجب تطابقمسارexe وinode مع الملف المحمي root-owned وغير القابل لكتابة المجموعة والآخرين ومساراته. ترقية ملف تنفيذي أثناء الرصد أوعلامة`(deleted)` تُرفض.
+
+المسح الأول والثاني يجب أن يتفقا فيPID وstart_ticks وبيانات الملف التنفيذي لكل دايمون؛ تغيرR إلىS مسموح لأنه جدولة، وليس إعادة تشغيل. حد4096 عملية لكلمسح و64KiB لكلقراءة وناتج، مع فحوص deadline=1.5ث؛ الجامع يفرض أيضًا حدقبول العينة2ث. **ليست المهلة ضمانًا لمقاطعةsyscall عالق**. مخزن العينات والقفل والnonce وraw_sha256 وsource hashes وإعادةالتصدير هي العقد نفسه فيالقسم السابق؛ ملفالمحول الجديد داخلsource hashes.
+
+### معنى الهوية والوقت
+
+هوية كل دايمون: `boot_id:PID:start_ticks`؛ وهويةالمجموعة بصمةJSON مرتبة لهوياتالدايمونات وفضاءيPID/time. لا تدخلbtime فيهويةالمجموعة كيلا تتحولإعادةتقديرساعةالإقلاع إلىإعادةتشغيل وهمية. الاسم أوPID وحده لا يكفيان. البصمة ليستتوقيعًا ولا تثبتخلوالنظام منroot مخترق أوتزوير مترابط للمخزن.
+
+الأوقات مشتقة منحقولالنواة:
+
+```text
+birth_ms = btime_seconds × 1000 + floor(start_ticks × 1000 / CLK_TCK)
+precision_ms = 1000 + ceil(1000 / CLK_TCK)
+```
+
+يُقرأCLK_TCK منsysconf، لا يُفترض100 لجميعالأنظمة. حدالدقة محافظ يجمع تقطيعbtime إلىثانية وتقطيعstarttime إلىtick؛ مثلًا1010ms عندCLK_TCK=100. هذا ليس ادعاءدقةالساعة أوتوقيتexec الأصلي. `started_ms` أكبرbirth للدايموناتالخمس، و`earliest_started_ms` أصغرها، و`start_semantics=latest_required_daemon_birth_not_service_readiness`. بعدالمطابقة يُستخدمالأكبر كـservice_started_ms فيسجلالدورة، بمعنىاكتمالولادةمجموعةالعمليات المطلوبة، **لا جاهزيةالخدمة**؛ التأكيدالوظيفي اللاحق ما زال يتطلبcanary وتنبيهًا وعينةactive.
+
+مصدرLinuxv6.12 يطرحإزاحةtime namespace منbtime ويضيفهاإلىstart_boottime قبلتحويلهإلىticks. روجعتالأسطرالمعنية، لاكاملنظامالوقت فيالنواة. المصادرالأربعة وبصماتها وUTC في`research/inbox/2026-09-23_proc_sources.json`: `fs/proc/stat.c` و`fs/proc/array.c` وproc_stat/proc_pid_stat man pages. هذهعقودمرجعية، لا إثبات لإصدارالنواةالمثبتة. أيclock step أوتغيرbtime أثناءالمسح يرفض؛ ضبطالساعات وحدودخطئها يظلانمطلوبين.
+
+### الدمج مع مخازن UC-01
+
+يلزم التصريح بالمحول فيبروتوكولالتجربة قبلالتنفيذ؛ intent يسجلkind قبلالمسح لكنprotocol_ref وحده لايثبتالتسجيلالمسبق.
+
+```bash
+python3 -B scripts/measure/connection_collect.py capture --lab \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --kind linuxproc --store PRIVATE_BEFORE_STORE
+python3 -B scripts/measure/connection_collect.py export \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --kind linuxproc \
+  --store PRIVATE_BEFORE_STORE --sha256 EXPECTED_INTENT_SHA256
+```
+
+هذه أوامر إرشادية لتشغيل مصرح مستقبلًا؛ لم تنفذ علىSOC فيهذهالجولة. تُجمع before وafter فيمخزنين مختلفين حولأمرإعادةالتشغيل المصرح الذي لا ينفذهالجامع. `--stores` للـbind يحتفظبالعقدالسابق معحقلkind اختياري **فيbefore/after فقط**:
+
+```json
+{
+  "manager": {"path": "PRIVATE_MANAGER_STORE", "sha256": "EXPECTED_MANAGER_INTENT"},
+  "before": {"path": "PRIVATE_BEFORE_STORE", "sha256": "EXPECTED_BEFORE_INTENT", "kind": "linuxproc"},
+  "after": {"path": "PRIVATE_AFTER_STORE", "sha256": "EXPECTED_AFTER_INTENT", "kind": "linuxproc"},
+  "source": {"path": "PRIVATE_SOURCE_STORE", "sha256": "EXPECTED_SOURCE_INTENT"}
+}
+```
+
+قيمالمثالplaceholders وليستبصماتصالحة. عندغيابkind يبقىالمحول`service` القديم؛ الخلط بينservice وlinuxproc مرفوض. يلزم:
+
+1. مطابقةالمخازن للخطة والدورة وhashes وإعادةتحليلraw.
+2. before وafter فيفضاءيPID/time نفسيهما؛ **إعادةإنشاءالحاوية أوإعادةإقلاعالمضيف ليست دورةخدمة مدعومةبهذاالربط**.
+3. تبدلجميع هوياتالدايمونات، لا تبدلagentd وحده؛ إعادةتشغيلجزئية تعطيPARTIAL_DAEMON_RESTART.
+4. مجالولادةأقدمدايمونجديد يأتي بالكامل بعدمجالrequest؛ الغموض لا يُحوّلإلىنجاح. plan.endpoint.precision_ms يغطيالدقةالمشتقة وحدشاهدالمصدر؛ بدءدايمونبسرعةمقارنةبعدماليقين قديرفضالربط، ولايُخفضprecision بأثررجعي.
+5. بقيةشروطالخدمةقبل/بعد والمصدر والتغطية وactiveبعدcanary كماهي. أوقاتcontroller مازالتإقرارات، والإعدادالفعلينفسهغيرمتحقق.
+
+### حدود الاختبار والقبول
+
+الاختبارات المحلية تستخدمprocfs اصطناعيًا ومخازنحقيقيةخاصة داخلworkspace، وتختبرالربط حتىFUNCTIONAL_EVIDENCE_WITHIN_WINDOW لدورة واحدة وأربعMISSING_RECORD؛ ليستنتائجاتصالأصلية. تشملPID reuse، تعدد/غيابالدايمونات،exe path/inode/permissions، تبدلnamespace، btime وticks، حالاتالعمليات، فشلI/O وإغلاقfd وحدودالمسح والبايتات. لا يُستنتجمنلقطتين اتصالمستمر أوعدموجودعملياتعابرةبينالمسحين أوتشغيلالإعدادالصحيح.
+
+المتبقي الأصلي لهذا المحول: قبول native على إصدارات Linux/Wazuh/procfs وقيود hidepid وuser/time namespaces وACL الفعلية. Windows وcontroller الأصلي وt4/t5 وISSUE-068 أعمال برمجية منفصلة لم تُنجز بهذه الإضافة. المراجعة المستقلة انتهت وحُكمت كما يلي.
+
+### تحكيم مراجعة procfs — 08768699
+
+المراجعة للنص عند5db9ea6؛ لم يشغّل المراجع اختبارات المستودع أو مسحًا أصليًا. أعاد قراءة مصدري Linux v6.12 وأكد اتساق إزاحتي time namespace في اشتقاق birth_ms. التقرير الأصلي في`research/inbox/2026-09-23_proc_review_result.json`؛ **انتهت المهمة ولا تعاد**. لا يُسمى التقرير اعتمادًا بشريًا أو مراجعة مستقلة للإصلاحات اللاحقة.
+
+| البند | الحكم والإجراء المحلي |
+|---|---|
+| D1: الحالةD | صحيحة كحد إتاحة: العملية قد تكون حية وهي تنتظرI/O. لم يُوسع شرطR/S المعلن والمتسق معagent_health؛ إنه شرط أهلية اللقطة لا إثبات موت العملية. غُيّر التشخيص إلىPROC_DAEMON_STATE_REJECTED فيc395a61 لمنع هذا الالتباس، مع إبقاء الاختبارات. عبارةالتقرير«no store» غير دقيقة: يظلintent وterminalfailed، وأضيف اختبار يثبت ذلك. |
+| D2: manager/observer | قيد خطة مقصود لكل حزمة native؛ هذاالجامع يرصدmanager محليًا ولا يقبل مراقبًا بعيدًا. قبل/بعد تستخدمان الخطة ذاتها التي ستربط معmanager، لذلك فحصها مبكرًا ليس تصحيحساعةendpoint بساعةmanager. التقديرات المنفصلة تحتاج خطة/عقدجامع آخر، لا تجاوز المساواة هنا. |
+| D3: اختلاف backend | لم يُضيق المحلل العام أويُحوّلbind إلىمصنفنجاح. procfs يحتاج شرطًا إضافيًا: جميع الدايمونات جديدة بعدrequest، لا أحدثها فقط. فيservice يمكنربطصف أقدم بنيويًا، لكن الاختبار الجديد يثبتINVALID_TIMELINE وبسطصفر للبدءقبلrequest بدقيقة؛ ليس نجاحًا وظيفيًا ولاTIMING_UNCERTAIN دائمًا كما ذكرالتقرير. |
+| D4: دلالةالوقت | صحيح كقيداستعمالالسجل. لم تُمددschema v1 بصمت؛ هذهالدلالة موثقة أعلاه وفيWRITER_HANDOFF. لايجوز تفسيرservice_started_ms كجاهزية أوexec فيأيمنالمحولين؛ افحصنوعintent وصادراتbefore/after المرتبطةبالبصمات لتحديدbackend. السجلالمجردلايحملتمييزbackend مستقلًا. |
+| D5: دايمون سادس | رفضمتعمّد للالتباس؛ لم يُضفretry يخفي لقطةغيرمقبولة أوينتقيحالةمواتية. يبقىالمخزنfailed والسجلالمفقودبالمقام. أيبروتوكولretry مستقبلي يحتاجعقدًا مستقلًا وحفظكلالمحاولات، لا patchتلقائي. |
+| D6: زمنsyscalls | حدحقيقي معلن، لا وعدبمهلةhard. فحوصdeadline وحد2ث يمنعانقبولعينةمتأخرة بعدرجوعالنداء، لكنهما لايقاطعاننداءنواةعالقًا. watchdogthread لايقتلالنداء؛ لذلك لميُضفكضمانزائف. |
+
+التقرير ذكر لاحقًا «No non-systemd adapter»، وهو غير صحيح لوصف هذهالإضافة: linuxproc لا يعتمدsystemd. غيرالمتحقق هوالقبولالأصلي؛ Windows وإعادةإنشاءالحاوية عبرnamespace جديد لايدعمهماهذاالمحول. المصدرالمستقلليسبديلًاعنفحصالكودالفعلية.
+
+أضيفت3 اختبارات تحكيم فيec3bdbf إلى35 السابقة؛ **38 اختبارproc و838 كليًا ناجحة علىc395a61**، مع31 ملفرسوم مشتقًا متطابقًا. لا تغييرات علىSVG أوالخادم، ولا نتائجتجاربأصلية.
+
+
+## UC-01 Windows service — منتج قراءة فقط واستيراد بايتات
+
+**تحديث 2026-09-23:** أضيف `connection_windows.ps1` و`connection_windows.py` و`import-windows` فيالجامع. هذهحزمة **لقطات الخدمة فقط**؛ لا تعني اكتمال UC-01 علىWindows. شاهدcanary أصلي لـWindows وتوقيتcontroller ما زالا برمجة محلية. اختبارbind هنا يحاكي مصدرcanary والمراقب، ولا يُسمى سلسلة أدلة Windows أصلية.
+
+### المنتج والحقول
+
+- يتطلبPowerShell5.1+ و`-Lab` وWindows. يستعلمCIM محليًا فقط: Win32_Service باسمWazuhSvc، ثمWin32_Process بالـPID الذي أعادتهالخدمة، وWin32_OperatingSystem.LastBootUpTime قبلالعينتين وبعدهما. لاstart/stop/restart/enrollment ولاحذفملفات.
+- الخدمةRunning ومعرفهاوPID العملية مطابقان. يقارنExecutablePath بالمسارالمتوقع، وPathName بصيغةمسارمطلق بلاوسائط؛ المسارذوالمسافات يلزمأنيكونمقتبسًا. لايدعمUNC أوSystemRoot أوصيغةcommand-line حرة. basename يجبأنيكونwazuh-agent.exe والقرصFixed؛ هذهحدودمحولمقصودة وليستمحللخدماتعامًا.
+- يرفضreparse points فيمسارملفالبرنامج وأسلافه قبلالفتح. يقرأملفًا≤32MiB بـFileShare.Read، ويحسبSHA256 مقابلبصمةمتوقعةمعتمدةمسبقًا. هذهبصمةالملفالقرصي **وليستبصمةصفحاتالعمليةالمحمّلة**؛ سباقاتتبديلالمساروملكيةNTFS/ACL وقوةالمصدرالمتوقع لمتُصادقعليها.
+- `hostname` يجبأنيطابقحرفيًاagent_name فيالخطة، بمافيذلكحالةالأحرف. تطابقWindows لمسارالبرنامجcase-insensitive لايغيّرعقدهويةالخطة. أسماءWazuhالمستعارة المختلفةعنhostname تحتاجعقدربطجديدًا، لا إعادةتسميةصامتة.
+- وقتإنشاءالعملية ووقتإقلاعCIM يُحوّلانإلىUTC DateTime ticks كنصعشري (100ns وحداتتمثيل، لادقةمدعاة). يقبلKind=Utc/Local، ويرفضUnspecified، ويرفضLocal إذاكانغامضًا أوغيرصالح فيتحويلDST. يسجلprocess_datetime_kind وboot_before_kind/boot_after_kind. يلزمقبولنوعCIM الفعلي علىWindows؛ لم يفترضأنالموحدغيرالموسوميحملUTC.
+- يجبثباتboot والعينتين (PID وcreation ticks) قبلstatus=complete. `started_ms` هوfloor((ticks−621355968000000000)/10000)، وprecision المصدرة1000ms كحدمحافظ مطلوببالخطة، لاجاهزيةالخدمة. الهويةبصمة(boot,PID,creation ticks)؛ ليستPIDفقط.
+- نافذةالالتقاطتحوي6استعلاماتCIM وقراءتيhash. لكلCIM OperationTimeoutSec=1، لكنحدقبولالنافذةكلها2ث بالـStopwatch الفعلي؛ يتأكدالمنتجمنالحدويخرجfailed عندتجاوزه، والمستورديفحصهحسابيًا مجددًا. ذلك **لايضمنقطعCIM أوI/O عالق بعد2ث** ولايعنيأنكلجهازWindows سينهياللقطةضمنالحد. لايوسعالحدبأثررجعي لتحسينالنتيجة.
+
+مفاتيحJSON الأصليةحصرية: schema_version=1،producer=soc-windows-service-v1،capture_id،producer_sha256،plan_sha256،run_id،cycle_id،clock_ref،hostname،expected_image_path/sha256،status،samples،boot_before/after_ticks وkind،start_ms/end_ms،start_ticks/end_ticks/tick_frequency،وثلاثةأعلامfalse:acceptance_approved،authenticity_verified،loaded_image_hash_verified. كلsample يحويservice_name/state وprocess_id وprocess_created_ticks وprocess_datetime_kind وexecutable_path وimage_sha256 وconfigured_image_matches. يستلزماثنتينمطابقتينللتصدير؛failed أوpartial لايُقبل.
+
+### التشغيل والخصوصية
+
+الأوامر الآتية إرشادية فقط؛ لم تنفذ على جهازSOC. ثبّتخطةWindowsوصورةالبرنامجوبصمتهامسبقًا، وراجعالسكريبتوسياسةتشغيله؛ لايتضمنالدليلتعطيلExecutionPolicy. المدخلاتالمتوقعةمثلPLAN_SHA256 placeholders وليستقيمًاصالحة:
+
+```powershell
+powershell.exe -NoLogo -NoProfile -NonInteractive -File connection_windows.ps1 -Lab `
+  -RunId RUN_ID -CycleId CYCLE_ID -PlanSha256 PLAN_SHA256 `
+  -ClockRef CLOCK_REF -ExpectedHost EXACT_HOSTNAME `
+  -ImagePath 'C:\Program Files (x86)\ossec-agent\wazuh-agent.exe' -ImageSha256 APPROVED_IMAGE_SHA256
+```
+
+**stdout خاص:** المنتجلاينشئمخزنWindows دائمًا ولايكتبintent علىالقرصقبلالاستعلام. جهّزوجهةNTFS جديدةوخاصةوتحققACL قبلالتشغيل؛ لاتطبعJSON فيجلسةمسجلةأوعامة. فشل/قتلPowerShell قد يتركملفًاجزئيًا يرفضهالمستورد. لاoverwrite أوإعادةتشغيلخفي للتجربة. المفقوديبقىفيالمقام.
+
+المنتجيضبطConsole.OutputEncoding إلىUTF-8 بدونBOM. إعادةتوجيهPowerShell5.1 أوOut-File قدتعيدترميزالنصإلىUTF-16؛ لا تستخدمها دونضبطومراجعةالترميز. احفظبايتاتstdout الأصلية عبروسيلةتُبقيهاUTF-8، ولا تعيدserialize JSON بعدحسابالبصمة. المستورد يرفضUTF-16/BOM والبايتاتالمختلفة. التحقق منالحفظوالإقفال وACL والـstdout علىWindows الأصلي مازال بوابةقبول، وليس منجزًاباختبارLinux.
+
+الرفضالأولي يخرجexit2 وstderrعامWINDOWS_EVIDENCE_REJECTED دونpayload؛ فشلداخلالالتقاطيخرجJSON status=failed وexit2. نجاحالمنتجexit0 يعنيانتهاءلقطةمطابقةلشروطه، **لا قبولالخدمة أوالتجربة**. عندتغليفهداخلPowerShell -Command، انقلالـLASTEXITCODE صراحةحتىلا يتحولرمزالفشلإلى1 فيالغلاف.
+
+### المستورد الخاص على Linux
+
+انقلpayload وبصمةبايتاتهالمتوقعةبطريقةمعتمدة وخاصة، لا عبرGit. صورةالمتوقعملفJSON0600 مستقل:
+
+```json
+{"path":"C:\\Program Files (x86)\\ossec-agent\\wazuh-agent.exe","sha256":"APPROVED_IMAGE_SHA256"}
+```
+
+```bash
+python3 -B scripts/measure/connection_collect.py import-windows \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --input PRIVATE_WINDOWS.json \
+  --sha256 EXPECTED_RAW_SHA256 --image PRIVATE_IMAGE.json --store PRIVATE_EMPTY_STORE
+python3 -B scripts/measure/connection_collect.py export \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --kind windowsservice \
+  --store PRIVATE_STORE --sha256 EXPECTED_IMPORT_INTENT_SHA256
+```
+
+المستورد يتحققمنالـSHA المتوقعقبلالكتابة، ثمschema/هويةالخطةوالدورةوالساعةوالبرنامج وبصمةنسخةالمنتجالحالية والتوقيت. الحد64KiB للـpayload وimage spec. المخزن0700 وملفاته0600، write-once/nofollow/fsync وقفلrunner؛ لاoverwrite. ترتيبالملفات:intent.json ثمplan.json ثمimage.json ثمwindows.json ثمterminal.json. الانقطاعيتركpartial مرفوضًا؛ لا إصلاح تلقائي أواختلاقاكتمال.
+
+export يتحققمنبصمةintent والخطةالحرفية وصورةالمتوقع وبايتاتWindows ونسخةالمصادر، ويعيدparse والتوقيت والهوية وقائمةالملفات. `stored_bytes_verified=true` لايصادقعلىWindows؛ `import_not_native_capture=true` و`authenticity_verified=false` ثابتتان. كذلكproducer_hash_attested=true وproducer_authenticity_verified=false: مطابقةhash تحرسنسخةالتصريح، ولا تثبتأنالكودنفذفعليًا. تبقىالمطابقةصارمة، ولا تُحذفلمجردأنهاغيرموقعة.
+
+لبefore/after في`--stores` استخدمkind=windowsservice؛manager كماهو. يلزمboot وصورةمتوقعةثابتان، وهويتاعمليةمختلفتان ولقطتان قبلrequest/بعدcommand_end معحدودالساعة. binder يجمعالسجل، والمحلليقررstate؛ اختباربدايةقديمة يثبتINVALID_TIMELINE وبسطصفر لا قبولًامزيفًا. مصدرcanaryWindows غيرمنفذ؛ لا تمررملفًامصنوعًا كأنهsource_observer export أصلي. الاختبارالذييحاكيهذاالحد يصرحبالـmock، وليس دليلًا أصليًا.
+
+### المصادر والاختبارات والمراجعة
+
+المصادرالخمسةفيresearch/inbox/2026-09-23_windows_sources.json معUTC/both hashes: Wazuhv4.14.1 win_service.c وWiX (WazuhSvc،ownProcess،wazuh-agent.exe)، وثائقMicrosoftWin32_Process/Service/OperatingSystem للحقولالمستخدمة. قرئتالأجزاءذاتالصلة، لاكلSDK أوصورالمعمل. إصدارالمصادرلايثبتالتثبيتالحالي.
+
+اختبارات34 في6fe661c؛ **872كليًامحليًا بلاskips على6fe661c**. أُخذPowerShell7.4.13 Linuxportable منالإصدارالرسمي بعدمطابقةSHA256؛ يوجدداخلbuildالمهمل، لافيالحزمة. الاختباراتتستخدمparser الحقيقي، وhelper/core الفعليين معCIM mocks، وفشلالـboot/count/PID/hash/المهلة، وقراءةhash وsymlink اصطناعيينعلىLinux. لايشملهذاWindowsPowerShell5.1 أوCIM/NTFS أصليين. إذا لميوجدpwsh محليًا تُسجل7اختباراتPowerShellكـskipped؛ يجبالإفصاحعنذلكفيالتحقق، لاعدّهااختباراتnativeناجحة.
+
+المراجعة9dbf6ede انتهت، لكنجزءهاالأولقُطعمنتصفالبند5؛ طُلبتكملتهفيالمشروعنفسهدونإعادةالمراجعة. original/tail والreceipt محفوظةفيresearch/inbox/2026-09-23_windows_review_*.json. **اكتملت وحُكمت؛ لاتعاد.** لمينفذالمراجعاختبارات، ولميُراجعالإصلاحاتاللاحقةاستقلاليًابأثررجعي.
+
+| البند | الحكم والإجراء |
+|---|---|
+|1| صُحح ادعاءfalse acceptance فيذيلالتقرير:bind بنيوي والمحلليمنعالبدءالقديم. اختبار6fe661c يثبتINVALID_TIMELINE وبسطصفر؛ لا تغييرللمقامات. |
+|2| مؤكد كاتساقstatus: أضيفت مقارنةboot وPID/creationقبلcomplete في7952f70؛ نواةالالتقاطالمستخرجةاختُبرتفيfe96c8d بأحوالboot/count/process/hash. |
+|3| عولجKindغيرالمحدد وغموضDST برفضصريح وتسجيلkinds. Utc/Local غيرغامضينيسمحانبتحويلمعلن؛القبولعلىCIM الأصليباقٍ. |
+|4/10| hash ليسمصادقة؛ أبقينامطابقةالنسخة وأضفناflags صريحة. اقتراححذفالمطابقةرُفضكيلايُقبلخلطنسخمختلفة. |
+|5| أُخرجName/State منالكائنالمقروء بعدassert بدلliterals؛ configured_image_matches يبقىنتيجةassert ناجح. اختبارالاسمغيرالصحيحيرفض؛ لاصحةأصليةتنتجمنتبديلطريقةكتابةالحقل. |
+|6|6استعلاماتقدتتجاوز2ث، فذلكرفضمحافظلامشكلةfalseaccept. المنتجيفشلإذاطالالمجموع واختبار6×400ms يثبته. لا نعتمداقتراح0.5ث كضمانلأنOperationTimeoutSec ليسdeadline كليًا؛ لا نوسعالبروتوكولبأثررجعي. |
+|7|caseexact للمضيفقيدهويةمعلن ومختبر؛ لاتطبيعهضمنيًا لأنهيساويagent_name فيالخطة. |
+|8| المحولمقصودللخدمةالمثبتةبالاسم/البرنامجالمحددين، بلاوسائطأوSystemRoot. لا نضيفparser لأوامرخدماتعامة كإصلاحغيرمصرح. المسارالمتوقعخاصومثبتقبلالتجربة. |
+|9| أضيفتtests للنواةالفعلية معmocks وللفشل والمهلة والـhash/symlink علىLinux. BOM يُفحصعلىمخرجاختبارPowerShellLinux؛ سلسلةحفظstdout وreparse/ACL علىWindows مازالتغيرمقبولةnative. |
+
+المتبقيالبرمجياللاحق: Windowscanary/مخزنه وتوقيتcontroller، ثمt4/t5 والسببية وISSUE-068 والتكامل وبقيةالتدقيقالأكاديمي. لا تحولنجاحهذهالحزمةإلىإغلاقUC-01 كاملًا.

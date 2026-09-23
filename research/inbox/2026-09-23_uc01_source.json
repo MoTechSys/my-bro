@@ -1,0 +1,12 @@
+{
+  "url": "https://documentation.wazuh.com/current/user-manual/reference/tools/agent-control.html",
+  "resolved_url": "https://documentation.wazuh.com/current/user-manual/reference/tools/agent-control.html",
+  "retrieved_utc": "2026-09-23T03:17:09.929512+00:00",
+  "content_type": "text/html",
+  "bytes": 169044,
+  "sha256": "51d89a51fa0f4df118114a53a50389a587424b60d182253045de24efec8c47ce",
+  "archive": "2026-09-23_uc01_agent_control.html.gz",
+  "archive_bytes": 30381,
+  "archive_sha256": "8b787837cc711b25dde8b8df818a694867e0b7f957c517aa9a130a8d4f9b5027",
+  "scope": "Read agent_control status/option descriptions only; no native version or execution validation."
+}

@@ -1,0 +1,14 @@
+flowchart TB
+    logs["Endpoint logs / events / Operational sensitive data"]
+    manager["Manager alerts.json / id / timestamp / rule / agent / syscheck or data fields"]
+    git["Git repository / Code / configs / diagrams / No raw logs or credentials"]
+    index["Indexer document / _index / _id / _source / No SQL foreign keys"]
+    evidence["Private evidence directories / 0700 directories / 0600 files / intent + snapshots + terminal"]
+    dashboard["Dashboard / query client / Searches indexed documents"]
+    journal["Attempt journal JSONL / Separate from detection logs / Failures / exclusions kept"]
+    reports["Derived reports / Sanitized / access-controlled / Not authenticity certificates"]
+    logs -->|"agent collection / analysis"| manager
+    manager -->|"Filebeat"| index
+    index -->|"query and presentation"| dashboard
+    evidence -->|"verified observation import"| journal
+    journal -->|"offline calculation"| reports

@@ -1,15 +1,15 @@
 # الفصل الثالث: منهجية البحث وتصميم النظام
 ## Chapter Three: Research Methodology and System Design
 
-> **حالة الفصل:** مسودة أولى كاملة (v1) — [CLAUDE] 2026-09-09 — مهمة T-21.
+> **حالة الفصل:** مسودة v2 — أصل [CLAUDE] 2026-09-09؛ تصحيح [AI] 2026-09-18 للنطاق ومنهجية القياس. تصميم المعمل أدناه تاريخي وليس جرد السحابة الحالية؛ راجع الفصل الرابع وسجل CLOUD_ENV_ACCESS. لا يعني وجود التصميم قبولاً معملياً حديثاً.
 > **المصدر الأصلي:** S4 (§3.6 فقط) — أُعيدت صياغته ليتوافق مع الواقع المنفَّذ (`docs/02_ARCHITECTURE.md`) والنية الموحَّدة (`docs/05`). حُذف Zeek وKibana وElasticsearch من التصميم المنفَّذ ونُقلت إلى §3.8 (قابلية التوسع).
-> **المخططات:** بصيغة Mermaid — تُصدَّر إلى PNG عند بناء DOCX (T-25). الشكل 3.3 الأصلي (Context Diagram) موجود في `docs/sources/` ويُستبدل بالنسخة المُصحَّحة أدناه.
+> **تحديث المخططات 2026-09-23:** ثمانية مخططات هذا الفصل أعيد بناؤها من catalog.json مع SVG وMermaid، وسبعة أشكال مكملة في [الفهرس](figures/INDEX.md). التسليم المطلوب Markdown لكاتب المستندات، لا Word/PDF؛ راجع [دليل الكاتب](WRITER_HANDOFF.md). الرسوم شروح تصميم/كود، لا قبولاً معملياً أو نتائج كمية.
 
 ---
 
 ### 3.1 مقدمة الفصل
 
-يعرض هذا الفصل المنهجية التي اتُّبعت في تصميم منصة مركز العمليات الأمنية وتنفيذها وتقييمها، بدءاً من تحديد النموذج البحثي ومراحله، ثم تحليل المتطلبات الوظيفية وغير الوظيفية، فتصميم المعمارية العامة وطبقاتها الست، ثم نمذجة تدفق البيانات على ثلاثة مستويات، وتصميم حالات الاستخدام الثماني وسلسلة الاستجابة الآلية، وتصميم بيئة المعمل الافتراضية، وأخيراً منهجية التقييم الكمي. ويلتزم الفصل بمبدأ **المطابقة مع المنفَّذ**: كل مكوّن يُذكر في التصميم له نظير عامل في المعمل، وما لم يُنفَّذ يُذكر صراحةً في قسم قابلية التوسع.
+يعرض هذا الفصل المنهجية التي اتُّبعت في تصميم منصة مركز العمليات الأمنية وتنفيذها وتقييمها، بدءاً من تحديد النموذج البحثي ومراحله، ثم تحليل المتطلبات الوظيفية وغير الوظيفية، فتصميم المعمارية العامة وطبقاتها الست، ثم نمذجة تدفق البيانات على ثلاثة مستويات، وتصميم حالات الاستخدام الثماني وسلسلة الاستجابة الآلية، وتصميم بيئة المعمل الافتراضية، وأخيراً منهجية التقييم الكمي. يفصل الفصل بين التصميم والتنفيذ البرمجي والدليل المعملي؛ حالة كل مكوّن الحديثة في الفصل الرابع، ولا يفترض أن كل مكوّن مصمم يعمل حالياً في السحابة.
 
 ---
 
@@ -21,15 +21,24 @@
 #### 3.2.2 مراحل المنهجية
 اتُّبع نموذج تطوير **تكراري متزايد** (Iterative-Incremental) بست مراحل:
 
+[الرسم المتجهي SVG](figures/fig01_methodology.svg) · [المصدر القابل للتحرير](figures/catalog.json) · [Mermaid](figures/fig01_methodology.mmd)
+
 ```mermaid
-flowchart LR
-    A[1. تحليل المشكلة<br/>والمتطلبات] --> B[2. دراسة الأدوات<br/>واختيارها]
-    B --> C[3. تصميم المعمارية<br/>وتدفق البيانات]
-    C --> D[4. بناء المعمل<br/>ونشر النواة]
-    D --> E[5. تنفيذ حالات الاستخدام<br/>تكرارياً UC-01..08]
-    E --> F[6. التقييم الكمي<br/>والتوثيق]
-    E -.->|اكتشاف خطأ/فجوة| C
-    F -.->|نتائج غير مقبولة| E
+flowchart TB
+    n0["Requirements / and source audit"]
+    n1["Tool selection / and scope decisions"]
+    n2["Architecture / and data contracts"]
+    n3["Implementation / and local regression tests"]
+    n4["Authorized native pilot / PILOT: 5 per scenario"]
+    n5["Measured trials + baseline / planned_n #62;= 30#59; #62;= 12 h"]
+    n6["Human review / and final thesis"]
+    n0 -->|"next stage"| n1
+    n1 -->|"next stage"| n2
+    n2 -->|"next stage"| n3
+    n3 -->|"next stage"| n4
+    n4 -->|"next stage"| n5
+    n5 -->|"next stage"| n6
+    n3 -->|"revise design after failed checks"| n2
 ```
 
 | المرحلة | المدخلات | المخرجات | الأدوات |
@@ -63,7 +72,7 @@ flowchart LR
 | FR-06 | كشف محاولات استغلال ثغرات خادم الويب من سجلات الوصول | يجب | UC-06 |
 | FR-07 | فحص الملفات الجديدة محلياً بقواعد برمجيات خبيثة دون الاعتماد على الاتصال الخارجي | يجب | UC-07 |
 | FR-08 | كشف العمليات المستمعة المشبوهة (قنوات عكسية) | يجب | UC-08 |
-| FR-09 | ربط كل تنبيه بتكتيك/تقنية MITRE ATT&CK | يجب | كل الحالات |
+| FR-09 | إظهار وسوم MITRE ATT&CK عندما تدعمها القاعدة؛ لا ضمان لتغطية كل تنبيه | يجب | القواعد ذات الوسوم فقط |
 | FR-10 | عرض التنبيهات في لوحة مركزية مع تصفية وبحث | يجب | Dashboard |
 | FR-11 | تنبيه المحلل خارج اللوحة (بريد/رسالة فورية) عند الخطورة العالية | ينبغي | UC-10 (توسعة) |
 | FR-12 | حظر مصدر هجوم القوة الغاشمة آلياً | ينبغي | UC-11 (توسعة) |
@@ -73,18 +82,20 @@ flowchart LR
 
 | # | المتطلب | المقياس/الهدف |
 |---|---------|---------------|
-| NFR-01 | **التكلفة:** صفر تكلفة ترخيص لكل المكونات | كل الأدوات مفتوحة المصدر |
+| NFR-01 | **التكلفة:** تفضيل النواة مفتوحة المصدر | كلفة التشغيل والعتاد والسحابة وخطط الخدمات الخارجية والرخص تحتاج توثيقاً مستقلاً |
 | NFR-02 | **زمن الكشف (MTTD):** من وقوع الحدث إلى ظهور التنبيه | ≤ 60 ث للحالات الفورية؛ ≤ 60 ث + دورة الاستطلاع للحالات الدورية (UC-08) |
 | NFR-03 | **زمن الاستجابة الآلية:** من التنبيه إلى إتمام الإجراء | ≤ 30 ث (باستثناء زمن VirusTotal الخارجي) |
 | NFR-04 | **الدقة:** إنذارات كاذبة خلال ساعة نشاط طبيعي | يُقاس ويُوثَّق (هدف: 0 للقواعد المخصصة L≥12) |
 | NFR-05 | **الموارد:** يعمل على حاسوب واحد 16 GB RAM | 3 آلات افتراضية متزامنة |
 | NFR-06 | **قابلية التكرار:** إعادة النشر من المستودع دون معرفة ضمنية | runbooks + إعدادات مُتحقَّقة آلياً |
-| NFR-07 | **الأمان الذاتي:** الاستجابة الآلية لا تُحدث ضرراً | قائمة مسموحة للمسارات، صلاحيات 750 root:wazuh، اختبار داخل VM فقط |
+| NFR-07 | **الأمان الذاتي:** تقليل مخاطر الاستجابة وفق حدود معلنة، لا ضمان انعدام الضرر | allowlists وواصفات ثابتة ومهل وصلاحيات مدققة؛ قبول native وسباق الاسم النهائي باقيان |
 | NFR-08 | **قابلية التوسع:** إضافة مصدر جديد دون تغيير المعمارية | decoder + قواعد فقط (§3.8) |
+
+> أهداف NFR الزمنية أعلاه تاريخية قبل القياس، وليست نتائج أو معيار قبول بديل عن TEST_PLAN المثبت لكل سيناريو. مواصفات الموارد والمنافذ والإصدارات في الجداول التاريخية تحتاج تحققاً حالياً.
 
 #### 3.3.3 حدود التصميم (Design Constraints)
 - بيئة افتراضية واحدة (VMware) على شبكة معزولة `192.168.100.0/24`؛ لا اتصال بأنظمة إنتاج.
-- الاتصال الخارجي محدود بـ VirusTotal API (4 طلبات/دقيقة) ومستودعات الحزم.
+- حدود VirusTotal الفعلية تعتمد الخطة وشروط الخدمة عند التجربة؛ رقم أربعة طلبات/دقيقة افتراض تاريخي لا حد مثبت لكل حساب. التكاملات الاختيارية اللاحقة لها اتصالات مصرح بها مستقلة.
 - لا تخزين لأي مفتاح API في المستودع.
 
 ---
@@ -92,41 +103,35 @@ flowchart LR
 ### 3.4 المعمارية العامة للنظام
 
 #### 3.4.1 النموذج المرجعي الست المراحل
-صُمّمت المنصة حول خط أنابيب واحد يمرّ به كل حدث أمني بست مراحل. هذا النموذج هو **الإطار الذهني الموحَّد** الذي تُقرأ عليه كل حالة استخدام:
+المراحل الست نموذج ذهني لفهم المنصة، وليست مساراً إلزامياً لكل حدث؛ الإثراء والاستجابة ووسوم MITRE مشروطة بالقواعد. يوضح الرسم أيضاً مسار التخزين ومسار AI الاستشاري المنفصل:
+
+[الرسم المتجهي SVG](figures/fig02_architecture.svg) · [المصدر القابل للتحرير](figures/catalog.json) · [Mermaid](figures/fig02_architecture.mmd)
 
 ```mermaid
-flowchart LR
-    subgraph S1[1 · SENSE]
-        E1[نقاط النهاية<br/>Windows / Linux]
-        E2[حركة الشبكة]
-    end
-    subgraph S2[2 · COLLECT]
-        C1[Wazuh Agent<br/>syscheck · logcollector · command]
-        C2[Suricata<br/>eve.json]
-    end
-    subgraph S3[3 · DETECT]
-        D1[Decoders]
-        D2[Rules + CDB]
-        D3[MITRE tags]
-    end
-    subgraph S4[4 · DECIDE]
-        Q1[Rule level 0–15]
-        Q2[Integrator<br/>VirusTotal]
-    end
-    subgraph S5[5 · RESPOND]
-        R1[Active Response<br/>remove-threat · yara]
-    end
-    subgraph S6[6 · PRESENT]
-        P1[Wazuh Indexer]
-        P2[Wazuh Dashboard<br/>MITRE · FIM · Threat Hunting]
-    end
-    E1 --> C1
-    E2 --> C2 --> C1
-    C1 --> D1 --> D2 --> D3 --> Q1
-    Q1 --> Q2 --> Q1
-    Q1 -->|rules_id match| R1
-    R1 -->|active-responses.log| C1
-    Q1 --> P1 --> P2
+flowchart TB
+    sensors["Endpoints / Suricata / FIM, audit, web, processes"]
+    agent["Wazuh Agent / syscheck / logcollector"]
+    rules["Decoders + Rules + CDB / Selected MITRE annotations"]
+    manager["Wazuh Manager / Decode / match / route"]
+    ar["Endpoint Active Response / Configured rules only"]
+    alerts["alerts.json / Manager alert records"]
+    advisory["AI advisory pipeline / execution_authority=none"]
+    filebeat["Filebeat / Alert shipping"]
+    human["Security analyst / Reviews advice / alerts"]
+    index["Wazuh Indexer / OpenSearch documents"]
+    report["Private AI report / Not an execution interface"]
+    dashboard["Wazuh Dashboard / Search / visualization"]
+    sensors -->|"events / EVE"| agent
+    agent -->|"collected events"| manager
+    rules -->|"matching configuration"| manager
+    manager -->|"AR dispatch"| ar
+    manager -->|"alerts"| alerts
+    alerts -->|"JSON records"| filebeat
+    filebeat -->|"indexing"| index
+    index -->|"queries / results"| dashboard
+    advisory -->|"advice only"| human
+    human -->|"review"| report
+    alerts -->|"controlled sanitized export"| advisory
 ```
 
 #### 3.4.2 المكونات الفيزيائية والمنطقية
@@ -136,7 +141,7 @@ flowchart LR
 | Wazuh Manager | خدمة | استقبال الأحداث، التحليل، القرار، تنسيق الاستجابة | wazuh-manager 4.14 (`analysisd`, `remoted`, `integratord`, `execd`) | wazuh-server |
 | Wazuh Indexer | خدمة | تخزين وفهرسة التنبيهات | OpenSearch-based | wazuh-server |
 | Wazuh Dashboard | خدمة | العرض والتحليل والبحث | OpenSearch Dashboards-based، HTTPS 443 | wazuh-server |
-| Filebeat | خدمة داخلية | نقل `alerts.json` إلى Indexer | مدمج في المدير | wazuh-server |
+| Filebeat | ناقل سجلات | نقل `alerts.json` إلى Indexer | خدمة نشر مرافقة للمدير، وليست analysisd نفسه | wazuh-server تاريخياً |
 | Wazuh Agent (Linux) | وكيل | FIM، جمع السجلات، تنفيذ الأوامر الدورية، الاستجابة المحلية | wazuh-agent 4.14.7 | kali1 |
 | Wazuh Agent (Windows) | وكيل | نفس الوظائف | wazuh-agent 4.14.7 (MSI) | win1 |
 | Suricata | حسّاس شبكي | NIDS بتوقيعات ET Open على `eth0` | 8.0.6، af-packet | kali1 |
@@ -148,7 +153,7 @@ flowchart LR
 #### 3.4.3 مبادئ التصميم
 1. **وكيل واحد، مصادر متعددة:** يُجمّع وكيل Wazuh كل مصادر المضيف (FIM، auditd، Apache، Suricata، ps) فيقلّ عدد القنوات والمنافذ إلى 1514/1515 فقط.
 2. **الكشف في المركز، الاستجابة في الطرف:** التحليل والقرار على المدير؛ التنفيذ (`location=local`) على الوكيل صاحب الحدث — يمنع تنفيذ إجراء على جهاز غير معنيّ.
-3. **الحلقة المغلقة:** كل استجابة آلية تكتب نتيجتها في `active-responses.log` الذي يقرأه الوكيل نفسه → تنبيه تأكيد (100092/108001) → يُرى في اللوحة. لا إجراء بلا أثر.
+3. **تغذية راجعة مشروطة:** تسجل السكربتات نتائج/أخطاء يعيد الوكيل جمعها؛ قد تطابق قاعدة تأكيد. 108001 نتيجة مطابقة YARA إيجابية، لا إثبات اكتمال لكل scan. غياب السجل أو التنبيه ممكن عند الفشل، وسجل النجاح ليس شاهد t5 مستقلاً.
 4. **الفصل بين الطبقات:** تغيير مصدر بيانات (مثلاً استبدال Suricata) لا يمسّ القواعد المخصصة أو اللوحة.
 5. **الأقل امتيازاً:** سكربتات الاستجابة `root:wazuh 750`؛ لا تشغيل كـ root إلا لما يلزم الحذف.
 
@@ -183,92 +188,86 @@ flowchart LR
 
 #### 3.6.2 المستوى السياقي (Level 0 — Context Diagram) — الشكل 3.1
 
+[الرسم المتجهي SVG](figures/fig03_context.svg) · [المصدر القابل للتحرير](figures/catalog.json) · [Mermaid](figures/fig03_context.mmd)
+
 ```mermaid
 flowchart TB
-    EP[نقاط النهاية<br/>win1 · kali1]
-    NET[حركة الشبكة<br/>eth0 على kali1]
-    ATK[المهاجم<br/>curl · nmap · nc · عينات خبيثة]
-    VT[VirusTotal API]
-    AN[محلل الأمن<br/>المتصفح HTTPS]
-    SOC((منصة SOC<br/>Wazuh + Suricata))
-    EP -->|أحداث FIM · سجلات · قائمة عمليات| SOC
-    NET -->|حزم| SOC
-    ATK -->|هجمات محاكاة| EP
-    ATK -->|فحص منافذ · طلبات HTTP خبيثة| NET
-    SOC -->|هاش الملف| VT
-    VT -->|حكم السمعة| SOC
-    SOC -->|أوامر استجابة آلية| EP
-    SOC -->|تنبيهات · لوحات · ATT&CK| AN
-    AN -->|استعلامات · إعدادات| SOC
+    endpoints["Endpoints / network / Authorized event sources"]
+    soc["SOC platform / Collection and detection"]
+    vt["VirusTotal / External reputation service"]
+    analyst["Security analyst / Search / investigate"]
+    operator["Lab operator / Authorized test actions"]
+    reviewer["Human evaluator / Independent labels/reviews"]
+    endpoints -->|"event telemetry"| soc
+    soc <-->|"hash request / reputation reply"| vt
+    soc <-->|"alerts / search requests"| analyst
+    operator -->|"authorized test events"| endpoints
+    reviewer -->|"review evidence"| analyst
+    soc -->|"configured rule-driven AR"| endpoints
 ```
 
 **التحليل:** معظم التدفقات ثنائية الاتجاه (نقاط النهاية ترسل أحداثاً وتستقبل أوامر استجابة؛ VirusTotal يستقبل هاشاً ويعيد حكماً)، بينما تدفق المهاجم أحادي الاتجاه نحو الأهداف. ويُلاحَظ أن **المهاجم لا يتفاعل مع المنصة مباشرة** بل تُلاحَظ آثاره عبر نقاط النهاية والشبكة — وهذا جوهر المراقبة السلبية (Passive Monitoring).
 
 #### 3.6.3 المستوى الأول (Level 1 DFD) — الشكل 3.2
 
+[الرسم المتجهي SVG](figures/fig04_dfd1.svg) · [المصدر القابل للتحرير](figures/catalog.json) · [Mermaid](figures/fig04_dfd1.mmd)
+
 ```mermaid
-flowchart LR
-    EP[نقاط النهاية]
-    NET[الشبكة]
-    VT[VirusTotal]
-    AN[المحلل]
-    P1((1.0<br/>جمع الأحداث<br/>Agent · Suricata))
-    P2((2.0<br/>فك الترميز<br/>والتطبيع))
-    P3((3.0<br/>مطابقة القواعد<br/>والربط))
-    P4((4.0<br/>الإثراء<br/>الخارجي))
-    P5((5.0<br/>الاستجابة<br/>الآلية))
-    P6((6.0<br/>الفهرسة<br/>والعرض))
-    DS1[(قواعد · decoders<br/>CDB lists)]
-    DS2[(alerts.json)]
-    DS3[(wazuh-alerts-*<br/>Indexer)]
-    DS4[(active-responses.log)]
-    EP -->|أحداث خام| P1
-    NET -->|eve.json| P1
-    P1 -->|أحداث مُغلَّفة 1514| P2
-    P2 -->|حقول مُفكَّكة| P3
-    DS1 --> P3
-    P3 -->|تنبيه level≥3| DS2
-    P3 -->|100200/100201| P4
-    P4 <-->|هاش / حكم| VT
-    P4 -->|87105| P3
-    P3 -->|rules_id match| P5
-    P5 -->|تنفيذ على الوكيل| EP
-    P5 -->|نتيجة| DS4
-    DS4 -->|تُقرأ كسجل| P1
-    DS2 --> P6
-    P6 --> DS3
-    DS3 --> AN
-    AN -->|استعلام| P6
+flowchart TB
+    source["Endpoint / network sources / Events and EVE JSON"]
+    collect["P1 Collect / Agent / logcollector"]
+    config["D1 Rules / decoders / CDB / Versioned configuration"]
+    decode["P2 Decode / Extract fields"]
+    enrich["P4 Enrich via VirusTotal / Hash request / event reply"]
+    match["P3 Match and route / Configured rule conditions"]
+    respond["P5 Endpoint AR / Guarded remove / YARA"]
+    alerts["D2 alerts.json / Alert records"]
+    arlog["D3 active-responses.log / Recollected by P1"]
+    present["P6 Ship / index / query / Filebeat + Indexer + UI"]
+    analyst["Security analyst / Search requests / results"]
+    documents["D4 Index documents / wazuh-alerts-4.x-*"]
+    source -->|"raw events"| collect
+    collect -->|"enveloped events"| decode
+    config -->|"decoder definitions"| decode
+    decode -->|"decoded fields"| match
+    match -->|"configured enrichment trigger"| enrich
+    match -->|"configured AR triggers"| respond
+    respond -->|"result / error logs"| arlog
+    match -->|"eligible alert"| alerts
+    alerts -->|"JSON shipping"| present
+    present <-->|"index / read"| documents
+    analyst <-->|"query / display"| present
+    config -->|"rule / CDB definitions"| match
+    arlog -->|"feedback log collection"| collect
+    enrich -->|"enrichment event returned"| match
 ```
 
 **الحلقات المغلقة الثلاث** (ميزة التصميم):
 1. **حلقة الإثراء:** P3 → P4 → VirusTotal → P4 → P3 (قاعدة 87105) — قرار مبني على معرفة خارجية.
-2. **حلقة الاستجابة:** P3 → P5 → نقطة النهاية → `active-responses.log` → P1 → P2 → P3 (100092/108001) — كل إجراء يُولّد تنبيه تأكيد.
+2. **حلقة الاستجابة:** P3 → P5 → نقطة النهاية → `active-responses.log` → P1 → P2 → P3؛ تنبيه النتيجة مشروط بنجاح الكتابة والجمع والمطابقة، وليس مضموناً لكل إجراء، ولا يستبدل شاهداً سببياً مستقلاً للاكتمال.
 3. **حلقة المحلل:** P6 → المحلل → استعلام → P6 — البحث والتصفية.
 
 #### 3.6.4 المستوى الثاني (Level 2 DFD) — تفصيل العملية 3.0 "مطابقة القواعد" — الشكل 3.3
 
+[الرسم المتجهي SVG](figures/fig05_dfd2.svg) · [المصدر القابل للتحرير](figures/catalog.json) · [Mermaid](figures/fig05_dfd2.mmd)
+
 ```mermaid
 flowchart TB
-    IN[حقول مُفكَّكة من 2.0]
-    R1((3.1<br/>قواعد مدمجة<br/>550/554 · 80792 · 31168 · 86601 · 530))
-    R2((3.2<br/>قواعد مخصصة<br/>if_sid · field · match))
-    R3((3.3<br/>بحث CDB<br/>audit.command → color))
-    R4((3.4<br/>وسم ATT&CK<br/>T1190 · T1059 · T1571 …))
-    R5((3.5<br/>تحديد المستوى<br/>والمحفّزات))
-    CDB[(suspicious-programs<br/>audit-keys)]
-    OUT1[→ alerts.json]
-    OUT2[→ 4.0 Integrator]
-    OUT3[→ 5.0 Active Response]
-    IN --> R1 --> R2
-    R2 -->|100210?| R3
-    CDB --> R3
-    R3 --> R4
-    R2 --> R4
-    R4 --> R5
-    R5 -->|level ≥ 3| OUT1
-    R5 -->|100200 · 100201| OUT2
-    R5 -->|87105 · 100300 · 100301 · 100303 · 100304| OUT3
+    input["Decoded fields from P2 / Event metadata"]
+    builtin["P3.1 Built-in parents / Rule-specific matching"]
+    cdb["CDB lists / Conditional command lookup"]
+    local["P3.2 Local rule conditions / if_sid / field / match"]
+    annotations["Optional MITRE metadata / Not universal coverage"]
+    route["P3.3 Rule level + routing / Configured thresholds"]
+    alert["alerts.json / Eligible alerts"]
+    outputs["P4 enrichment / P5 AR / Configured triggers only"]
+    input -->|"decoded input"| builtin
+    builtin -->|"parent match"| local
+    cdb -->|"lookup where configured"| local
+    local -->|"matching rule"| route
+    annotations -->|"metadata if present"| route
+    route -->|"alert record"| alert
+    route -->|"trigger conditions"| outputs
 ```
 
 ---
@@ -290,50 +289,56 @@ flowchart TB
 
 #### 3.7.2 تسلسل الاستجابة الآلية — UC-03 (الشكل 3.4)
 
+[الرسم المتجهي SVG](figures/fig06_vt_sequence.svg) · [المصدر القابل للتحرير](figures/catalog.json) · [Mermaid](figures/fig06_vt_sequence.mmd)
+
 ```mermaid
 sequenceDiagram
-    participant A as المهاجم
-    participant K as kali1 (Agent)
-    participant M as Manager (analysisd)
-    participant I as Integrator
-    participant V as VirusTotal
-    participant X as execd (Agent)
-    participant D as Dashboard
-    A->>K: كتابة eicar.com في /home/kali/SOCfile
-    K->>M: syscheck: file added (554)
-    M->>M: 100201 (L7) — محفّز
-    M->>I: alert JSON (rule 100201)
-    I->>V: GET /files/{sha256}
-    V-->>I: positives ≥ 1
-    I->>M: virustotal event
-    M->>M: 87105 (L12) — positive match
-    M->>X: AR remove-threat (location local)
-    X->>X: rm -f "<file>"
-    X->>K: active-responses.log: "Successfully removed threat"
-    K->>M: 657 → 100092 (L12)
-    M->>D: 100201 · 87105 · 100092
+    participant agent as Agent
+    participant manager as Manager
+    participant vt as VT integration
+    participant execd as execd / wrapper
+    participant ar as soc_ar remove
+    participant store as Filebeat / Indexer
+    agent->>manager: FIM event -#62; configured 100200/100201 trigger
+    manager->>vt: Hash reputation request through integration
+    vt->>manager: Reputation event -#62; rule 87105 when matched
+    manager->>execd: Dispatch configured local remove-threat response
+    execd->>ar: Read bounded JSON add#59; delete is a no-op
+    ar->>ar: Require rule 87105 and approved path#59; derive agent/path/md5 keys
+    ar->>execd: check_keys handshake
+    execd->>ar: abort -#62; return#59; continue -#62; proceed#59; otherwise reject
+    ar->>ar: Open no-follow single-link regular file under pinned parent
+    ar->>ar: Compare source MD5 and stable descriptor/name identity
+    ar->>ar: os.unlink(basename, dir_fd=parent)#59; final name-swap risk remains
+    ar->>agent: Write success/error log#59; log is not independent completion evidence
+    agent->>manager: Recollect log#59; configured success/failure rules may match
+    manager->>store: alerts.json -#62; Filebeat -#62; Indexer -#62; Dashboard
 ```
 
-**زمن الحلقة الكاملة** = t(syscheck) + t(1514) + t(analysisd) + t(VirusTotal RTT) + t(execd) + t(log→alert). القياس في الفصل 5 يفصل الزمن الخارجي (VirusTotal) عن الزمن الداخلي.
+التسلسل أعلاه يشرح مسار Linux دون قياس مدد؛ حالات abort/delete/errors لا تنفذ المسار الناجح كاملاً. يفصل عقد القياس D_VT عند توفر t2_prime عن المقاييس الأخرى، ولا يجمع مدد خدمات مفترضة لتكوين نتيجة. الحذف os.unlink تحت أب مثبت بعد فحص MD5 والهوية، مع بقاء مخاطرة تبديل الاسم النهائية؛ راجع SECURITY_REVIEW.
 
 #### 3.7.3 تسلسل الاستجابة الآلية — UC-07 (الشكل 3.5)
 
+[الرسم المتجهي SVG](figures/fig07_yara_sequence.svg) · [المصدر القابل للتحرير](figures/catalog.json) · [Mermaid](figures/fig07_yara_sequence.mmd)
+
 ```mermaid
 sequenceDiagram
-    participant A as المهاجم
-    participant K as kali1 (Agent)
-    participant M as Manager
-    participant X as execd → yara.sh
-    participant D as Dashboard
-    A->>K: تنزيل عينة إلى /tmp/yara/malware
-    K->>M: syscheck 554
-    M->>M: 100301 (L7)
-    M->>X: AR yara_linux (extra_args: path, rules)
-    X->>X: انتظار استقرار حجم الملف
-    X->>X: yara -w -r rules.yar <file>
-    X->>K: active-responses.log: "wazuh-yara: INFO - Scan result: <rule> <file>"
-    K->>M: yara_decoder → 108000 → 108001 (L12)
-    M->>D: 100301 · 108001
+    participant agent as Agent
+    participant manager as Manager
+    participant ar as soc_ar yara
+    participant yara as YARA process
+    participant store as Filebeat / Indexer
+    agent->>manager: FIM event -#62; configured Linux trigger 100300 or 100301
+    manager->>ar: AR add with exact approved extra_args#59; delete -#62; no-op
+    ar->>ar: Require allowed path#59; pin regular single-link file without following links
+    ar->>ar: Wait for stable identity#59; reject if not stable within bounded loop
+    ar->>ar: Check root-owned non-writable regular binary and rule file
+    ar->>yara: yara -w -a 10 -l 100 RULES /proc/self/fd/FD#59; no shell or recursion
+    yara->>ar: 25 s subprocess timeout#59; CPU/address-space limits#59; require exit 0
+    ar->>ar: Recheck file identity#59; validate each rule name and descriptor output
+    ar->>agent: Write match lines and scan_complete audit#59; failures logged separately
+    agent->>manager: yara_decoder / 108001 for positive match, not every completed scan
+    manager->>store: alerts.json -#62; Filebeat -#62; Indexer -#62; Dashboard
 ```
 
 #### 3.7.4 سجل معرّفات القواعد المخصصة (جدول 3.4)
@@ -358,18 +363,23 @@ sequenceDiagram
 
 #### 3.8.1 الطوبولوجيا (الشكل 3.6)
 
+[الرسم المتجهي SVG](figures/fig08_topology.svg) · [المصدر القابل للتحرير](figures/catalog.json) · [Mermaid](figures/fig08_topology.mmd)
+
 ```mermaid
 flowchart TB
-    subgraph VMware["VMware Workstation — شبكة 192.168.100.0/24"]
-        S["wazuh-server<br/>192.168.100.105<br/>Manager · Indexer · Dashboard<br/>node01"]
-        K["kali1 — Kali 2025.4<br/>192.168.100.108<br/>Agent 4.14.7 · Suricata 8.0.6<br/>auditd · Apache 2.4.68 · YARA 4.5.5"]
-        W["win1 — Windows 10 Education<br/>192.168.100.106<br/>Agent 4.14.7"]
-        K -- "1514 / 1515 TCP" --> S
-        W -- "1514 / 1515 TCP" --> S
-    end
-    B["متصفح المحلل"] -- "HTTPS 443" --> S
-    S -- "HTTPS (VirusTotal API)" --> I((إنترنت))
+    linux["Historical kali1 / 192.168.100.108 / Agent / Suricata / YARA"]
+    server["Historical wazuh-server / 192.168.100.105 / Manager / Indexer / UI"]
+    windows["Historical win1 / 192.168.100.106 / Windows Agent"]
+    browser["Analyst browser / Dashboard access"]
+    lab["Historical VMware design / 192.168.100.0/24 / Not live cloud inventory"]
+    vt["VirusTotal service / External HTTPS access"]
+    linux -->|"1514 events / 1515 enrollment"| server
+    windows -->|"1514 events / 1515 enrollment"| server
+    browser -->|"HTTPS access"| server
+    server <-->|"integration request"| vt
 ```
+
+> جدول الأصول التالي تاريخي؛ افتراض OVA والنظام الحالي لا يثبت من الرسم. لا تستخدمه لاتصال أو نشر أو بوصفه جرداً سحابياً حديثاً.
 
 #### 3.8.2 جدول الأصول (جدول 3.5)
 | الأصل | الاسم | IP | نظام التشغيل | البرمجيات | الدور |
@@ -386,11 +396,11 @@ flowchart TB
 #### 3.8.4 المنافذ والبروتوكولات (جدول 3.6)
 | منفذ | بروتوكول | الاتجاه | الغرض |
 |------|----------|---------|-------|
-| 1514 | TCP | Agent → Manager | أحداث مشفَّرة (AES) |
-| 1515 | TCP | Agent → Manager | تسجيل الوكيل (TLS) |
+| 1514 | TCP | Agent → Manager | نقل الأحداث؛ إعداد التشفير الفعلي يتحقق من النشر الأصلي |
+| 1515 | TCP | Agent → Manager | التسجيل؛ تحقق TLS والشهادات من الإعداد الفعلي |
 | 443 | TCP | المحلل → Dashboard | واجهة الويب |
 | 55000 | TCP | Dashboard → Manager | Wazuh API |
-| 9200 | TCP | Manager → Indexer | Filebeat (داخلي) |
+| 9200 | TCP | Filebeat → Indexer | نقل داخلي وفق إعداد النشر المعتمد |
 | 80 | TCP | المهاجم → kali1 | Apache (ضحية) |
 | 443 | TCP | Manager → VirusTotal | إثراء خارجي |
 
@@ -398,49 +408,60 @@ flowchart TB
 
 ### 3.9 قابلية التوسع والمكونات غير المنفَّذة
 
-صُمّم النظام ليستقبل مصادر وقدرات جديدة **دون تغيير المعمارية**، بإضافة decoder/قواعد/سكربت فقط:
+يمكن توسيع النظام بمصادر وقدرات جديدة، لكن ذلك قد يحتاج نقلاً وصلاحيات وتخزيناً وقبولاً إضافياً، ولا يقتصر دائماً على decoder أو قاعدة:
 
 | التوسعة | الطبقة المتأثرة | ما يلزم إضافته | النطاق المحجوز | الحالة |
 |---------|-----------------|----------------|----------------|--------|
-| SQL Injection detection | 3 | لا شيء (قواعد 31103/31104 مدمجة) — إعداد Apache فقط | — | مقترح UC-09 |
-| إشعار Telegram/Email | 6 | سكربت Integrator مخصص + `<integration>` | 100500+ | مقترح UC-10 |
-| حظر brute-force SSH | 5 | `<active-response>` بـ `firewall-drop` على 5712/5763 | — | مقترح UC-11 |
+| SQL Injection detection | 3 | عميل اختبار محدود وسجل Apache؛ 31103 توقيع SQLi و31106 محتمل وفق السطر | — | UC-09 منفذ برمجياً؛ القبول الأصلي متبقٍ |
+| إشعار Telegram | 6 | Integrator خاص ومخزن محاولات ومفاتيح خارج Git | لا قاعدة جديدة | UC-10 منفذ برمجياً؛ إرسال معتمد متبقٍ |
+| حظر brute-force SSH | 5 | عميل محدود ومولّد إعداد firewall-drop على 5712/5763 باستثناء الإدارة | — | UC-11 منفذ برمجياً؛ اختبار الحظر والإزالة متبقٍ |
 | أجهزة الشبكة (راوتر/سويتش) | 1، 2، 3 | `<remote><connection>syslog</connection>` + decoders + قواعد | 100400+ | مقترح UC-12 |
 | Zeek (تحليل بروتوكولات) | 2، 3 | decoders لسجلات Zeek JSON | — | عمل مستقبلي |
 | TheHive (إدارة الحالات) | 6 | Integrator → TheHive API | — | عمل مستقبلي |
-| محلل ذكاء اصطناعي (LLM) | 6 | خدمة تقرأ `alerts.json` وتُولّد شرحاً | 100500+ | عمل مستقبلي |
+| محلل ذكاء اصطناعي (LLM) | 6 | إسقاط منقح ومعرفة مثبتة وrunner وتقييم وتقرير خاص | 100500+ محجوز | MUST وفق ADR-014؛ أدوات منفذة، لا inference أو C4 أصلي |
 | الأجهزة المحمولة | 1 | لا وكيل رسمي؛ عبر MDM/syslog أو مراقبة الترافيك على gateway | — | تحدٍّ بحثي |
 
 ---
 
 ### 3.10 منهجية التقييم
 
-#### 3.10.1 وحدة التجربة والمقاييس
-تُقاس فعالية النظام لكل حالة استخدام عبر **محاولات مستقلة قابلة للتكرار** تُسجَّل في **سجل محاولات** (Ground Truth) منفصل عن سجل التنبيهات، وفق `tests/TEST_PLAN.md`:
+> التصحيح المنهجي 2026-09-18: يحكم هذا القسم `tests/TEST_PLAN.md` و`tests/README.md`، لا قيم النسخة الأولى (عشر محاولات وساعة baseline). هذه خطة قبل القياس، وليست نتائج نجاح.
 
-| المقياس | التعريف | طريقة الحساب |
-|---------|---------|--------------|
-| **معدل الكشف** (Detection Rate) | نسبة المحاولات التي ولّدت التنبيه المتوقَّع | كُشف / إجمالي المحاولات (المقام من سجل المحاولات، لا من `alerts.json`) |
-| **MTTD** (Mean Time To Detect) | متوسط الفارق بين وقت الحدث على المصدر ووقت توليد التنبيه على المدير | t(alert `timestamp`) − t(event على الجهاز، من سجل المحاولات المُتزامن NTP) |
-| **زمن الاستجابة الآلية** | من تنبيه المحفّز إلى تنبيه تأكيد الاستجابة | t(100092 أو 108001) − t(المحفّز)؛ يُفصل زمن VirusTotal الخارجي |
-| **الإنذارات الكاذبة/ساعة** | تنبيهات القواعد المخصصة (L≥12) خلال ساعة نشاط طبيعي بلا هجوم | عدّ مباشر |
-| **زمن الظهور في اللوحة** | من `timestamp` التنبيه إلى قابليته للبحث في Dashboard | يُقاس منفصلاً؛ لا يُخلط مع MTTD |
+#### 3.10.1 وحدة التجربة والمقامات
 
-#### 3.10.2 ضوابط التجربة
-- **10 محاولات** لكل سيناريو ونظام تشغيل مشمول؛ تباعد ≥ 930 ث لقاعدة 100051 بسبب `ignore="900"`.
-- **تزامن الساعات** (NTP) بين الآلات قبل كل جولة.
-- **بوابة سلامة** قبل اختبار الحذف الآلي (مراجعة السكربت، قائمة مسموحة، نسخة احتياطية).
-- **ضوابط سالبة:** تنفيذ أنشطة مشروعة مشابهة (مثل `ls`، كتابة ملف نصي عادي) للتأكد من عدم إطلاق قواعد L≥12.
-- **الأدلة:** لقطة شاشة مؤرَّخة + سطر `alerts.json` لكل محاولة، تُحفظ في `docs/lab/evidence/UC-0X/`.
+تسجل كل محاولة في journal مستقل عن التنبيهات بهوية run/trial ثابتة ومرحلة PILOT أو MEASURED أو BASELINE أو SUPPRESSION_CONTROL. خمس محاولات PILOT لكل سيناريو/OS/config، ثم تثبيت `planned_n ≥ 30` قبل MEASURED وقد يزداد وفق SD المرصود: `max(30, ceil((1.96*sigma_hat/margin)**2))`، والهامش الافتراضي ثانية. هذه صيغة تخطيط للمتوسط لا ضمان لدقة P95. لكل فعل FIM (إضافة/تعديل/حذف) مجموعة مستقلة. UC-01 خمس دورات اتصال وليس اختبار كشف هجوم. حالات UC-09..13 تحتاج بروتوكولات قبول خاصة ولا تعتمد بمجرد قبول معرفاتها في أداة الحساب.
 
-#### 3.10.3 معايير القبول
-| المعيار | القيمة المستهدفة |
-|---------|------------------|
-| معدل الكشف للحالات الفورية (02، 03، 05، 06، 07) | ≥ 90% |
-| معدل الكشف للحالة الدورية (08) | ≥ 90% ضمن دورة واحدة (30 ث) + هامش |
-| MTTD الداخلي (بلا VirusTotal) | ≤ 60 ث |
-| زمن الاستجابة الآلية الداخلي | ≤ 30 ث |
-| إنذارات كاذبة L≥12 خلال ساعة | 0 |
+المعدل الأساسي `DETECTED / جميع المحاولات` يشمل الاستبعادات، ويعرض إلى جواره المعدل الشرطي `DETECTED/(DETECTED+MISSED)` مع أسباب BLOCKED/INVALID/INTERFERED/AMBIGUOUS. لا تُحذف حالات الفشل أو تُستبدل بمحاولات ناجحة. الكشف بعد الموعد يبقى MISSED ضمن النافذة مع علامة تأخر إضافية.
+
+#### 3.10.2 تعريف الزمن ومصادره
+
+`t0` إطلاق الفعل، `t1` دليل المصدر، `t2` تنبيه المدير، `t3` أول ظهور مرصود بالفهرس، `t4` بدء الاستجابة على endpoint، `t5` اكتمال مستقل، `t6` تأكيد المدير. تصحح الساعات بطرح offset مرة واحدة؛ التخزين epoch ms لا يثبت دقة ms.
+
+| المقياس | الصيغة بعد التصحيح |
+|---|---|
+| D_source | t1 − t0 |
+| MTTD | t2 − t1 |
+| MTTD_e2e | t2 − t0 |
+| L_vis | t3 − t2 |
+| L_AR_trigger | t4 − t2 |
+| L_AR_complete | t5 − t4 |
+| L_AR_e2e | t5 − t0 |
+| L_confirm | t6 − t5 |
+
+في UC-03، `t2_prime` تنبيه VirusTotal و`D_VT=t2_prime−t2` منفصل؛ لا يساوى تأكيد المدير اكتمال الحذف ولا نتيجة YARA بداية الفحص. زمن Suricata من EVE إلى المدير تأخير تكامل لا كامل زمن كشف الهجوم. القيم المفقودة والفروق السالبة تعطي null مع السبب، لا صفراً. ملخصات الزمن شرطية على DETECTED ذي الطابع الصالح، وتعرض n والوسيط والربيعين وIQR وP95 بطريقة type7 والمتوسط وsample SD والمفقود. زمن C4 منفصل ويستخدم nearest-rank لـP95.
+
+#### 3.10.3 الضبط والإحصاء والقبول
+
+- بوابة G2-0: فحص `alert.timestamp` الأصلي ودقة المولد وعدم يقين الساعة؛ عدد الخانات وحده لا يكفي. لكل جهاز قياسات offset وعدم يقين ومراجع قبل/بعد الجولة؛ تجاوز حد 100ms وفق العقد يرفض session كاملة، ولا يُفترض المفقود صفراً.
+- حد أدنى 12 ساعة BASELINE لكل OS/config، باتحاد فترات التعرض دون عد مزدوج، ونشاط طبيعي موصوف وتحكيم لكل تنبيه. `FP/h = عدد إنذارات التهديد المحكوم بكذبها / ساعات التعرض`؛ ترافقه قيمة Poisson أحادية عليا 95% وفق الافتراضات. لا تُحسب FPR بلا تعريف TN.
+- Wilson95 للنسب الثنائية مع مراجعة استقلال المحاولات وتجانسها، لا لمتوسطات الزمن أو FP/h. لا عينات تعني null لا نجاحاً بنسبة 100% أو خطأ بنسبة صفر.
+- مقارنة H4 في `L_AR_complete` تحتاج مجموعتين مستقلتين وشروطاً متكافئة؛ نتيجة Mann–Whitney غير الدالة لا تثبت عدم الدونية أو حد ثانية. ISSUE-054 يبقى للمراجعة المنهجية.
+- تنبيهات خام مؤرخة ومراجع مصدر وربط فريد ومراقب مستقل للاكتمال وأول ظهور API؛ المشغّل يستورد مراقبي t3/t4/t5 ولا ينشرهم بنفسه. سجل النافذة كله والملفات المدورة، ولا تنظف logs لتهيئة التجربة.
+- اختبار AR بعد مراجعة المسارات والصلاحيات والنسخ والرجوع؛ لا تعطيل Defender تلقائياً، ولا عينات خبيثة تنفيذية. تثبيت حدود النجاح ونوافذ الكشف من TEST_PLAN قبل القياس، وأي تغيير ينشئ run جديدة.
+
+#### 3.10.4 تقييم المحلل الاستشاري C4
+
+وفق UC-14 §10–13: ثلاثون تنبيهاً بشري الوسوم على الأقل، ومخرجات وفشل ورفض ومفقود بالمقام المجمد، دون تسريب gold/rubric إلى النموذج. يستورد runner أدلة البايتات، ويحسب evaluator المقاييس، ويعرض report.py تقريراً خاصاً. شروط Wilson تشمل استقلال الحالات وتميز العناقيد والدفعات وصادرات المصدر؛ لا يعاد تقديم المصدر نفسه كعينة مستقلة. تحكيم الادعاءات بشري ومربوط ببصمة الجواب؛ نقص التحكيم ليس غياب الهلوسة. `execution_authority=none`، ولا تمنح الأدوات موافقة نشر أو تثبت هوية النموذج أو استقلال البشر.
 
 ---
 

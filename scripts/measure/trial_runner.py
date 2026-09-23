@@ -23,6 +23,9 @@ import time
 _spec = importlib.util.spec_from_file_location('measurement', Path(__file__).with_name('mttd.py'))
 m = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(m)
+_source_spec = importlib.util.spec_from_file_location('trial_source', Path(__file__).with_name('source_observer.py'))
+so = importlib.util.module_from_spec(_source_spec)
+_source_spec.loader.exec_module(so)
 
 
 def document(path):
@@ -96,7 +99,29 @@ def set_time(trial, stage, value, ref):
     trial['missing_reasons'].pop(stage, None)
 
 
-def collect(trial, run, source, sources, alerts, observers):
+def bound_source(trial, run, evidence):
+    """Re-read private source artifacts, never trust an exported JSONL claim alone."""
+    binding = trial.get('source_binding')
+    m.require(isinstance(binding, dict) and set(binding) == {'source_spec_sha256', 'target_key'},
+              'SOURCE_BINDING_REQUIRED')
+    so.r.e.sha256(binding['source_spec_sha256'])
+    row = so.export(*evidence)
+    m.require(row is not None, 'SOURCE_EVENT_NOT_OBSERVED')
+    m.require((row['run_id'], row['trial_id']) == (trial['run_id'], trial['trial_id']), 'SOURCE_TRIAL_MISMATCH')
+    m.require(binding == {k: row[k] for k in binding}, 'SOURCE_BINDING_MISMATCH')
+    m.require(row['device'] == run['clock_map']['t1'] and
+              row['clock_ref'] == run['devices'][row['device']]['clock_ref'], 'SOURCE_CLOCK_MISMATCH')
+    path = row['target_key']['syscheck.path']
+    m.require(trial['stage_selectors'].get('t2', {}).get('target_key', {}).get('syscheck.path') == path,
+              'SOURCE_TARGET_MISMATCH')
+    targets = [trial['target_key']] + [item['target_key'] for item in trial['stage_selectors'].values()]
+    for item in targets:
+        for field in ('path', 'syscheck.path', 'data.virustotal.source.file', 'data.yara_scanned_file'):
+            m.require(field not in item or item[field] == path, 'SOURCE_TARGET_MISMATCH')
+    return row
+
+
+def collect(trial, run, source, sources, alerts, observers, source_evidence=None):
     """Collect within the declared observation window, preserving missing data."""
     provenance = []
     visibility_identity = None
@@ -119,8 +144,22 @@ def collect(trial, run, source, sources, alerts, observers):
             trial.update(event_valid=True, source_ref=ref,
                          source_precision_ms=source['precision_ms'])
             trial['timestamp_precision_ms']['t1'] = source['precision_ms']
-    if observers:
+    m.require(source_evidence is not None or 'source_binding' not in trial, 'SOURCE_STORE_REQUIRED')
+    verified_source = bound_source(trial, run, source_evidence) if source_evidence is not None else None
+    if observers or verified_source is not None:
         lines, hashes = snapshot(observers); provenance.extend(hashes)
+        for raw, _ in lines:
+            value = m.strict_json(raw)
+            if isinstance(value, dict) and (value.get('run_id'), value.get('trial_id')) != (trial['run_id'], trial['trial_id']):
+                continue
+            m.require(not isinstance(value, dict) or 'producer' not in value or
+                      value['producer'] != so.PRODUCER, 'SOURCE_STORE_REQUIRED')
+            if verified_source is not None:
+                m.require(not isinstance(value, dict) or value.get('stage') != 'event', 'SOURCE_EVENT_CONFLICT')
+        if verified_source is not None:
+            lines.append((so.r.json_bytes(verified_source).decode('ascii'),
+                          'source-intent:sha256:' + source_evidence[1]))
+            provenance.append({'path': str(source_evidence[0]), 'sha256': source_evidence[1]})
         kinds = {'t1': 'source_event', 't3': 'indexer_first_visible',
                  't4': 'endpoint_start', 't5': 'independent_observation',
                  'event': 'action_confirmed'}
@@ -136,6 +175,9 @@ def collect(trial, run, source, sources, alerts, observers):
             m.require(device in run['devices'], 'unknown observer clock')
             if stage != 'event':
                 m.require(device == run['clock_map'][stage], 'observer clock disagrees with clock_map')
+            if 'clock_ref' in row:
+                m.require(row['clock_ref'] == run['devices'][device]['clock_ref'],
+                          'observer clock_ref disagrees with manifest')
             at = m.epoch_ms(row.get('timestamp_ms'))
             m.text(row.get('evidence_ref'), 'observer evidence_ref')
             m.number(row.get('precision_ms'), 'observer precision', 0)
@@ -195,6 +237,15 @@ def secure_open(path, flags):
     return fd
 
 
+def sync_parent(path):
+    """Validate private output ancestry and persist namespace changes, not just bytes."""
+    fd = so.r.directory(Path(path).absolute().parent)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 def write_all(fd, data):
     while data:
         count = os.write(fd, data)
@@ -208,19 +259,45 @@ def encoded(value):
 
 
 def execute(command, timeout):
-    """No shell/eval. Bound the direct child and clean its entire process group."""
-    child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL, start_new_session=True)
+    """No shell; observe exit without reaping until group signaling is complete.
+
+    Linux/default SIGCHLD and exclusive child ownership required. External init
+    must reap orphan descendants; D-state/SIGKILL are not hard-time guarantees.
+    """
+    m.number(timeout, 'child timeout', 0)
+    m.require(timeout <= 3600, 'child timeout exceeds bound')
+    m.require(signal.getsignal(signal.SIGCHLD) == signal.SIG_DFL, 'DEFAULT_SIGCHLD_REQUIRED')
+    deadline = time.monotonic() + timeout
+    child = None
     try:
-        return {'exit_code': child.wait(timeout=timeout), 'timed_out': False}
-    except subprocess.TimeoutExpired:
+        with so.r.launch_cancellation_guard():
+            child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                     stderr=subprocess.DEVNULL, start_new_session=True)
+        while time.monotonic() < deadline:
+            ended = os.waitid(os.P_PID, child.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+            if ended is not None:
+                code = ended.si_status if ended.si_code == os.CLD_EXITED else -ended.si_status
+                return {'exit_code': code, 'timed_out': False}
+            time.sleep(min(.01, max(0, deadline - time.monotonic())))
         return {'exit_code': None, 'timed_out': True}
     finally:
+        previous = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM, signal.SIGINT})
+        failed = False
         try:
-            os.killpg(child.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        child.wait()
+            if child is not None:
+                try:
+                    os.killpg(child.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                except OSError:
+                    failed = True
+                try:
+                    child.wait(timeout=2)
+                except (OSError, subprocess.TimeoutExpired):
+                    failed = True
+            m.require(not failed, 'WORKER_CLEANUP_FAILED')
+        finally:
+            signal.pthread_sigmask(signal.SIG_SETMASK, previous)
 
 
 def prepare_eicar(trial, directory, source=None):
@@ -273,6 +350,8 @@ def main(argv=None):
     parser.add_argument('--alerts', required=True, nargs='+', help='explicit local/exported rotation files')
     parser.add_argument('--source', nargs='*', default=[])
     parser.add_argument('--observers', nargs='*', default=[])
+    parser.add_argument('--source-store', help='private M2-A source store; no implicit observation')
+    parser.add_argument('--source-intent-sha256', help='externally retained intent hash for source store')
     parser.add_argument('--eicar-dir', help='UC-03 built-in unique EICAR attempt, replaces command; existing approved directory')
     parser.add_argument('--device', help='live runner clock device; must equal clock_map.t0')
     parser.add_argument('--timeout', type=float, default=60, help='child timeout seconds, max 3600')
@@ -287,6 +366,8 @@ def main(argv=None):
         for value in (args.timeout, args.wait):
             m.number(value, 'timeout/wait', 0.001)
             m.require(value <= 3600, 'timeout/wait exceeds one hour')
+        m.require(bool(args.source_store) == bool(args.source_intent_sha256), 'SOURCE_STORE_AND_HASH_REQUIRED')
+        source_evidence = (args.source_store, args.source_intent_sha256) if args.source_store else None
         spec, manifest = document(args.spec), document(args.manifest)
         trial = copy.deepcopy(spec['attempt'])
         run = next(r for r in manifest['runs'] if r['run_id'] == trial['run_id'])
@@ -336,6 +417,10 @@ def main(argv=None):
         output = Path(args.output).absolute()
         inputs = [args.spec, args.manifest] + args.alerts + args.source + args.observers
         m.require(all(output.resolve() != Path(p).resolve() for p in inputs), 'output aliases an input')
+        if source_evidence is not None:
+            m.require(Path(source_evidence[0]).resolve() not in output.resolve().parents,
+                      'OUTPUT_INSIDE_SOURCE_STORE')
+        sync_parent(output)
         fd = secure_open(output, os.O_CREAT | os.O_RDWR | os.O_APPEND)
         with os.fdopen(fd, 'r+b', buffering=0) as journal:
             fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -356,9 +441,21 @@ def main(argv=None):
                 if args.lab:
                     trial['t0'] = time.time_ns() // 1000000
                     trial['time_refs']['t0'] = str(output) + '#' + trial['run_id'] + '/' + trial['trial_id'] + '/t0'
+                journal.seek(0)
+                prefix_hash = hashlib.sha256()
+                prefix_bytes = 0
+                for chunk in iter(lambda: journal.read(65536), b''):
+                    prefix_hash.update(chunk)
+                    prefix_bytes += len(chunk)
+                    m.require(prefix_bytes <= m.MAX_BYTES, 'journal size bound exceeded')
                 trial['runner'] = {'mode': 'lab' if args.lab else 'replay', 'command': command,
-                                   'state': 'PREPARED_NOT_COMPLETED'}
-                write_all(pfd, encoded(trial))  # durable launch intent BEFORE command
+                                   'state': 'PREPARED_NOT_COMPLETED',
+                                   'manifest_sha256': so.r.digest(so.r.json_bytes(manifest)),
+                                   'journal_path': os.path.abspath(output), 'journal_prefix_bytes': prefix_bytes,
+                                   'journal_prefix_sha256': prefix_hash.hexdigest()}
+                write_all(pfd, encoded(trial))
+                sync_parent(pending)  # output + launch-intent names durable BEFORE command
+            cancelled = False
             try:
                 if args.lab and trial['exclusion_reason'] is None:
                     trial['runner'].update(execute(command, args.timeout))
@@ -370,7 +467,7 @@ def main(argv=None):
                                  window_ref=trial['time_refs']['t0'])
                     time.sleep(args.wait)
                     trial['observe_until'] = m.iso_ms(round(time.time_ns() // 1000000 + shift))
-                alert_rows = collect(trial, run, source, args.source, args.alerts, args.observers)
+                alert_rows = collect(trial, run, source, args.source, args.alerts, args.observers, source_evidence)
                 # Include previous trials: a new offset violation invalidates ALL
                 # rows in the report, without rewriting the append-only raw journal.
                 result = m.analyze_v2(existing + [(trial, 'runner')], alert_rows, manifest)
@@ -379,14 +476,24 @@ def main(argv=None):
                 if trial['exclusion_reason']:
                     trial['reason'] = current['reason']
                 trial['runner']['state'] = 'COLLECTED'
-            except (OSError, ValueError, KeyError, TypeError, OverflowError, KeyboardInterrupt) as exc:
+            except KeyboardInterrupt:
+                trial.update(exclusion_reason='INVALID', reason='INTERRUPTED_DURING_EXECUTION_OR_COLLECTION')
+                trial['runner']['state'] = 'COLLECTION_INTERRUPTED'
+                cancelled = True
+            except (OSError, ValueError, KeyError, TypeError, OverflowError) as exc:
                 trial.update(exclusion_reason='INVALID', reason='RUNNER_ERROR:' + str(exc))
                 trial['runner']['state'] = 'COLLECTION_FAILED'
             write_all(fd, encoded(trial))
-            pending.unlink()
+            if not cancelled:
+                pending.unlink()
+            sync_parent(output)
         print(json.dumps({'run_id': trial['run_id'], 'trial_id': trial['trial_id'],
                           'exclusion_reason': trial['exclusion_reason'], 'output': str(output)}))
-        return 2 if trial['exclusion_reason'] else 0
+        return 130 if cancelled else (2 if trial['exclusion_reason'] else 0)
+    except KeyboardInterrupt:
+        # The durable pending intent is recovery evidence, never automatically removed.
+        print('trial runner interrupted; retain pending evidence and do not rerun', file=sys.stderr)
+        return 130
     except (OSError, ValueError, KeyError, TypeError, OverflowError, StopIteration) as exc:
         print('trial runner error: ' + str(exc), file=sys.stderr)
         return 2

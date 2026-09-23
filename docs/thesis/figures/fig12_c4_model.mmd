@@ -1,0 +1,15 @@
+flowchart TB
+    manifest["Evaluation manifest / evaluation_id / provenance / dataset_kind / declarations"]
+    case["Case (planned) / case_id, batch_id, alert_ref / input_sha256 / gold"]
+    batch["Batch grouping / batch_id -#62; input_sha256 / Many cases may share input"]
+    attempt["Attempt (0..1 per case) / status / prediction / output_sha256 / latency"]
+    review["Review (0..1 completed case) / reviewer_ref / independent / claims / unsupported_claims"]
+    output["Shared answer artifact / output_sha256 / Runner verifies actual bytes"]
+    declared["Human / model declarations / Not authenticated by hashes / Original evaluation pending"]
+    report["C4 report / All planned + conditional / Failure / missing included"]
+    manifest ---|"1 : 1..1000 planned cases"| case
+    case ---|"grouping, not a SQL table"| batch
+    case ---|"1 : 0..1 recorded attempt"| attempt
+    attempt ---|"hash binding"| output
+    output ---|"completed + matching output hash"| review
+    attempt ---|"status and prediction"| report

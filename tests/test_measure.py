@@ -882,6 +882,50 @@ class Runner(unittest.TestCase):
                                  'import sys; sys.exit(0 if sys.argv[1] == "a; b" else 1)', 'a; b'], 5)
         self.assertEqual(result['exit_code'], 0)
 
+    def test_child_group_signaled_before_leader_reaped(self):
+        spawn, kill = self.r.subprocess.Popen, self.r.os.killpg
+        children, states = [], []
+        def launch(*args, **kwargs):
+            child = spawn(*args, **kwargs); children.append(child); return child
+        def signal_group(pid, signum):
+            states.append(children[0].returncode)
+            return kill(pid, signum)
+        with patch.object(self.r.subprocess, 'Popen', side_effect=launch), \
+             patch.object(self.r.os, 'killpg', side_effect=signal_group):
+            result = self.r.execute([sys.executable, '-I', '-B', '-c', 'pass'], 5)
+        self.assertEqual(result['exit_code'], 0)
+        self.assertEqual(states, [None])
+        self.assertEqual(children[0].returncode, 0)
+
+    def test_child_requires_default_sigchld_before_launch(self):
+        with patch.object(self.r.signal, 'getsignal', return_value=self.r.signal.SIG_IGN), \
+             patch.object(self.r.subprocess, 'Popen') as launch:
+            with self.assertRaisesRegex(self.r.m.InputError, 'DEFAULT_SIGCHLD_REQUIRED'):
+                self.r.execute(['/never-launched'], 1)
+        launch.assert_not_called()
+
+    def test_child_cleanup_failure_is_explicit_and_mask_restored(self):
+        spawn = self.r.subprocess.Popen
+        def launch(*args, **kwargs):
+            child = spawn(*args, **kwargs); wait = child.wait
+            def failed_wait(*a, **k):
+                wait(*a, **k)  # reap the real test child before injecting error
+                raise self.r.subprocess.TimeoutExpired('synthetic', 2)
+            child.wait = failed_wait
+            return child
+        before = self.r.signal.pthread_sigmask(self.r.signal.SIG_BLOCK, set())
+        with patch.object(self.r.subprocess, 'Popen', side_effect=launch):
+            with self.assertRaisesRegex(self.r.m.InputError, 'WORKER_CLEANUP_FAILED'):
+                self.r.execute([sys.executable, '-I', '-B', '-c', 'pass'], 5)
+        self.assertEqual(self.r.signal.pthread_sigmask(self.r.signal.SIG_BLOCK, set()), before)
+
+    def test_supplied_observer_clock_ref_must_match_manifest(self):
+        row = self.observer('t4', 'endpoint_start', '2026-09-09T01:00:04Z', 'endpoint',
+                            clock_ref='different clock evidence')
+        path = self.write('clock-mismatch.jsonl', json.dumps(row)+'\n')
+        self.assertEqual(self.invoke(self.args()+['--observers', path]), 2)
+        self.assertIn('observer clock_ref disagrees', self.result()['reason'])
+
     def test_prior_session_clock_rejection_prevents_launch(self):
         previous = trial_v2(trial_id='previous', exclusion_reason='INVALID', reason='clock')
         previous['ntp_offset_ms']['observer'] = -101
@@ -892,6 +936,103 @@ class Runner(unittest.TestCase):
             execute.assert_not_called()
         self.assertEqual(len(self.output.read_text().splitlines()),2)
         self.assertEqual(self.result()['reason'],'SESSION_CLOCK_LIMIT_EXCEEDED')
+
+    def test_trial_launch_cancellation_cleans_real_child(self):
+        import os
+        import signal
+        import subprocess
+        real = subprocess.Popen
+        real_execute = real._execute_child
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            for phase in ('inside', 'assignment'):
+                with self.subTest(signal=sig, phase=phase):
+                    children = []
+                    previous = signal.getsignal(sig)
+                    def handler(*_): raise KeyboardInterrupt()
+                    def inside(proc, *args, **kwargs):
+                        real_execute(proc, *args, **kwargs)
+                        children.append(proc); os.kill(os.getpid(), sig)
+                    def start(*args, **kwargs):
+                        proc = real(*args, **kwargs)
+                        children.append(proc); os.kill(os.getpid(), sig)
+                        return proc
+                    signal.signal(sig, handler)
+                    hook = (patch.object(real, '_execute_child', inside) if phase == 'inside'
+                            else patch.object(self.r.subprocess, 'Popen', side_effect=start))
+                    try:
+                        with hook, self.assertRaises(KeyboardInterrupt):
+                            self.r.execute([sys.executable, '-I', '-B', '-c', 'import time; time.sleep(30)'], 1)
+                        self.assertEqual(children[0].returncode, -signal.SIGKILL)
+                        self.assertIs(signal.getsignal(sig), handler)
+                    finally:
+                        signal.signal(sig, previous)
+                        for proc in children:
+                            if proc.poll() is None: os.killpg(proc.pid, signal.SIGKILL)
+                            proc.wait(timeout=2)
+
+    def test_namespace_sync_happens_before_execution_and_after_pending_removal(self):
+        pending = Path(str(self.output) + '.pending')
+        actual = self.r.sync_parent; calls = []
+        def sync(path):
+            actual(path)
+            calls.append((Path(path).name, pending.exists()))
+        def execute(*_):
+            self.assertEqual(calls[-1], (pending.name, True))
+            return {'exit_code': 0, 'timed_out': False}
+        times = iter([self.t['t0'] * 1000000, self.t['t0'] * 1000000, (self.t['t0'] + 121000) * 1000000])
+        with patch.object(self.r, 'sync_parent', side_effect=sync), \
+             patch.object(self.r, 'execute', side_effect=execute), patch.object(self.r.time, 'sleep'), \
+             patch.object(self.r.time, 'time_ns', side_effect=lambda: next(times)):
+            self.assertEqual(self.invoke(self.args('--lab') + ['--device', 'attacker', '--wait', '120', '--', '/mock-only']), 0)
+        self.assertEqual(calls, [(self.output.name, False), (pending.name, True), (self.output.name, False)])
+
+    def test_directory_fsync_failure_retains_intent_and_prevents_execution(self):
+        actual = self.r.sync_parent
+        def fail(path):
+            if str(path).endswith('.pending'): raise OSError('synthetic sync failure')
+            actual(path)
+        with patch.object(self.r, 'sync_parent', side_effect=fail), patch.object(self.r, 'execute') as execute:
+            self.assertEqual(self.invoke(self.args()), 2)
+        execute.assert_not_called()
+        self.assertTrue(Path(str(self.output) + '.pending').exists())
+        self.assertEqual(self.output.read_bytes(), b'')
+
+    def test_outer_cancellation_retains_pending_and_returns_130(self):
+        actual = self.r.sync_parent
+        def stop(path):
+            actual(path)
+            if str(path).endswith('.pending'): raise KeyboardInterrupt()
+        with patch.object(self.r, 'sync_parent', side_effect=stop), patch.object(self.r, 'execute') as execute:
+            self.assertEqual(self.invoke(self.args()), 130)
+        execute.assert_not_called()
+        pending = Path(str(self.output) + '.pending')
+        before = pending.read_bytes()
+        self.assertEqual(self.invoke(self.args()), 2)
+        self.assertEqual(pending.read_bytes(), before)
+        self.assertEqual(self.output.read_bytes(), b'')
+
+    def test_sync_parent_uses_directory_descriptor(self):
+        import os
+        import stat
+        actual = os.fsync; kinds = []
+        def sync(fd):
+            kinds.append(stat.S_ISDIR(os.fstat(fd).st_mode)); actual(fd)
+        with patch.object(self.r.os, 'fsync', side_effect=sync): self.r.sync_parent(self.output)
+        self.assertEqual(kinds, [True])
+
+    def test_public_output_parent_rejected_before_creating_journal(self):
+        public = self.home/'public'; public.mkdir(mode=0o755)
+        self.output = public/'attempts.jsonl'
+        self.assertEqual(self.invoke(self.args()), 2)
+        self.assertFalse(self.output.exists())
+
+    def test_trial_launch_failure_does_not_mask_original_error(self):
+        import signal
+        before = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+        with patch.object(self.r.subprocess, 'Popen', side_effect=OSError('synthetic launch failure')):
+            with self.assertRaisesRegex(OSError, 'synthetic launch failure'):
+                self.r.execute(['/never-run'], 1)
+        self.assertEqual(before, {sig: signal.getsignal(sig) for sig in before})
 
     def test_fifo_log_rejected_without_blocking(self):
         import os

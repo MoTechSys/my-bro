@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant agent as Agent
+    participant manager as Manager
+    participant vt as VT integration
+    participant execd as execd / wrapper
+    participant ar as soc_ar remove
+    participant store as Filebeat / Indexer
+    agent->>manager: FIM event -#62; configured 100200/100201 trigger
+    manager->>vt: Hash reputation request through integration
+    vt->>manager: Reputation event -#62; rule 87105 when matched
+    manager->>execd: Dispatch configured local remove-threat response
+    execd->>ar: Read bounded JSON add#59; delete is a no-op
+    ar->>ar: Require rule 87105 and approved path#59; derive agent/path/md5 keys
+    ar->>execd: check_keys handshake
+    execd->>ar: abort -#62; return#59; continue -#62; proceed#59; otherwise reject
+    ar->>ar: Open no-follow single-link regular file under pinned parent
+    ar->>ar: Compare source MD5 and stable descriptor/name identity
+    ar->>ar: os.unlink(basename, dir_fd=parent)#59; final name-swap risk remains
+    ar->>agent: Write success/error log#59; log is not independent completion evidence
+    agent->>manager: Recollect log#59; configured success/failure rules may match
+    manager->>store: alerts.json -#62; Filebeat -#62; Indexer -#62; Dashboard

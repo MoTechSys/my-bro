@@ -1,0 +1,69 @@
+# Independent source review — `ai_agent/runner.py` @ `5e98757c`
+
+**Scope/method:** read the submitted `runner.py` + `tests/test_ai_runner.py`, and, to verify cross-module invariants the file depends on, the sibling modules at the same revision — [`analyst.py`](https://raw.githubusercontent.com/MoTechSys/my-bro/5e98757cadbcfc71860cefe8b139fafb74c4af26/ai_agent/analyst.py), [`evaluate.py`](https://raw.githubusercontent.com/MoTechSys/my-bro/5e98757cadbcfc71860cefe8b139fafb74c4af26/ai_agent/evaluate.py), [`knowledge.py`](https://raw.githubusercontent.com/MoTechSys/my-bro/5e98757cadbcfc71860cefe8b139fafb74c4af26/ai_agent/knowledge.py). I did **not** execute anything, clone with credentials, or run the lab. Findings below are stated at function/statement granularity (no line numbers were available from the fetched sources — treat anchors as function-scope, not line-scope). No proven defect that breaks a *hard* requirement was found; the items ranked are robustness/identity risks.
+
+## What is demonstrably satisfied
+- **No response execution:** `bounded_process` runs one fixed trusted argv (`sys.executable -I -B runner.py _worker …`); `worker()` only calls `a.Ollama(...)(context)`, and `analyst.Ollama.__call__` is a loopback POST via `urllib` with explicit tool-call rejection; `analyst.py` contains no shell/`exec`. The response is never interpreted as a command. ✔
+- **No raw/gold/provider text in public diagnostics:** `classify_output` copies `exc.args[0]` only if it is a member of `VALIDATION_CODES`, else `INVALID_MODEL_RESPONSE`; `worker()` returns `2` and writes nothing to stderr; `main`'s error path prints a constant JSON. Manifest/gold/rubric are never placed in the worker argv (only `configuration.json`+`context.json`). ✔
+- **Immutable failure journal:** `write_once` uses `O_CREAT|O_EXCL`, `os.mkdir` fails on replay, no retry path; interrupted intent → `INTERRUPTED_AFTER_INTENT`/`failed` with null latency. ✔
+- **Fail-closed export:** every artifact re-hashed, then `bundle != rebuilt` reconstruction check against `intent['prepared_at']` and current `code_snapshot()`. ✔
+
+## Prioritized findings
+
+### F1 — Duplicate `alert_ref` inside one batch is not rejected → prediction duplication (Medium-High)
+`batch_cases` validates coverage with **set equality**: `{c['alert_ref'] for c in cases} != {v['ref'] for v in context['alerts']}`. A manifest with two cases sharing `alert_ref='A1'` (distinct `case_id`) yields identical sets, so no `BATCH_COVERAGE_MISMATCH`. `run_batch`/`import_batch` then build `by_ref` (a **dict keyed by ref**) and emit one attempt **per case**, so two denominator rows receive the *same* single prediction. This inflates the C4 denominator with duplicated, non-independent predictions — exactly the property `e.evaluate`'s Wilson/independence contract is meant to protect.
+*Confidence: high on the code path; the only escape is if `e.evaluate(manifest,…)` itself rejects duplicate case ids — unverified (its body was not retrievable).*
+*Minimal repro:* manifest with `case_id in {c0,c1}`, both `alert_ref='A1'`, same `batch_id`/`input_sha256`; run with a one-finding response referencing `A1`; observe two `completed` attempts sharing one prediction.
+*Fix:* require per-batch `alert_ref` uniqueness and `len(cases) == len(context['alerts'])`; require global `case_id` uniqueness.
+*Test:* assert `ValueError` on a manifest with a duplicated ref in one batch.
+
+### F2 — "Byte identity" is a decode→encode canonicalization, not raw bytes (Medium)
+`read_bytes` = `a.read_file(path, limit).encode('utf-8')`; its comment asserts "reencoding preserves bytes." Identity holds only if `analyst.read_file` opens with `newline=''` and does not strip a BOM. Neither `read_file`, `strict_json`, `encoded` nor `validate_response` bodies were retrievable (the crawl returned only `exact`/`identifier`/`sha256`), so I **cannot verify** newline/BOM handling. If `read_file` used `Path.read_text()` (universal newlines), a CRLF/CR evidence file would be silently normalized before hashing, contradicting "التحقق من بصمات بايتات ملفات الأدلة الأصلية" — and the test `test_original_byte_hash_not_normalized_json_or_declared_hash` would fail, not pass. Invalid-UTF-8 input is fail-closed (`UnicodeDecodeError` ⊂ `ValueError`), so that case is acceptable.
+*Confidence: conditional on unread dependency.*
+*Fix/test:* hash raw bytes read with `open(path,'rb')`; add a BOM-prefixed and a CRLF fixture asserting `digest(on_disk) == recorded`.
+
+### F3 — Worker re-opens artifacts by path, bypassing the hardened reader (Medium)
+All hardened access uses pinned fds (`read_at` with `O_NOFOLLOW`, `dir_fd`, `nlink==1`, uid/mode checks), but the worker command passes **path strings**: `str(base/'configuration.json')`, `str(base/'context.json')`, and `worker()` calls `read_bytes(config_path)` → `a.read_file` (path-based, follows symlinks, no dir_fd pinning). Between `write_once(... 'intent.json')` and the worker's open there is a symlink/swap window on those two names that `read_at` would have blocked. Bounded by the private same-uid directory (declared operator boundary), so severity is Medium, not High.
+*Fix:* pass the pinned batch fd (or `O_PATH` fd) to the worker and read via `os.open(...,dir_fd=...)`.
+
+### F4 — Exclusive store lock held across the whole worker deadline (Medium, concurrency/availability)
+`run_batch` executes `bounded_process` **inside** `with store_lock(store)`. With `deadline_seconds` up to 120, any second batch — and `export_attempts` (same `store_lock`) — is blocked for the full worker lifetime, and a hung worker blocks export until its deadline. Fail-closed, but serializes the pipeline far beyond "one intent written, worker launched."
+*Confidence: high.*
+*Fix:* hold the lock only for manifest freeze + `mkdir` + intent write, release before `Popen`, re-acquire for terminal publication.
+
+### F5 — Tests write temp dirs inside `.git` (Medium, test hygiene/security)
+`PrivateFiles.setUp` / `Evidence.setUp` / CLI tests use `tempfile.TemporaryDirectory(dir=ROOT/'.git')`. The repository's own rules state `.git` carries private SSH material and must not be disturbed/archived. Creating `ai-runner-*`/`ai-evidence-*`/`boundary-*` dirs inside `.git` risks interfering with git internals and contradicts that boundary; cleanup depends solely on `TemporaryDirectory`.
+*Fix:* use the OS temp dir or a workspace scratch path.
+
+### F6 — `main` swallows internal faults as generic "rejected" (Low-Medium, observability)
+`except (ValueError, OSError, UnicodeError, KeyError, TypeError, subprocess.SubprocessError)` emits one constant line and exit `1`. A genuine bug surfacing as `KeyError`/`TypeError` (e.g. an unexpected exception type from `a.validate_response`) becomes indistinguishable from validation rejection, and the failure reason is lost. No privacy leak (good), but it masks defects.
+*Fix:* distinguish expected validation exceptions from unexpected ones; map the latter to a distinct bounded code.
+
+### F7 — Inconsistent latency bound on import (Low)
+`run_batch` clamps the worker deadline to ≤120s, but `import_batch` accepts `latency_seconds` in `0..86400`, so a tampered-but-rehashed terminal can record an implausible duration. Tighten to the same 120s ceiling.
+
+### F8 — Only the first deferred cancellation is replayed (Low)
+`launch_cancellation_guard` stores only `pending[0]`; a second distinct signal (e.g. SIGINT then SIGTERM) is dropped. Also, replay invokes the Python handler manually (`handler(sig, frame)`) — a synthetic call, not a real signal delivery; for `SIG_DFL` it converts to `KeyboardInterrupt` (documented). Acceptable, but note the single-signal replay and that default-terminate semantics change.
+
+### F9 — "Global deadline" is soft at the tail (Low)
+After `deadline` the cleanup path adds `proc.wait(timeout=2)`, so observable wall time can exceed `deadline_seconds` by ~2s; and cleanup reassigns `reason='WORKER_CLEANUP_FAILED'`, overriding `DEADLINE_EXCEEDED`. Both are deliberate/documented; flag only because the requirement said "global wall-clock deadline."
+
+### F10 — WNOWAIT/killpg window (Info, acknowledged)
+The observe-exit-then-`killpg(proc.pid)` ordering keeps the leader a zombie so the pgid is not reused; the residual PID-reuse window is explicitly documented. No additional defect found.
+
+## Could not verify (state plainly, do not treat as accepted)
+1. `analyst.read_file` newline/BOM behavior (F2).
+2. `analyst.strict_json` / `encoded` determinism (dict ordering) underlying the `bundle != rebuilt` equality — the reconstruction contract passes only if `encoded` is order-stable between write and rebuild.
+3. `analyst.validate_response` full error-code set and whether every code is in `VALIDATION_CODES` (otherwise silently downgraded to `INVALID_MODEL_RESPONSE`).
+4. Whether `evaluate.evaluate` rejects duplicate `case_id` (decides F1's severity).
+5. Actual test execution (green suite, `.git` tempdir behavior) — not run by me.
+
+## Suggested focused tests
+- Duplicate `alert_ref` / duplicate `case_id` manifest → expect `ValueError` (F1).
+- BOM-prefixed and CRLF `alerts.jsonl`; assert on-disk-byte digest equals recorded (F2).
+- Symlink swap of `configuration.json` after intent publication → expect worker refusal (F3).
+- Concurrent `run_batch` on two batches with a ~30s worker → assert non-blocking (F4).
+- Force `a.validate_response` to raise `TypeError` → assert a distinct bounded code, not bare `rejected` (F6).
+- Tampered terminal with `latency_seconds=86400` → expect rejection (F7).
+
+**Bottom line:** design intent (one attempt/batch, immutable intent, fail-closed reconstruction, no execution, no diagnostic leakage) is broadly met and well-tested synthetically. No proven high-severity defect; F1 and F2 are the two to resolve first, and F2's verdict hinges on code I could not read.

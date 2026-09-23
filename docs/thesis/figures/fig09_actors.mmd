@@ -1,0 +1,16 @@
+flowchart TB
+    admin["SOC administrator / Deployment / configuration"]
+    enroll["UC-01 / Agent enrollment / health"]
+    operator["Authorized lab operator / Controlled test scenarios"]
+    detect["UC-02..09 / UC-11 / Detection / configured AR"]
+    analyst["Security analyst / Investigates / reviews"]
+    advice["UC-10 / UC-14 / Notifications / AI advice"]
+    reviewer["Human evaluator / Labels / adjudication"]
+    c4["C4 evaluation / Frozen planned denominator"]
+    future["UC-12 / UC-13 / Network / mobile visibility"]
+    gate["Scope + samples + acceptance / Not implemented by drawing"]
+    admin -->|"configure / inspect"| enroll
+    operator -->|"authorized experiments"| detect
+    analyst -->|"review, never model execution"| advice
+    reviewer -->|"independent labels / reviews"| c4
+    future -->|"requires separate work"| gate
