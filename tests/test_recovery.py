@@ -32,7 +32,9 @@ class Recovery(unittest.TestCase):
         for key in v.m.TIMES:
             if key != 't0': self.trial[key] = None
         self.trial['runner'] = {'mode': 'replay', 'command': [], 'state': 'PREPARED_NOT_COMPLETED',
-                               'manifest_sha256': v.r.digest(v.r.json_bytes(self.manifest))}
+                               'manifest_sha256': v.r.digest(v.r.json_bytes(self.manifest)),
+                               'journal_path': str(self.journal), 'journal_prefix_bytes': 0,
+                               'journal_prefix_sha256': v.r.digest(b'')}
         self.write(self.journal, b'')
         self.write(self.pending, v.t.encoded(self.trial))
         self.write(self.manifest_path, v.r.json_bytes(self.manifest))
@@ -80,6 +82,8 @@ class Recovery(unittest.TestCase):
         previous = trial_v2(trial_id='previous', exclusion_reason='BLOCKED', reason='approved control')
         raw = v.t.encoded(previous).replace(b'\n', b'\r\n')
         self.write(self.journal, raw)
+        self.trial['runner'].update(journal_prefix_bytes=len(raw), journal_prefix_sha256=v.r.digest(raw))
+        self.write(self.pending, v.t.encoded(self.trial))
         result = self.run_recovery(); output = self.exported(result)
         self.assertTrue(output.startswith(raw)); rows = v.rows(output)
         self.assertEqual(len(rows), 2); self.assertEqual(rows[0], previous)

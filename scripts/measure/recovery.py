@@ -82,7 +82,7 @@ def rows(raw, *, single=False):
     return result
 
 
-def plan(data, allow_legacy=False):
+def plan(data, allow_legacy=False, *, journal_path=None):
     """Recompute a full journal; never replace a published row by a failed guess."""
     journal = rows(data['journal.jsonl'])
     pending = rows(data['pending.json'], single=True)[0]
@@ -103,6 +103,26 @@ def plan(data, allow_legacy=False):
         r.e.sha256(expected)
         require(expected == r.digest(r.json_bytes(manifest)), 'PENDING_MANIFEST_MISMATCH')
         binding = 'pending_canonical_manifest'
+    journal_fields = {'journal_path', 'journal_prefix_bytes', 'journal_prefix_sha256'}
+    if not journal_fields & set(runner):
+        require(allow_legacy, 'LEGACY_JOURNAL_UNBOUND')
+        journal_binding = 'operator_pinned_legacy'
+    else:
+        require(journal_fields <= set(runner), 'PARTIAL_JOURNAL_BINDING')
+        require(isinstance(runner['journal_path'], str) and journal_path is not None and
+                runner['journal_path'] == os.path.abspath(journal_path), 'PENDING_JOURNAL_PATH_MISMATCH')
+        n = runner['journal_prefix_bytes']
+        require(type(n) is int and 0 <= n <= len(data['journal.jsonl']), 'PENDING_JOURNAL_PREFIX_LENGTH')
+        r.e.sha256(runner['journal_prefix_sha256'])
+        prefix = data['journal.jsonl'][:n]
+        require(r.digest(prefix) == runner['journal_prefix_sha256'], 'PENDING_JOURNAL_PREFIX_MISMATCH')
+        rows(prefix)
+        suffix = rows(data['journal.jsonl'][n:])
+        require(len(suffix) <= 1 and all((row.get('run_id'), row.get('trial_id')) ==
+                (pending.get('run_id'), pending.get('trial_id')) for row in suffix), 'JOURNAL_SUFFIX_CONFLICT')
+        require(not any((row.get('run_id'), row.get('trial_id')) ==
+                (pending.get('run_id'), pending.get('trial_id')) for row in rows(prefix)), 'PENDING_ALREADY_IN_PREFIX')
+        journal_binding = 'pending_path_and_prefix'
     pending_hash = r.digest(data['pending.json'])
     identity = (pending.get('run_id'), pending.get('trial_id'))
     seen = set()
@@ -120,7 +140,7 @@ def plan(data, allow_legacy=False):
     recovered['runner'].update(state='RECOVERED_INTERRUPTED', exit_code=None, timed_out=None)
     recovered['recovery'] = {'schema_version': 1, 'pending_sha256': pending_hash,
         'journal_sha256': r.digest(data['journal.jsonl']), 'manifest_sha256': r.digest(data['manifest.json']),
-        'manifest_binding': binding, 'execution_started': None, 'process_cleanup_verified': False,
+        'manifest_binding': binding, 'journal_binding': journal_binding, 'execution_started': None, 'process_cleanup_verified': False,
         'window_kind': 'predeclared_not_observed'}
     # Only the original t0 is retained. Other timestamps and times of failure are never invented.
     for key in m.TIMES:
@@ -134,7 +154,8 @@ def plan(data, allow_legacy=False):
         require(existing.get('t0') == pending.get('t0'), 'EXISTING_TRIAL_CONFLICT')
         er = existing.get('runner', {})
         require(er.get('state') in ('COLLECTED', 'COLLECTION_FAILED', 'RECOVERED_INTERRUPTED') and
-                all(er.get(k) == runner.get(k) for k in ('mode', 'command', 'manifest_sha256')), 'EXISTING_RUNNER_CONFLICT')
+                all(er.get(k) == runner.get(k) for k in ('mode', 'command', 'manifest_sha256', 'journal_path',
+                                                           'journal_prefix_bytes', 'journal_prefix_sha256')), 'EXISTING_RUNNER_CONFLICT')
         if er.get('state') == 'RECOVERED_INTERRUPTED':
             require(existing.get('recovery', {}).get('pending_sha256') == pending_hash, 'EXISTING_RECOVERY_CONFLICT')
         disposition, output, combined = 'already_recorded', data['journal.jsonl'], journal
@@ -147,7 +168,7 @@ def plan(data, allow_legacy=False):
     m.analyze_v2([(recovered, 'pending')], [], manifest)
     m.analyze_v2([(row, 'journal:' + str(i)) for i, row in enumerate(combined)], [], manifest)
     return output, {'disposition': disposition, 'row_count': len(combined), 'pending_sha256': pending_hash,
-                    'manifest_binding': binding, 'output_sha256': r.digest(output)}
+                    'manifest_binding': binding, 'journal_binding': journal_binding, 'output_sha256': r.digest(output)}
 
 
 def recover(journal, manifest, store, pins, *, operator_stopped=False, allow_legacy=False):
@@ -176,7 +197,7 @@ def recover(journal, manifest, store, pins, *, operator_stopped=False, allow_leg
                             'pending.json': private_read(pending), 'manifest.json': private_read(manifest)}
                     require(all(r.digest(data[name]) == pins[name] for name in INPUTS), 'INPUT_HASH_MISMATCH')
                     for name in INPUTS: r.write_once(out, name, data[name])
-                    output, result = plan(data, allow_legacy)
+                    output, result = plan(data, allow_legacy, journal_path=str(journal))
                     r.write_once(out, 'attempts.jsonl', output)
                     terminal.update(status='completed', reason=None, result=result)
                 finally:
@@ -222,7 +243,7 @@ def export(store, expected, *, summary=False, output_path=None):
         require(set(os.listdir(fd)) == {'intent.json', 'terminal.json', 'attempts.jsonl', *INPUTS}, 'UNEXPECTED_STORE_ENTRY')
         data = {name: r.read_at(fd, name, MAX_INPUT) for name in INPUTS}
         require(all(r.digest(data[name]) == intent['pins'][name] for name in INPUTS), 'INPUT_HASH_MISMATCH')
-        output, result = plan(data, intent['allow_legacy'])
+        output, result = plan(data, intent['allow_legacy'], journal_path=intent['journal_path'])
         require(result == terminal['result'] and output == r.read_at(fd, 'attempts.jsonl'), 'RECOVERY_OUTPUT_MISMATCH')
         if output_path is not None:
             destination = Path(os.path.abspath(output_path))
