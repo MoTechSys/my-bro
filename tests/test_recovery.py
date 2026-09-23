@@ -310,6 +310,71 @@ class Recovery(unittest.TestCase):
         self.assertEqual(v.export(self.store, result['intent_sha256'], summary=True)['result']['manifest_binding'],
                          'pending_canonical_manifest')
 
+    def test_bound_pending_refuses_another_journal_path(self):
+        self.trial['runner']['journal_path'] = str(self.base/'different.jsonl')
+        self.write(self.pending, v.t.encoded(self.trial)); self.reject()
+
+    def test_bound_pending_refuses_missing_prefix_even_with_new_pins(self):
+        self.trial['runner'].update(journal_prefix_bytes=5, journal_prefix_sha256=v.r.digest(b'prior'))
+        self.write(self.pending, v.t.encoded(self.trial)); self.reject()
+
+    def test_bound_pending_refuses_rewritten_prefix(self):
+        before = v.t.encoded(trial_v2(trial_id='prior'))
+        self.trial['runner'].update(journal_prefix_bytes=len(before), journal_prefix_sha256=v.r.digest(before))
+        self.write(self.pending, v.t.encoded(self.trial))
+        self.write(self.journal, before.replace(b'prior', b'other'))
+        self.reject()
+
+    def test_bound_journal_cannot_gain_unrelated_suffix(self):
+        self.write(self.journal, v.t.encoded(trial_v2(trial_id='unrelated')))
+        self.reject()
+
+    def test_legacy_journal_binding_is_explicit_and_recorded(self):
+        for key in ('journal_path', 'journal_prefix_bytes', 'journal_prefix_sha256'): del self.trial['runner'][key]
+        self.write(self.pending, v.t.encoded(self.trial))
+        data = {name: path.read_bytes() for name, path in zip(v.INPUTS, (self.journal, self.pending, self.manifest_path))}
+        with self.assertRaisesRegex(ValueError, 'LEGACY_JOURNAL_UNBOUND'): v.plan(data)
+        result = self.run_recovery(allow_legacy=True)
+        self.assertEqual(v.export(self.store, result['intent_sha256'], summary=True)['result']['journal_binding'],
+                         'operator_pinned_legacy')
+
+    def test_single_pending_row_must_not_be_empty_or_multiple(self):
+        for raw in (b'', b'{}\n{}\n'):
+            with self.subTest(raw=raw), self.assertRaisesRegex(ValueError, 'INPUT_ROW_COUNT'):
+                v.rows(raw, single=True)
+
+    def test_extra_store_entry_rejected(self):
+        result = self.run_recovery(); self.write(self.store/'extra.json', b'{}\n')
+        with self.assertRaisesRegex(ValueError, 'UNEXPECTED_STORE_ENTRY'): self.exported(result)
+
+    def test_internal_fault_has_distinct_bounded_code(self):
+        with patch.object(v, 'plan', side_effect=RuntimeError('PRIVATE_INTERNAL_DETAIL')):
+            result = self.run_recovery()
+        summary = v.export(self.store, result['intent_sha256'], summary=True)
+        self.assertEqual(summary['reason'], 'RECOVERY_INTERNAL_ERROR')
+        self.assertNotIn('PRIVATE_INTERNAL_DETAIL', (self.store/'terminal.json').read_text())
+
+    def test_inner_runner_cancellation_retains_pending_and_is_not_duplicated(self):
+        self.pending.unlink(); spec_path = self.base/'spec.json'; alerts = self.base/'alerts.jsonl'
+        self.write(spec_path, v.r.json_bytes({'attempt': self.trial})); self.write(alerts, b'')
+        with patch.object(v.t, 'collect', side_effect=KeyboardInterrupt('PRIVATE_CANCEL_DETAIL')), \
+             contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = v.t.main(['--replay', '--spec', str(spec_path), '--manifest', str(self.manifest_path),
+                             '--output', str(self.journal), '--alerts', str(alerts)])
+        self.assertEqual(code, 130); self.assertTrue(self.pending.exists())
+        before = self.journal.read_bytes()
+        self.assertNotIn(b'PRIVATE_CANCEL_DETAIL', before)
+        self.assertEqual(v.rows(before)[0]['runner']['state'], 'COLLECTION_INTERRUPTED')
+        result = self.run_recovery(); self.assertEqual(self.exported(result), before)
+        self.assertEqual(v.export(self.store, result['intent_sha256'], summary=True)['result']['disposition'], 'already_recorded')
+
+    def test_existing_recovery_hash_conflict_is_rejected(self):
+        result = self.run_recovery(); row = v.rows(self.exported(result))[0]
+        row['recovery']['pending_sha256'] = 'a' * 64
+        self.write(self.journal, v.t.encoded(row))
+        self.store = self.base/'conflict'; self.store.mkdir(mode=0o700)
+        self.reject()
+
     def test_actual_cli_recovery_and_export(self):
         command = [sys.executable, '-I', '-B', str(ROOT/'scripts/measure/recovery.py')]
         pins = self.pins()
