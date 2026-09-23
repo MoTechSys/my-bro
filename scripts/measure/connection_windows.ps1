@@ -81,28 +81,9 @@ function Service-Sample {
     }
 }
 
-try {
-    Assert-Value ($Lab -and [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT)
-    foreach ($Value in @($RunId,$CycleId,$ClockRef,$ExpectedHost,$ImagePath)) { Assert-Text $Value }
-    Assert-Value ($PlanSha256 -cmatch '^[0-9a-f]{64}$' -and $ImageSha256 -cmatch '^[0-9a-f]{64}$')
-    Assert-Value ($ImagePath -cmatch '^[A-Za-z]:\\' -and $ImagePath -notmatch '/' -and
-        [IO.Path]::GetFullPath($ImagePath) -ceq $ImagePath -and
-        [IO.Path]::GetFileName($ImagePath) -ieq 'wazuh-agent.exe')
-    $Drive = [IO.DriveInfo]::new([IO.Path]::GetPathRoot($ImagePath))
-    Assert-Value ($Drive.DriveType -eq [IO.DriveType]::Fixed)
-    $HostNameValue = [Net.Dns]::GetHostName()
-    Assert-Value ($HostNameValue -ceq $ExpectedHost)
-    $ProducerDigest = (Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()
-    $Result = [ordered]@{
-        schema_version = 1; producer = 'soc-windows-service-v1'; capture_id = [Guid]::NewGuid().ToString('N')
-        producer_sha256 = $ProducerDigest; plan_sha256 = $PlanSha256; run_id = $RunId; cycle_id = $CycleId
-        clock_ref = $ClockRef; hostname = $HostNameValue; expected_image_path = $ImagePath
-        expected_image_sha256 = $ImageSha256; status = 'failed'; samples = @(); boot_before_ticks = $null
-        boot_after_ticks = $null; boot_before_kind = $null; boot_after_kind = $null; start_ms = (Utc-Milliseconds); end_ms = $null
-        start_ticks = [Diagnostics.Stopwatch]::GetTimestamp(); end_ticks = $null
-        tick_frequency = [Diagnostics.Stopwatch]::Frequency
-        acceptance_approved = $false; authenticity_verified = $false; loaded_image_hash_verified = $false
-    }
+function Complete-ServiceEvidence($Result) {
+    $Result.start_ms = Utc-Milliseconds
+    $Result.start_ticks = [Diagnostics.Stopwatch]::GetTimestamp()
     try {
         $Boot = @(Get-CimInstance -ClassName Win32_OperatingSystem -OperationTimeoutSec 1)
         Assert-Value ($Boot.Count -eq 1)
@@ -128,6 +109,32 @@ try {
         $Result.end_ticks -lt $Result.start_ticks -or $Result.end_ms -lt $Result.start_ms) {
         $Result.status = 'failed'
     }
+    return $Result
+}
+
+try {
+    Assert-Value ($Lab -and [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT)
+    foreach ($Value in @($RunId,$CycleId,$ClockRef,$ExpectedHost,$ImagePath)) { Assert-Text $Value }
+    Assert-Value ($PlanSha256 -cmatch '^[0-9a-f]{64}$' -and $ImageSha256 -cmatch '^[0-9a-f]{64}$')
+    Assert-Value ($ImagePath -cmatch '^[A-Za-z]:\\' -and $ImagePath -notmatch '/' -and
+        [IO.Path]::GetFullPath($ImagePath) -ceq $ImagePath -and
+        [IO.Path]::GetFileName($ImagePath) -ieq 'wazuh-agent.exe')
+    $Drive = [IO.DriveInfo]::new([IO.Path]::GetPathRoot($ImagePath))
+    Assert-Value ($Drive.DriveType -eq [IO.DriveType]::Fixed)
+    $HostNameValue = [Net.Dns]::GetHostName()
+    Assert-Value ($HostNameValue -ceq $ExpectedHost)
+    $ProducerDigest = (Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    $Result = [ordered]@{
+        schema_version = 1; producer = 'soc-windows-service-v1'; capture_id = [Guid]::NewGuid().ToString('N')
+        producer_sha256 = $ProducerDigest; plan_sha256 = $PlanSha256; run_id = $RunId; cycle_id = $CycleId
+        clock_ref = $ClockRef; hostname = $HostNameValue; expected_image_path = $ImagePath
+        expected_image_sha256 = $ImageSha256; status = 'failed'; samples = @(); boot_before_ticks = $null
+        boot_after_ticks = $null; boot_before_kind = $null; boot_after_kind = $null; start_ms = (Utc-Milliseconds); end_ms = $null
+        start_ticks = [Diagnostics.Stopwatch]::GetTimestamp(); end_ticks = $null
+        tick_frequency = [Diagnostics.Stopwatch]::Frequency
+        acceptance_approved = $false; authenticity_verified = $false; loaded_image_hash_verified = $false
+    }
+    $Result = Complete-ServiceEvidence $Result
     $Json = ConvertTo-Json -InputObject $Result -Depth 5 -Compress
     Assert-Value ([Text.Encoding]::UTF8.GetByteCount($Json) -le 65536)
     [Console]::Out.WriteLine($Json)
