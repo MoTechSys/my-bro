@@ -1,0 +1,57 @@
+[
+  {
+    "url": "https://csrc.nist.gov/pubs/sp/800/218/final",
+    "resolved_url": "https://csrc.nist.gov/pubs/sp/800/218/final",
+    "retrieved_utc": "2026-09-23T01:53:34.776956+00:00",
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 48321,
+    "sha256": "e6e9eae588b09b6bd4c5f4e0c6fbe224bbc6bc8f84255f930fbb02e2487f9dff",
+    "archive": "2026-09-23_nist_ssdf_final.html.gz",
+    "archive_bytes": 9768,
+    "archive_sha256": "17ab20de3d294c5c900afea31661a08e17c06dce65824d9a114bb9b7726ace63"
+  },
+  {
+    "url": "https://csrc.nist.gov/pubs/sp/800/218/r1/ipd",
+    "resolved_url": "https://csrc.nist.gov/pubs/sp/800/218/r1/ipd",
+    "retrieved_utc": "2026-09-23T01:53:34.864411+00:00",
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 48868,
+    "sha256": "55cec1277940429869190e6ff979bfb5a377e902fffd52e934124901e9efe18c",
+    "archive": "2026-09-23_nist_ssdf_draft.html.gz",
+    "archive_bytes": 9972,
+    "archive_sha256": "8e3977ddec5788cf66845483991efb57d8eeac0d201cbdbf9920ed3e737b1aaf"
+  },
+  {
+    "url": "https://csrc.nist.gov/pubs/sp/800/61/r3/final",
+    "resolved_url": "https://csrc.nist.gov/pubs/sp/800/61/r3/final",
+    "retrieved_utc": "2026-09-23T01:53:35.008626+00:00",
+    "content_type": "text/html; charset=utf-8",
+    "bytes": 44822,
+    "sha256": "cca8c8ca097f8813903b1c68f767ceabcdc0aedabac4b4d6080838a799a56789",
+    "archive": "2026-09-23_nist_ir_final.html.gz",
+    "archive_bytes": 9291,
+    "archive_sha256": "d594c2db89d153be4aa6315434649211c30c1f50bc9fea7f955a1c8950377fe7"
+  },
+  {
+    "url": "https://documentation.wazuh.com/current/user-manual/agent/agent-enrollment/agent-life-cycle.html",
+    "resolved_url": "https://documentation.wazuh.com/current/user-manual/agent/agent-enrollment/agent-life-cycle.html",
+    "retrieved_utc": "2026-09-23T01:53:35.073196+00:00",
+    "content_type": "text/html",
+    "bytes": 169348,
+    "sha256": "df8fc39065cdc2125915d1abfe9cc9280fcf774448168bb586dd2869b91bc6c3",
+    "archive": "2026-09-23_wazuh_agent_lifecycle.html.gz",
+    "archive_bytes": 30442,
+    "archive_sha256": "2ba92a18968234d1771bf84833e18b6ede3fb5753a263544a567376ef43ad1e4"
+  },
+  {
+    "url": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf",
+    "resolved_url": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-218.pdf",
+    "retrieved_utc": "2026-09-23T01:53:35.282783+00:00",
+    "content_type": "application/pdf",
+    "bytes": 739891,
+    "sha256": "617746e553a9e2da49bfbd4eef0dfc3094758a39b869314e4173ac36605cde22",
+    "archive": "2026-09-23_ssdf_11_pdf.pdf.gz",
+    "archive_bytes": 712649,
+    "archive_sha256": "325f7cc8d3b03b86adcd9501bb0c18aae53bcd6a6f8c77c3be3fed3fca66654e"
+  }
+]
