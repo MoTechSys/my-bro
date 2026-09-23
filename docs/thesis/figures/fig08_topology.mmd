@@ -1,0 +1,11 @@
+flowchart TB
+    linux["Historical kali1 / 192.168.100.108 / Agent / Suricata / YARA"]
+    server["Historical wazuh-server / 192.168.100.105 / Manager / Indexer / UI"]
+    windows["Historical win1 / 192.168.100.106 / Windows Agent"]
+    browser["Analyst browser / Dashboard access"]
+    lab["Historical VMware design / 192.168.100.0/24 / Not live cloud inventory"]
+    vt["VirusTotal service / External HTTPS access"]
+    linux -->|"1514 events / 1515 enrollment"| server
+    windows -->|"1514 events / 1515 enrollment"| server
+    browser -->|"HTTPS access"| server
+    server <-->|"integration request"| vt

@@ -1,0 +1,26 @@
+flowchart TB
+    source["Endpoint / network sources / Events and EVE JSON"]
+    collect["P1 Collect / Agent / logcollector"]
+    config["D1 Rules / decoders / CDB / Versioned configuration"]
+    decode["P2 Decode / Extract fields"]
+    enrich["P4 Enrich via VirusTotal / Hash request / event reply"]
+    match["P3 Match and route / Configured rule conditions"]
+    respond["P5 Endpoint AR / Guarded remove / YARA"]
+    alerts["D2 alerts.json / Alert records"]
+    arlog["D3 active-responses.log / Recollected by P1"]
+    present["P6 Ship / index / query / Filebeat + Indexer + UI"]
+    analyst["Security analyst / Search requests / results"]
+    documents["D4 Index documents / wazuh-alerts-4.x-*"]
+    source -->|"raw events"| collect
+    collect -->|"enveloped events"| decode
+    config -->|"decoder definitions"| decode
+    decode -->|"decoded fields"| match
+    match <-->|"trigger / enrichment event"| enrich
+    match -->|"configured AR triggers"| respond
+    respond -->|"result / error logs"| arlog
+    match -->|"eligible alert"| alerts
+    alerts -->|"JSON shipping"| present
+    present <-->|"index / read"| documents
+    analyst <-->|"query / display"| present
+    config -->|"rule / CDB definitions"| match
+    arlog -->|"feedback log collection"| collect

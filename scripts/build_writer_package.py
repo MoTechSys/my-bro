@@ -93,9 +93,10 @@ def validate(spec, root=ROOT):
             nodes[node['id']] = node
         require(isinstance(spec['edges'], list) and len(spec['edges']) <= 50, 'edge count')
         for edge in spec['edges']:
-            require(set(edge) == {'from', 'to', 'label', 'points', 'label_at'}, 'edge fields')
+            require(set(edge) == {'from', 'to', 'label', 'points', 'label_at', 'direction'}, 'edge fields')
             require(edge['from'] in nodes and edge['to'] in nodes, 'edge endpoint')
             text(edge['label'], 56)
+            require(edge['direction'] in ('forward', 'both', 'none'), 'edge direction')
             require(isinstance(edge['points'], list) and 2 <= len(edge['points']) <= 8, 'edge points')
             for point in edge['points'] + [edge['label_at']]:
                 require(isinstance(point, list) and len(point) == 2, 'point')
@@ -155,7 +156,9 @@ def render(spec):
     if spec['kind'] == 'graph':
         for edge in spec['edges']:
             element(svg, 'polyline', points=' '.join(f'{x},{y}' for x, y in edge['points']),
-                    fill='none', stroke='#366581', stroke_width=2, marker_end='url(#arrow)')
+                    fill='none', stroke='#366581', stroke_width=2,
+                    marker_end='url(#arrow)' if edge['direction'] != 'none' else 'none',
+                    marker_start='url(#arrow)' if edge['direction'] == 'both' else 'none')
         for node in spec['nodes']:
             x, y = node['x'], node['y']
             element(svg, 'rect', x=x, y=y, width=300, height=100, rx=22 if node['kind'] == 'process' else 4,
@@ -201,7 +204,8 @@ def mermaid(spec):
         for n in spec['nodes']:
             lines.append(f'    {n["id"]}["{safe(" / ".join(n["lines"]))}"]')
         for e in spec['edges']:
-            lines.append(f'    {e["from"]} -->|"{safe(e["label"])}"| {e["to"]}')
+            arrow = {'forward': '-->', 'both': '<-->', 'none': '---'}[e['direction']]
+            lines.append(f'    {e["from"]} {arrow}|"{safe(e["label"])}"| {e["to"]}')
     else:
         lines = ['sequenceDiagram']
         lines += [f'    participant {p["id"]} as {safe(p["label"])}' for p in spec['participants']]

@@ -1,0 +1,12 @@
+flowchart TB
+    endpoints["Endpoints / network / Authorized event sources"]
+    soc["SOC platform / Collection and detection"]
+    vt["VirusTotal / External reputation service"]
+    analyst["Security analyst / Search / investigate"]
+    operator["Lab operator / Authorized test actions"]
+    reviewer["Human evaluator / Independent labels/reviews"]
+    endpoints <-->|"events / configured AR return"| soc
+    soc <-->|"hash request / reputation reply"| vt
+    soc <-->|"alerts / search requests"| analyst
+    operator -->|"authorized test events"| endpoints
+    reviewer -->|"review evidence"| analyst

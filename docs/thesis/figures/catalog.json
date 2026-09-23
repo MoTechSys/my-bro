@@ -101,7 +101,8 @@
           "label_at": [
             580,
             305
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "n1",
@@ -120,7 +121,8 @@
           "label_at": [
             580,
             485
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "n2",
@@ -139,7 +141,8 @@
           "label_at": [
             580,
             665
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "n3",
@@ -158,7 +161,8 @@
           "label_at": [
             580,
             845
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "n4",
@@ -177,7 +181,8 @@
           "label_at": [
             580,
             1025
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "n5",
@@ -196,7 +201,36 @@
           "label_at": [
             580,
             1205
-          ]
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n3",
+          "to": "n2",
+          "label": "revise design after failed checks",
+          "points": [
+            [
+              430,
+              760
+            ],
+            [
+              190,
+              760
+            ],
+            [
+              190,
+              580
+            ],
+            [
+              430,
+              580
+            ]
+          ],
+          "label_at": [
+            230,
+            665
+          ],
+          "direction": "forward"
         }
       ],
       "height": 1460
@@ -353,7 +387,8 @@
           "label_at": [
             580,
             208
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "agent",
@@ -372,7 +407,8 @@
           "label_at": [
             950,
             310
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "rules",
@@ -391,7 +427,8 @@
           "label_at": [
             580,
             398
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "manager",
@@ -418,7 +455,8 @@
           "label_at": [
             580,
             499
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "manager",
@@ -437,7 +475,8 @@
           "label_at": [
             950,
             500
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "alerts",
@@ -456,7 +495,8 @@
           "label_at": [
             950,
             690
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "filebeat",
@@ -475,7 +515,8 @@
           "label_at": [
             950,
             880
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "index",
@@ -494,7 +535,8 @@
           "label_at": [
             950,
             1070
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "advisory",
@@ -513,7 +555,8 @@
           "label_at": [
             210,
             880
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "human",
@@ -532,7 +575,8 @@
           "label_at": [
             210,
             1070
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "alerts",
@@ -559,7 +603,8 @@
           "label_at": [
             580,
             694
-          ]
+          ],
+          "direction": "forward"
         }
       ],
       "height": 1330
@@ -655,7 +700,8 @@
           "label_at": [
             580,
             208
-          ]
+          ],
+          "direction": "both"
         },
         {
           "from": "soc",
@@ -682,7 +728,8 @@
           "label_at": [
             580,
             314
-          ]
+          ],
+          "direction": "both"
         },
         {
           "from": "soc",
@@ -701,7 +748,8 @@
           "label_at": [
             950,
             315
-          ]
+          ],
+          "direction": "both"
         },
         {
           "from": "operator",
@@ -728,12 +776,13 @@
           "label_at": [
             245,
             530
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "reviewer",
           "to": "analyst",
-          "label": "review evidence, not AR control",
+          "label": "review evidence",
           "points": [
             [
               950,
@@ -747,7 +796,8 @@
           "label_at": [
             950,
             515
-          ]
+          ],
+          "direction": "forward"
         }
       ],
       "height": 780
@@ -903,7 +953,8 @@
           "label_at": [
             580,
             208
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "collect",
@@ -922,7 +973,8 @@
           "label_at": [
             950,
             310
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "config",
@@ -941,7 +993,8 @@
           "label_at": [
             580,
             398
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "decode",
@@ -960,7 +1013,8 @@
           "label_at": [
             950,
             500
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "match",
@@ -979,7 +1033,8 @@
           "label_at": [
             580,
             588
-          ]
+          ],
+          "direction": "both"
         },
         {
           "from": "match",
@@ -1006,7 +1061,8 @@
           "label_at": [
             580,
             689
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "respond",
@@ -1025,7 +1081,8 @@
           "label_at": [
             210,
             880
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "match",
@@ -1044,7 +1101,8 @@
           "label_at": [
             950,
             690
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "alerts",
@@ -1063,7 +1121,8 @@
           "label_at": [
             950,
             880
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "present",
@@ -1082,7 +1141,8 @@
           "label_at": [
             950,
             1070
-          ]
+          ],
+          "direction": "both"
         },
         {
           "from": "analyst",
@@ -1109,7 +1169,68 @@
           "label_at": [
             580,
             1069
-          ]
+          ],
+          "direction": "both"
+        },
+        {
+          "from": "config",
+          "to": "match",
+          "label": "rule / CDB definitions",
+          "points": [
+            [
+              360,
+              410
+            ],
+            [
+              530,
+              410
+            ],
+            [
+              530,
+              600
+            ],
+            [
+              800,
+              600
+            ]
+          ],
+          "label_at": [
+            560,
+            495
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "arlog",
+          "to": "collect",
+          "label": "feedback log collection",
+          "points": [
+            [
+              60,
+              980
+            ],
+            [
+              30,
+              980
+            ],
+            [
+              30,
+              140
+            ],
+            [
+              950,
+              140
+            ],
+            [
+              950,
+              170
+            ]
+          ],
+          "label_at": [
+            275,
+            140
+          ],
+          "direction": "forward"
         }
       ],
       "height": 1330
@@ -1224,7 +1345,8 @@
           "label_at": [
             580,
             208
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "builtin",
@@ -1243,7 +1365,8 @@
           "label_at": [
             950,
             315
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "cdb",
@@ -1262,7 +1385,8 @@
           "label_at": [
             580,
             408
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "local",
@@ -1281,7 +1405,8 @@
           "label_at": [
             950,
             515
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "annotations",
@@ -1300,7 +1425,8 @@
           "label_at": [
             580,
             608
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "route",
@@ -1327,7 +1453,8 @@
           "label_at": [
             580,
             714
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "route",
@@ -1346,7 +1473,8 @@
           "label_at": [
             950,
             715
-          ]
+          ],
+          "direction": "forward"
         }
       ],
       "height": 980
@@ -1646,7 +1774,8 @@
           "label_at": [
             580,
             208
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "windows",
@@ -1673,7 +1802,8 @@
           "label_at": [
             580,
             324
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "browser",
@@ -1692,7 +1822,8 @@
           "label_at": [
             950,
             325
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "server",
@@ -1719,7 +1850,8 @@
           "label_at": [
             950,
             565
-          ]
+          ],
+          "direction": "both"
         }
       ],
       "height": 820
@@ -1855,7 +1987,8 @@
           "label_at": [
             580,
             208
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "operator",
@@ -1874,7 +2007,8 @@
           "label_at": [
             580,
             408
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "analyst",
@@ -1893,7 +2027,8 @@
           "label_at": [
             580,
             608
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "reviewer",
@@ -1912,7 +2047,8 @@
           "label_at": [
             580,
             808
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "future",
@@ -1931,7 +2067,8 @@
           "label_at": [
             580,
             1008
-          ]
+          ],
+          "direction": "forward"
         }
       ],
       "height": 1180
@@ -1940,7 +2077,7 @@
       "id": "fig10_ai_sequence",
       "title": "UC-14 - advisory evidence and evaluation sequence",
       "caption_ar": "المدخلات المنقحة والمعرفة المثبتة تدخل مسار المحلل. gold وrubric لا يرسلان إلى النموذج. سجل intent يسبق العامل، ويحفظ الفشل/الرفض/الانقطاع ولا يعيد المحاولة خفية. التحقق من البايتات لا يثبت هوية النموذج أو استقلال البشر. لا سهم نحو AR.",
-      "status": "Linux code path; failure/abort branches described, no measured timing",
+      "status": "Advisory-only pipeline; original inference and human C4 acceptance pending",
       "sources": [
         "ai_agent/runner.py",
         "ai_agent/analyst.py",
@@ -2003,7 +2140,7 @@
         {
           "from": "worker",
           "to": "runner",
-          "label": "Validate full output or record rejected/failed/abstained state"
+          "label": "Validated output or explicit noncompleted status; no inference from refusal prose"
         },
         {
           "from": "runner",
@@ -2148,7 +2285,8 @@
           "label_at": [
             580,
             208
-          ]
+          ],
+          "direction": "none"
         },
         {
           "from": "manifest",
@@ -2167,7 +2305,8 @@
           "label_at": [
             210,
             325
-          ]
+          ],
+          "direction": "none"
         },
         {
           "from": "attempt",
@@ -2186,7 +2325,8 @@
           "label_at": [
             950,
             325
-          ]
+          ],
+          "direction": "none"
         },
         {
           "from": "clock",
@@ -2205,7 +2345,8 @@
           "label_at": [
             210,
             545
-          ]
+          ],
+          "direction": "none"
         },
         {
           "from": "alert",
@@ -2224,7 +2365,8 @@
           "label_at": [
             950,
             545
-          ]
+          ],
+          "direction": "none"
         },
         {
           "from": "attempt",
@@ -2251,7 +2393,64 @@
           "label_at": [
             950,
             785
-          ]
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "source",
+          "to": "attempt",
+          "label": "source_binding + verified export",
+          "points": [
+            [
+              360,
+              660
+            ],
+            [
+              550,
+              660
+            ],
+            [
+              550,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            560,
+            560
+          ],
+          "direction": "none"
+        },
+        {
+          "from": "recovery",
+          "to": "attempt",
+          "label": "pending path + journal prefix",
+          "points": [
+            [
+              360,
+              880
+            ],
+            [
+              610,
+              880
+            ],
+            [
+              610,
+              220
+            ],
+            [
+              800,
+              220
+            ]
+          ],
+          "label_at": [
+            590,
+            790
+          ],
+          "direction": "none"
         }
       ],
       "height": 1040
@@ -2286,7 +2485,7 @@
           "kind": "store",
           "lines": [
             "Case (planned)",
-            "case_id / batch_id / alert_ref",
+            "case_id, batch_id, alert_ref",
             "input_sha256 / gold"
           ]
         },
@@ -2331,7 +2530,7 @@
           "lines": [
             "Shared answer artifact",
             "output_sha256",
-            "Actual bytes verified by runner"
+            "Runner verifies actual bytes"
           ]
         },
         {
@@ -2375,7 +2574,8 @@
           "label_at": [
             580,
             208
-          ]
+          ],
+          "direction": "none"
         },
         {
           "from": "case",
@@ -2402,7 +2602,8 @@
           "label_at": [
             580,
             324
-          ]
+          ],
+          "direction": "none"
         },
         {
           "from": "case",
@@ -2421,7 +2622,8 @@
           "label_at": [
             950,
             325
-          ]
+          ],
+          "direction": "none"
         },
         {
           "from": "attempt",
@@ -2440,7 +2642,8 @@
           "label_at": [
             950,
             545
-          ]
+          ],
+          "direction": "none"
         },
         {
           "from": "output",
@@ -2459,7 +2662,8 @@
           "label_at": [
             580,
             648
-          ]
+          ],
+          "direction": "none"
         },
         {
           "from": "attempt",
@@ -2486,7 +2690,8 @@
           "label_at": [
             950,
             785
-          ]
+          ],
+          "direction": "none"
         }
       ],
       "height": 1040
@@ -2576,7 +2781,7 @@
           "lines": [
             "Attempt journal JSONL",
             "Separate from detection logs",
-            "Includes failures / exclusions"
+            "Failures / exclusions kept"
           ]
         },
         {
@@ -2586,7 +2791,7 @@
           "kind": "store",
           "lines": [
             "Derived reports",
-            "Sanitized, audience-controlled",
+            "Sanitized / access-controlled",
             "Not authenticity certificates"
           ]
         }
@@ -2609,7 +2814,8 @@
           "label_at": [
             580,
             208
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "manager",
@@ -2628,7 +2834,8 @@
           "label_at": [
             950,
             325
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "index",
@@ -2647,7 +2854,8 @@
           "label_at": [
             950,
             545
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "evidence",
@@ -2666,7 +2874,8 @@
           "label_at": [
             210,
             765
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "journal",
@@ -2685,7 +2894,8 @@
           "label_at": [
             580,
             868
-          ]
+          ],
+          "direction": "forward"
         }
       ],
       "height": 1040
@@ -2801,7 +3011,8 @@
           "label_at": [
             580,
             305
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "n1",
@@ -2820,7 +3031,8 @@
           "label_at": [
             580,
             485
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "n2",
@@ -2839,12 +3051,13 @@
           "label_at": [
             580,
             665
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "n3",
           "to": "n4",
-          "label": "next stage",
+          "label": "no published final row",
           "points": [
             [
               580,
@@ -2858,7 +3071,8 @@
           "label_at": [
             580,
             845
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "n4",
@@ -2877,7 +3091,8 @@
           "label_at": [
             580,
             1025
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "n5",
@@ -2896,7 +3111,8 @@
           "label_at": [
             580,
             1205
-          ]
+          ],
+          "direction": "forward"
         },
         {
           "from": "n6",
@@ -2915,7 +3131,36 @@
           "label_at": [
             580,
             1385
-          ]
+          ],
+          "direction": "forward"
+        },
+        {
+          "from": "n3",
+          "to": "n5",
+          "label": "existing final row: preserve once",
+          "points": [
+            [
+              730,
+              760
+            ],
+            [
+              970,
+              760
+            ],
+            [
+              970,
+              1120
+            ],
+            [
+              730,
+              1120
+            ]
+          ],
+          "label_at": [
+            865,
+            930
+          ],
+          "direction": "forward"
         }
       ],
       "height": 1640
@@ -3004,122 +3249,7 @@
           ]
         }
       ],
-      "edges": [
-        {
-          "from": "n0",
-          "to": "n1",
-          "label": "next stage",
-          "points": [
-            [
-              580,
-              270
-            ],
-            [
-              580,
-              350
-            ]
-          ],
-          "label_at": [
-            580,
-            305
-          ]
-        },
-        {
-          "from": "n1",
-          "to": "n2",
-          "label": "next stage",
-          "points": [
-            [
-              580,
-              450
-            ],
-            [
-              580,
-              530
-            ]
-          ],
-          "label_at": [
-            580,
-            485
-          ]
-        },
-        {
-          "from": "n2",
-          "to": "n3",
-          "label": "next stage",
-          "points": [
-            [
-              580,
-              630
-            ],
-            [
-              580,
-              710
-            ]
-          ],
-          "label_at": [
-            580,
-            665
-          ]
-        },
-        {
-          "from": "n3",
-          "to": "n4",
-          "label": "next stage",
-          "points": [
-            [
-              580,
-              810
-            ],
-            [
-              580,
-              890
-            ]
-          ],
-          "label_at": [
-            580,
-            845
-          ]
-        },
-        {
-          "from": "n4",
-          "to": "n5",
-          "label": "next stage",
-          "points": [
-            [
-              580,
-              990
-            ],
-            [
-              580,
-              1070
-            ]
-          ],
-          "label_at": [
-            580,
-            1025
-          ]
-        },
-        {
-          "from": "n5",
-          "to": "n6",
-          "label": "next stage",
-          "points": [
-            [
-              580,
-              1170
-            ],
-            [
-              580,
-              1250
-            ]
-          ],
-          "label_at": [
-            580,
-            1205
-          ]
-        }
-      ],
+      "edges": [],
       "height": 1460
     }
   ]

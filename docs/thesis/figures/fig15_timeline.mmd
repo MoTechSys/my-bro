@@ -1,0 +1,8 @@
+flowchart TB
+    n0["t0: action launch intent / Durable trial journal"]
+    n1["t1: native source timestamp / Not poll time or file mtime"]
+    n2["t2: manager alert / UC-03 t2_prime separately"]
+    n3["t3: first observed visibility / Requires prior negative poll"]
+    n4["t4: actual AR start / Instrumentation not yet built"]
+    n5["t5: independent completion / Causal evidence not yet built"]
+    n6["t6: manager confirmation / Not proof of t5 by itself"]

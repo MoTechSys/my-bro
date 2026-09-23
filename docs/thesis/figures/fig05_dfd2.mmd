@@ -1,0 +1,16 @@
+flowchart TB
+    input["Decoded fields from P2 / Event metadata"]
+    builtin["P3.1 Built-in parents / Rule-specific matching"]
+    cdb["CDB lists / Conditional command lookup"]
+    local["P3.2 Local rule conditions / if_sid / field / match"]
+    annotations["Optional MITRE metadata / Not universal coverage"]
+    route["P3.3 Rule level + routing / Configured thresholds"]
+    alert["alerts.json / Eligible alerts"]
+    outputs["P4 enrichment / P5 AR / Configured triggers only"]
+    input -->|"decoded input"| builtin
+    builtin -->|"parent match"| local
+    cdb -->|"lookup where configured"| local
+    local -->|"matching rule"| route
+    annotations -->|"metadata if present"| route
+    route -->|"alert record"| alert
+    route -->|"trigger conditions"| outputs
