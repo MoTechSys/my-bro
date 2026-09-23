@@ -250,6 +250,23 @@ class ConnectionContract(unittest.TestCase):
                 q['start_ms'] += shift; q['end_ms'] += shift
             self.assertEqual(state(r), 'CLOCK_JUMP')
 
+    def test_scheduler_tolerance_does_not_authorize_wall_clock_error(self):
+        r = record()
+        for q in r['polls'][10:]:
+            q['start_ms'] += 900; q['end_ms'] += 900
+        self.assertEqual(state(r), 'CLOCK_JUMP')
+
+    def test_wall_precision_boundary_is_conservative(self):
+        for delta, expected in [(4, 'FUNCTIONAL_EVIDENCE_WITHIN_WINDOW'), (5, 'CLOCK_JUMP')]:
+            r = record(); r['polls'][10]['end_ms'] += delta
+            self.assertEqual(state(r), expected)
+
+    def test_subthreshold_step_drift_is_bounded_globally(self):
+        r = record()
+        for i, q in enumerate(r['polls']):
+            q['start_ms'] += i; q['end_ms'] += i
+        self.assertEqual(state(r), 'CLOCK_JUMP')
+
     def test_request_overrun_and_negative_duration_refused(self):
         for duration in [-1, 2001]:
             r = record(); r['polls'][2]['end_monotonic_ms'] = r['polls'][2]['start_monotonic_ms']+duration

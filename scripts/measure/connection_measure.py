@@ -168,23 +168,26 @@ def classify(p, c, r, alerts):
     if not polls:
         return finish('OBSERVATION_INCOMPLETE')
     previous = None
+    clock = p['clocks']['observer']
+    # Scheduling jitter is not permission to exceed the declared wall-clock error.
+    wall_tolerance = 2 * (clock['precision_ms'] + clock['uncertainty_ms'])
     for q in polls:
         if any(q[k] != p['identity'][k] for k in ('manager_name', 'agent_id', 'agent_name')):
             return finish('IDENTITY_CHANGED')
         dt = q['end_monotonic_ms'] - q['start_monotonic_ms']
         if not 0 <= dt <= REQUEST_MS or q['end_ms'] < q['start_ms']:
             return finish('POLL_TIMING_INVALID')
-        if abs(q['end_ms'] - q['start_ms'] - dt) > JITTER_MS:
+        if abs(q['end_ms'] - q['start_ms'] - dt) > wall_tolerance:
             return finish('CLOCK_JUMP')
         if previous:
             gap = q['start_monotonic_ms'] - previous['start_monotonic_ms']
             if not POLL_MS - JITTER_MS <= gap <= POLL_MS + JITTER_MS or q['start_monotonic_ms'] < previous['end_monotonic_ms']:
                 return finish('POLL_GAP')
-            if abs(q['start_ms'] - previous['start_ms'] - gap) > JITTER_MS:
+            if abs(q['start_ms'] - previous['start_ms'] - gap) > wall_tolerance:
                 return finish('CLOCK_JUMP')
         # Compare to the first sample too; small per-poll drift must not accumulate.
         if abs(q['start_ms'] - polls[0]['start_ms'] -
-               (q['start_monotonic_ms'] - polls[0]['start_monotonic_ms'])) > JITTER_MS:
+               (q['start_monotonic_ms'] - polls[0]['start_monotonic_ms'])) > wall_tolerance:
             return finish('CLOCK_JUMP')
         previous = q
     coverage = p['coverage']
