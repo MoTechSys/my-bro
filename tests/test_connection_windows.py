@@ -252,7 +252,7 @@ class PowerShellProducer(unittest.TestCase):
     def test_mocked_service_sample_executes_actual_function_bodies(self):
         path = str(cc.WINDOWS_PRODUCER)
         command = "$t=$null;$e=$null;$a=[System.Management.Automation.Language.Parser]::ParseFile('"+path+"',[ref]$t,[ref]$e); $a.FindAll({param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst]},$true) | ForEach-Object { . ([scriptblock]::Create($_.Extent.Text)) }; "
-        command += "$ImagePath='C:\\SOC\\wazuh-agent.exe';$ImageSha256='"+'b'*64+"'; function Protected-ImageHash {return $ImageSha256}; function Get-CimInstance {param($ClassName,$Filter,$OperationTimeoutSec); if($ClassName -eq 'Win32_Service'){[pscustomobject]@{Name='WazuhSvc';State='Running';ProcessId=100;PathName=('\"'+$ImagePath+'\"')}}else{[pscustomobject]@{ExecutablePath=$ImagePath;CreationDate=[DateTime]'2026-09-23T01:00:03Z'}}}; Service-Sample | ConvertTo-Json -Compress"
+        command += "$ImagePath='C:\\SOC\\wazuh-agent.exe';$ImageSha256='"+'b'*64+"'; function Protected-ImageHash {return $ImageSha256}; function Get-CimInstance {param($ClassName,$Filter,$OperationTimeoutSec); if($ClassName -eq 'Win32_Service'){[pscustomobject]@{Name='WazuhSvc';State='Running';ProcessId=100;PathName=('\"'+$ImagePath+'\"')}}else{[pscustomobject]@{ProcessId=100;ExecutablePath=$ImagePath;CreationDate=[DateTime]'2026-09-23T01:00:03Z'}}}; Service-Sample | ConvertTo-Json -Compress"
         out = self.run_ps(command); self.assertEqual(out.returncode, 0, out.stderr+out.stdout)
         sample = json.loads(out.stdout); self.assertEqual(sample['process_id'], 100)
         self.assertEqual(sample['process_created_ticks'], str(w.EPOCH_TICKS+(BASE+3000)*10000))

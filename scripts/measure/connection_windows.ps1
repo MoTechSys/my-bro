@@ -43,11 +43,13 @@ function Protected-ImageHash {
         if ($Walk -is [IO.FileInfo]) { $Walk = $Walk.Directory } else { $Walk = $Walk.Parent }
     }
     $Stream = [IO.File]::Open($ImagePath, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
-    $Hash = [Security.Cryptography.SHA256]::Create()
     try {
-        Assert-Value ($Stream.Length -le 33554432)
-        return ([BitConverter]::ToString($Hash.ComputeHash($Stream))).Replace('-', '').ToLowerInvariant()
-    } finally { $Hash.Dispose(); $Stream.Dispose() }
+        $Hash = [Security.Cryptography.SHA256]::Create()
+        try {
+            Assert-Value ($Stream.Length -le 33554432)
+            return ([BitConverter]::ToString($Hash.ComputeHash($Stream))).Replace('-', '').ToLowerInvariant()
+        } finally { $Hash.Dispose() }
+    } finally { $Stream.Dispose() }
 }
 function Service-Sample {
     $Service = @(Get-CimInstance -ClassName Win32_Service -Filter "Name='WazuhSvc'" -OperationTimeoutSec 1)
@@ -58,7 +60,8 @@ function Service-Sample {
     $Process = @(Get-CimInstance -ClassName Win32_Process -Filter ("ProcessId=" + $ProcessIdValue) -OperationTimeoutSec 1)
     Assert-Value ($Process.Count -eq 1)
     $Process = $Process[0]
-    Assert-Value ($Process.ExecutablePath -ieq $ImagePath -and $Process.CreationDate -is [DateTime])
+    Assert-Value ($Process.ProcessId -eq $ProcessIdValue -and $Process.ExecutablePath -ieq $ImagePath -and
+        $Process.CreationDate -is [DateTime])
     $Configured = [string]$Service.PathName
     $Quoted = '"' + $ImagePath + '"'
     Assert-Value (($Configured -ieq $Quoted) -or (($ImagePath -notmatch '\s') -and ($Configured -ieq $ImagePath)))
@@ -108,6 +111,10 @@ try {
     finally {
         $Result.end_ticks = [Diagnostics.Stopwatch]::GetTimestamp()
         $Result.end_ms = Utc-Milliseconds
+    }
+    if (($Result.end_ticks - $Result.start_ticks) -gt (2 * $Result.tick_frequency) -or
+        $Result.end_ticks -lt $Result.start_ticks -or $Result.end_ms -lt $Result.start_ms) {
+        $Result.status = 'failed'
     }
     $Json = ConvertTo-Json -InputObject $Result -Depth 5 -Compress
     Assert-Value ([Text.Encoding]::UTF8.GetByteCount($Json) -le 65536)
