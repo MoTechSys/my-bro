@@ -111,6 +111,12 @@ def validate(spec, root=ROOT):
             for point in edge['points'] + [edge['label_at']]:
                 require(isinstance(point, list) and len(point) == 2, 'point')
                 number(point[0], 15, 1145); number(point[1], 140, spec['height'] - 65)
+            # Conservative monospace estimate, not an all-font text-layout proof.
+            lx, ly = edge['label_at']; half = len(edge['label']) * 13 * 0.65 / 2
+            require(lx-half >= 10 and lx+half <= 1150, 'edge label outside canvas')
+            for n in nodes.values():
+                require(not (lx-half < n['x']+300 and lx+half > n['x'] and
+                             ly-15 < n['y']+100 and ly+3 > n['y']), 'edge label overlaps node')
             for key, point in [('from', edge['points'][0]), ('to', edge['points'][-1])]:
                 n = nodes[edge[key]]; x, y = point
                 require(((x in (n['x'], n['x']+300) and n['y'] <= y <= n['y']+100) or

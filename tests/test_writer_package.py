@@ -83,6 +83,16 @@ class WriterPackageTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'coordinate bounds'):
                 w.validate(s)
 
+    def test_edge_label_clipping_rejected(self):
+        self.graph['edges'][0]['label_at'][0] = 15
+        with self.assertRaisesRegex(ValueError, 'edge label outside canvas'):
+            w.validate(self.graph)
+
+    def test_edge_label_on_node_rejected(self):
+        self.graph['edges'][0]['label_at'] = [580, 210]
+        with self.assertRaisesRegex(ValueError, 'edge label overlaps node'):
+            w.validate(self.graph)
+
     def test_missing_endpoint_rejected(self):
         self.graph['edges'][0]['to'] = 'missing'
         with self.assertRaisesRegex(ValueError, 'edge endpoint'):
