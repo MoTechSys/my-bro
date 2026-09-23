@@ -2,18 +2,18 @@
 
 ## الاستئناف الحاكم — تدقيق الاكتمال وتحكيم AR، 2026-09-23 [AI]
 
-طلبالمالكفيdocs/owner-messages/2026-09-23_vector_completion_audit.md: تأكيدvector، استكمال، بحثومعاييروتدقيقالاكتمال. checkout الصحيحmy-bro؛ المستودعالأب لميمس. لاreset/force/squashللتاريخالمنشور، وPR28مفتوح لا نشرSOC.
+طلب المالك محفوظ في docs/owner-messages/2026-09-23_vector_completion_audit.md: تأكيد Vector، واستكمال العمل والبحث وتدقيق الاكتمال. المسار الصحيح `/home/user/webapp/my-bro`؛ المستودع الأب لم يُمس. لا reset/force/squash للتاريخ المنشور، وPR28 مفتوح، دون نشر SOC.
 
-- نُفذمقامأدلةAR فيe05937d و27اختبارًا في5bd2feb؛ راجعه46bbb5ff ساكنًامنالنص، لميفتحcheckoutولميختبر. النتيجةالأصليةفيresearch/inbox/2026-09-23_ar_review_result.json والتحكيمالكاملآخرtests/README؛ **انتهتولا تعاد**.
-- عولجUC-07 triggerغيرFIM والسياسةالمهملةفيv1، وحفظexclusion_details، وscopeالمحفزاتغيرالمستبعدة، وتصريحمصدرoffsetوالمختلفعنrun، ورفضoverrideفيالمحاولة. fb4100a، ثماختباراتfresh-checkoutفي83ebff9.39AR؛ **680اختبارًا محليًا علىdd87465 في28.865s**. CIالرأسالنهائي وروابطالتسليمفيPR28 لايستعارانمنرأسقديم.
-- F1مساواةoffsetالمحاولةبالـrun لميتبع: العقديسمحبقياساتمتجددة، كلهاإقراراتتحتاجأدلة. F2لميخصصالمحفزالمشتركبعدإبطالclaim؛ احتفظبالغموضوالأسباب. F4خلطtimezoneبـNTP رُفض. F8/F9fail-closedمقصود. التفاصيلوالاختباراتفيالدليل.
--15SVGفعلًامتجهةبدونimage/script/foreignObject/href/data؛31مخرجًا متطابقًا. لاMermaidengine validation أوقبولبشري. حزمةb5d72e7القديمةليستمخرجاتهذهالجولة؛ الحزمةالمحدثةتعنونبرأسهافيPR28.
--أرشفت5مصادررسمية وبصمات/UTC؛ SP800-61r3نهائيأبريل2025حلRev.2، SSDF1.1نهائيفبراير2022وممارساتمختارةمنPDF، SSDF1.2المشارإليهمسودةIPD17ديسمبر2025، Wazuhcurrentdefault15mللانقطاعليسإعدادالمعمل. لاامتثالNISTمُدعى.
-- TAKEOVER_AUDIT §9مصفوفةالحالةوالأدلةوالمتبقي، research/analyzed/2026-09-22_completion_research.md §6تحليلالمصادر. الفصل2صُححجزئيًا دونادعاءتدقيقكلالأوراق، والفصل5ودليلالكاتبمحدثان.
+- نُفذ مقام أدلة AR في e05937d و27 اختبارًا في 5bd2feb؛ راجعه 46bbb5ff ساكنًا من النص، ولم يفتح checkout أو يختبره. النتيجة الأصلية في research/inbox/2026-09-23_ar_review_result.json والتحكيم الكامل آخر tests/README؛ **انتهت المهمة ولا تعاد**.
+- عولج محفز UC-07 غير المطابق لـFIM والسياسة المهملة في v1، وحُفظ exclusion_details، ووُضح نطاق المحفزات غير المستبعدة ومصدر offset واختلافه عن run، ورُفض override في المحاولة. الإصلاح fb4100a واختبارات fresh-checkout في 83ebff9. عدد اختبارات AR هو39؛ **680 اختبارًا محليًا على dd87465 في28.865s**. CI الرأس النهائي وروابط التسليم في PR28، ولا يستعاران من رأس قديم.
+- اقتراح F1 بمساواة offset المحاولة بالـrun لم يُتبع: العقد يسمح بقياسات متجددة، كلها إقرارات تحتاج أدلة. في F2 لم يُخصص المحفز المشترك بعد إبطال claim؛ احتُفظ بالغموض والأسباب. فرضية F4 التي خلطت timezone بـNTP رُفضت. حارسا F8/F9 مقصودان. التفاصيل والاختبارات في الدليل.
+- الرسوم الخمس عشرة متجهة دون image/script/foreignObject/href/data؛31 مخرجًا متطابقًا. لا تحقق بمحرك Mermaid أو قبول بشري. حزمة b5d72e7 القديمة ليست مخرجات هذه الجولة؛ الحزمة المحدثة تعنون برأسها في PR28.
+- أُرشفت خمسة مصادر رسمية مع البصمات وUTC؛ SP800-61r3 نهائي أبريل2025 حل محل Rev.2، وSSDF1.1 نهائي فبراير2022 مع قراءة ممارسات مختارة من PDF. وثيقة SSDF1.2 المشار إليها مسودة IPD بتاريخ17ديسمبر2025. مهلة Wazuh الحالية الافتراضية15m للانقطاع ليست إعداد المعمل. لا امتثال NIST مُدعى.
+- TAKEOVER_AUDIT §9 مصفوفة الحالة والأدلة والمتبقي؛ research/analyzed/2026-09-22_completion_research.md §6 تحليل المصادر. الفصل2 صُحح جزئيًا دون ادعاء تدقيق كل الأوراق، والفصل5 ودليل الكاتب محدثان.
 
-**التاليبالتحديد:** M2-Bمنتجt4وهويةARثمt5المستقلالسببي؛ M3UC-01collector/evaluatorبحدثجديدلاcachedactive؛ ISSUE-068حمايةconfigدونتخفيفguard؛ تدقيقبقيةالفصولوالمراجعوالملاحق. هذهبرمجة/تحريرمحليغيرمكتمل، لا مجردبيئة. بعدهابواياتnative/clock/Linux/Windows/YARA/ACLوالتعافيوالنموذجوالجردوالبشرو30labelsوPILOT5/MEASURED≥30/BASELINE≥12h. لاتجاربأصلية أوأرقامSOCجديدة. لا طلبإعادةإنشاءobservers/recovery/runnerأوالرسومات.
+**التالي بالتحديد:** M2-B منتج t4 وهوية AR ثم t5 المستقل السببي؛ M3/UC-01 collector/evaluator بحدث جديد لا cached active؛ حماية config في ISSUE-068 دون تخفيف guard؛ تدقيق بقية الفصول والمراجع والملاحق. هذه برمجة وتحرير محليان غير مكتملين، لا مجرد عائق بيئة. بعدها بوابات native/clock/Linux/Windows/YARA/ACL والتعافي والنموذج والجرد والبشر و30 labels وPILOT5/MEASURED≥30/BASELINE≥12h. لا تجارب أصلية أو أرقام فعالية جديدة. لا تعاد أدوات observers/recovery/runner أو الرسومات المنجزة.
 
-أوامرالتحقق: `python3 -B scripts/build_writer_package.py --check` ثم `SOC_TRANSPORT_TEST_PORT=18434 TMPDIR=/home/user/webapp/my-bro/build PYTHONDONTWRITEBYTECODE=1 bash scripts/validate/validate_all.sh` بعدوجودbuild؛ المسارالمؤقتداخلworkspace. لاخدمةHTTPمستمرة. أحدثHEADيتحققمنgit، وأحدثCIمنPR28. المشروع**IN-PROGRESSوليس100%**.
+التحقق: `python3 -B scripts/build_writer_package.py --check`، ثم `SOC_TRANSPORT_TEST_PORT=18434 TMPDIR=/home/user/webapp/my-bro/build PYTHONDONTWRITEBYTECODE=1 bash scripts/validate/validate_all.sh` بعد التأكد من وجود build. الملفات المؤقتة داخل workspace؛ لا خدمة HTTP مستمرة. أحدث HEAD يتحقق من Git، وCI من PR28. المشروع **IN-PROGRESS وليس100%**.
 
 ## الاستئناف الحاكم — تسليم Markdown وSVG، 2026-09-23 [AI]
 
