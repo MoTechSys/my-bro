@@ -46,6 +46,16 @@ def source_hashes():
     return {str(p.relative_to(ROOT)): r.digest(p.read_bytes()) for p in sorted(paths)}
 
 
+def native_plan(raw):
+    plan = c.check_plan(c.m.strict_json(raw.decode('utf-8')))
+    # This adapter timestamps polls on the manager itself. Clock-source estimates
+    # must agree; producer precision may differ between raw alerts and queries.
+    manager, observer = plan['clocks']['manager'], plan['clocks']['observer']
+    require(all(manager[k] == observer[k] for k in ('offset_ms', 'uncertainty_ms', 'ref')),
+            'SHARED_MANAGER_OBSERVER_CLOCK')
+    return plan
+
+
 def trusted_binary(path):
     original = Path(path)
     resolved = original.resolve(strict=True)
@@ -146,7 +156,7 @@ def check_snapshot(value, query, kind, plan):
 
 
 def capture(plan_raw, cycle_id, kind, store):
-    plan = c.check_plan(c.m.strict_json(plan_raw.decode('utf-8')))
+    plan = native_plan(plan_raw)
     require(kind in KINDS and cycle_id in {x['cycle_id'] for x in plan['cycles']}, 'CAPTURE_IDENTITY')
     require(kind != 'service' or plan['identity']['os'] == 'linux', 'LINUX_SYSTEMD_ONLY')
     with r.store_lock(store) as fd:
@@ -190,7 +200,7 @@ def capture(plan_raw, cycle_id, kind, store):
 def export(store, expected, plan_raw, cycle_id, kind):
     """Replay all raw bytes, not stored derived statuses. No partial success export."""
     r.e.sha256(expected)
-    plan = c.check_plan(c.m.strict_json(plan_raw.decode('utf-8')))
+    plan = native_plan(plan_raw)
     require(kind in KINDS and cycle_id in {x['cycle_id'] for x in plan['cycles']}, 'CAPTURE_IDENTITY')
     with r.store_lock(store) as fd:
         raw = r.read_at(fd, 'intent.json')
@@ -236,7 +246,7 @@ def bind(plan_raw, request_raw, manager, before, after, source):
     Each store descriptor is {path, sha256}. Source evidence brackets creation,
     not a native creation timestamp; require the plan to cover its full error.
     """
-    plan = c.check_plan(c.m.strict_json(plan_raw.decode()))
+    plan = native_plan(plan_raw)
     request = c.m.strict_json(request_raw.decode())
     c.keys(request, 'schema_version run_id cycle_id request_ms command_end_ms controller_ref', 'REQUEST_KEYS')
     require(type(request['schema_version']) is int and request['schema_version'] == 1 and
