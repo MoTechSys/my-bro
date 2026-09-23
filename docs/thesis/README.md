@@ -48,7 +48,7 @@ docs/thesis/
 
 ## Pipeline نسخة المراجعة — 2026-09-23
 
-المتطلبات الخارجية للتصدير فقط: Pandoc مثبت، وLibreOffice إن استُخدم --pdf؛ لا تثبيت تلقائي أوشبكة أوAPI نموذج. اختبارات CI تستخدم fixtures ولا تحتاج حزم التصدير.
+المتطلبات للتصدير فقط: Pandoc مثبت، و LibreOffice عند اختيار --pdf. لا تثبيت تلقائي أوشبكة أو API نموذج؛ اختبارات CI تستخدم fixtures ولا تحتاج برامج التصدير.
 
 ```bash
 mkdir -m 700 -p build
@@ -56,16 +56,16 @@ mkdir -m 700 build/thesis_review_NEW_ID
 python3 -B scripts/build_thesis.py --output-dir build/thesis_review_NEW_ID --pdf
 ```
 
-الدليل جديد وفارغ وخاص. الفصول الخمسة ثابتة منdocs/thesis؛ تُرفض الصور المضمنة وHTML media والنص التالف والأسوار غير المتوازنة، وتعطلraw HTML/TeX ولاfiltersأوciteproc. يستخدمPandocالعادي علىنصوصالمستودعالموثوقة، لا ندعيsandbox لنصاعتباطي. HOME/TMPDIR/XDG وملفLibreOffice الشخصي داخلruntimeالخاص؛ العمليات بمهلة كلية وحارس إلغاء، والمخرجات0600. لا يعيد البناء فوقدليلقديم.
+الدليل جديد وفارغ وخاص. المدخلات هي الفصول الخمسة الثابتة من docs/thesis؛ تُرفض الصور المضمنة و HTML media والنص التالف والأسوار غير المتوازنة، ويعطل raw HTML/TeX. لا filters أو citeproc. يستخدم Pandoc العادي على نصوص المستودع الموثوقة؛ لا ندعي sandbox لنص اعتباطي. HOME/TMPDIR/XDG وملف LibreOffice الشخصي داخل runtime الخاص. العمليات بمهلة كلية وحارس إلغاء، والمخرجات 0600؛ لا إعادة بناء فوق دليل قديم.
 
-`build-intent.json` يثبتبصماتالفصولوالكودوقائمة8مخططاتغيرمصيّرة، و`build-result.json` يحفظإصداراتالأدوات وبصماتالمخرجات وفحصDOCX. تكرارالمدخلاتيعيدنصالMarkdownنفسه؛ DOCX/PDF ليسامضمونَينمتطابقينبايتياً بسببmetadataوسلوكالأدوات. حالات incomplete/failed لا تعني نجاحالمراجعة.
+`build-intent.json` يثبت بصمات الفصول والكود والمخططات الثمانية غير المصيّرة. `build-result.json` يحفظ إصدارات الأدوات وبصمات المخرجات وفحص DOCX. نفس المدخلات تنتج نص Markdown نفسه؛ DOCX/PDF ليسا مضمونين متطابقين بايتياً بسبب metadata وسلوك الأدوات. حالتا incomplete/failed لا تعنيان نجاح المراجعة.
 
-التصدير الفعلي في `build/thesis_review_2026-09-23` (مجلدbuild متجاهل فيGit):
-- Pandoc3.1.11.1 وLibreOffice25.2.3.2؛43صفحة،Letter الافتراضي،لا قالبجامعة.
-- DOCX:65354بايت،SHA256 `7a7461f67ae789f4cc83de37559b44bf42fa8237747161e253c8a76f2187cfa6`.
-- PDF:1192277بايت،SHA256 `ae817d301c8883d5524b8382d0c768335f3686e91f3c9e97ab7b4e0386b20a53`.
-- فحصZIP/XML:العناوينالخمسةوتنبيهالمسودةموجودة،وbidimarkupموجود. pdfinfo:43صفحة،لاJavaScriptأوتشفير.
-- فحص بصري آلي لصفحتَي1و43فقط:العربيةمتصلةواتجاهRTLسليمولا قصأوتراكبظاهر. لا اعتمادللصفحات41الباقيةأولصحةالمضمون. نتائجالتحليل: [صفحة1](https://www.genspark.ai/api/files/s/hK8bk0sZ)،[صفحة43](https://www.genspark.ai/api/files/s/gHoeHxsa).
-- تنزيلخاص: [Word](https://www.genspark.ai/api/files/s/ZXSHe37u)،[PDF](https://www.genspark.ai/api/files/s/wl1VhgvY)،[buildreceipt](https://www.genspark.ai/api/files/s/MwDub9gy). الروابطتحتاججلسةالمالكولا تستخدمكأصولعامة.
+التصدير الفعلي في `build/thesis_review_2026-09-23`، داخل build المتجاهل في Git:
+- Pandoc3.1.11.1 و LibreOffice25.2.3.2؛43 صفحة، بقياس Letter الافتراضي، وليس قالب الجامعة.
+- DOCX:65354 بايت،SHA256 `7a7461f67ae789f4cc83de37559b44bf42fa8237747161e253c8a76f2187cfa6`.
+- PDF:1192277 بايت،SHA256 `ae817d301c8883d5524b8382d0c768335f3686e91f3c9e97ab7b4e0386b20a53`.
+- فحص ZIP/XML أثبت العناوين الخمسة وتنبيه المسودة ووجود bidi markup. pdfinfo أثبت 43 صفحة، بلا JavaScript أوتشفير.
+- فحص بصري آلي لصفحتَي 1 و 43 فقط: عربية متصلة و RTL سليم، ولا قص أوتراكب ظاهر. لا اعتماد للصفحات 41 الأخرى أوصحة المضمون. [تحليل صفحة 1](https://www.genspark.ai/api/files/s/hK8bk0sZ) و[تحليل صفحة 43](https://www.genspark.ai/api/files/s/gHoeHxsa).
+- تنزيل خاص: [Word](https://www.genspark.ai/api/files/s/ZXSHe37u)، [PDF](https://www.genspark.ai/api/files/s/wl1VhgvY)، [سجل البناء](https://www.genspark.ai/api/files/s/MwDub9gy). الروابط تحتاج جلسة المالك، ولا تستخدم كأصول عامة.
 
-**المتبقي المحلي:** تصييروتدقيقالمخططاتالثمانية،تدقيقالفصولوالمراجع،frontmatterوالملاحقودليلالعرض. **الخارجي:** قالبالجامعةوالبياناتالأصليةوالمراجعةالأكاديميةالبشرية. وجودالـpipelineلايغلقD1أوT-25بالكامل.
+**المتبقي المحلي:** تصيير وتدقيق المخططات الثمانية، وتدقيق الفصول والمراجع، و front matter والملاحق ودليل العرض. **الخارجي:** قالب الجامعة والبيانات الأصلية والمراجعة الأكاديمية البشرية. وجود pipeline لا يغلق D1 أو T-25 بالكامل.

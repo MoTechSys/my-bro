@@ -291,8 +291,8 @@ ISSUE-091 — FIXED-IN-REPO/NEEDS-NATIVE: مراجعةd21f2fcc انتهت ساك
 
 ## الاستعادة والتصدير — 2026-09-23
 
-- **ISSUE-097 — FIXED-IN-REPO / NEEDS-NATIVE:** استعادةpendingوcontinuation journalمنفذانفيrecovery.py؛46اختباراً،معالمقامالكامل ورفضالجزئي والتكرار وربطالبايتات. تصريحتوقفالمشغّل ليسإثباتعملية،ولاSIGKILL/power-lossacceptance. الدليلوالتحكيمفيtests/README.
-- **ISSUE-099 — FIXED-IN-REPO:** ربطpendingبالـjournalلميكفِفيالنسخةالأولى؛ أضيفمساروبصمةوطولالبادئةفيa59f594وفحصهافي297adf6. لا يقبلjournalآخرأومقلَّصحتىمعpinsحديثة. legacyصريحومحدودبـv2.
-- **ISSUE-100 — FIXED-IN-REPO:** الإلغاءداخلالجمعكانCOLLECTION_FAILEDوحذفpendingبعدصفالفشل؛62636ccيميزCOLLECTION_INTERRUPTED ويحفظالنيةويعيد130،وتثبتالاستعادةعدمإضافةصفثانٍ. لم يكنالصفالمنشورمفقوداًفيالسلوكالقديم.
-- **ISSUE-101 — PARTIAL / LOCAL_PENDING:** pipelineمراجعةالرسالةنُفذواختُبر،لكنالرسوم8والمراجعوالتنسيقالجامعيوfrontmatterوفحصكلالصفحاتمازالتناقصة. لا تُعلنالنسخةالمصدّرةنهائية.
-- ملاحظتاASCII/newlineوpendingالفارغفيالمراجعةمرفوضتانباختباراتعلىالاعتمادياتالفعلية. تشخيصRECOVERY_INTERNAL_ERRORأضيفدونتسريبنصحر.605اختباراتمحلية؛لا قبولSOCمنالعدد.
+- **ISSUE-097 — FIXED-IN-REPO / NEEDS-NATIVE:** استعادة pending و continuation journal منفذانفي recovery.py؛46 اختباراً،مع المقام الكامل ورفضالجزئي والتكرار وربط البايتات. تصريح توقف المشغّل ليس إثبات عملية،ولا SIGKILL/power-lossacceptance. الدليل والتحكيم في tests/README.
+- **ISSUE-099 — FIXED-IN-REPO:** ربط pending بالـ journal لم يكفِ في النسخة الأولى؛ أضيف مسار وبصمة وطول البادئة في a59f594 وفحصها في 297adf6. لا يقبل journal آخرأومقلَّصحتىمع pins حديثة. legacy صريحومحدودبـ v2.
+- **ISSUE-100 — FIXED-IN-REPO:** الإلغاء داخل الجمع كان COLLECTION_FAILED وحذف pending بعد صف الفشل؛62636cc يميز COLLECTION_INTERRUPTED ويحفظ النية ويعيد 130،وتثبت الاستعادة عدم إضافة صف ثانٍ. لم يكن الصف المنشور مفقوداً في السلوك القديم.
+- **ISSUE-101 — PARTIAL / LOCAL_PENDING:** pipeline مراجعةالرسالةنُفذ واختُبر،لكنالرسوم 8 والمراجعوالتنسيقالجامعيو frontmatter وفحصكلالصفحاتمازالتناقصة. لا تُعلن النسخة المصدّرة نهائية.
+- ملاحظتا ASCII/newline و pending الفارغ في المراجعة مرفوضتان باختبارات على الاعتماديات الفعلية. تشخيص RECOVERY_INTERNAL_ERROR أضيف دون تسريب نص حر.605 اختباراتمحلية؛لا قبول SOC منالعدد.
