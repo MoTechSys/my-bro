@@ -244,6 +244,7 @@ def load_runs(manifest):
     runs = {}
     for run in manifest['runs']:
         require(isinstance(run, dict), 'run must be object')
+        require('ar_policies' not in run, 'ar_policies requires manifest version 2')
         for key in ('run_id', 'agent_id', 'agent_name', 'manager_name', 'os',
                     'config_commit', 'config_sha256', 'timing_definition', 'coverage_ref'):
             text(run.get(key), 'run.' + key)
@@ -478,6 +479,7 @@ def validate_v2(trial, run):
     require('exclusion_reason' in trial and trial['exclusion_reason'] in EXCLUDED | {None},
             'exclusion_reason must be explicit null or exclusion enum')
     require('status' not in trial, 'v2 input uses exclusion_reason, not computed status')
+    require('ar_policies' not in trial, 'ar_policies belongs to run, not attempt')
     if trial['exclusion_reason']:
         text(trial.get('reason'), 'exclusion detail')
     offsets = trial.get('ntp_offset_ms')
@@ -505,7 +507,14 @@ def validate_v2(trial, run):
     if trial['t6'] is not None:
         require('t6' in stages, 'non-null t6 requires raw manager confirmation selector')
     if trial['exclusion_reason'] is None and trial['phase'] != 'BASELINE' and trial['uc'] != 'UC-01':
+        require(trial.get('event_valid') is True, 'v2 non-excluded attempt requires event_valid=true')
         require('t2' in stages, 't2 stage selector required')
+        if trial['uc'] == 'UC-07' and 'UC-07' in run.get('ar_policies', {}):
+            selector = stages['t2']
+            require(isinstance(selector, dict), 'UC-07 t2 stage selector object required')
+            require(isinstance(selector.get('rule_ids'), list) and selector['rule_ids'] and
+                    all(rule in {'100300', '100301', '100303', '100304'} for rule in selector['rule_ids']) and
+                    selector.get('levels') == [7], 'UC-07 AR t2 must use configured FIM rules at level 7')
         if trial['uc'] == 'UC-03':
             require('t2_prime' in stages, 'UC-03 needs explicit VT selector')
             require(set(stages['t2'].get('rule_ids', [])) <= {'100200', '100201'}, 'UC-03 t2 must be FIM')
@@ -625,7 +634,10 @@ def ar_outcome(row, run):
     output = {'state': 'NOT_APPLICABLE', 'trigger_observed': False,
               'completion_from_trigger_s': None, 'execution_s': None,
               'completion_interval_s': None, 'exclusion_reason': row['exclusion_reason'],
-              'causality_authenticated': False, 'acceptance_approved': False}
+              'causality_authenticated': False, 'acceptance_approved': False,
+              'clock_correction_source': 'attempt.ntp_offset_ms',
+              'clock_offsets_differ_from_run': sorted(device for device, offset in row['ntp_offset_ms'].items()
+                  if offset != run['devices'][device]['ntp_offset_ms'])}
     if row['uc'] not in AR_UCS or row['phase'] == 'BASELINE':
         return output
     policy = run.get('ar_policies', {}).get(row['uc'])
@@ -707,6 +719,7 @@ def ar_summary(rows, run, uc):
     triggered = sum(r['ar']['trigger_observed'] for r in rows)
     output = {'status': 'EVALUATED_DECLARED_EVIDENCE' if policy is not None else 'POLICY_NOT_DECLARED',
               'denominator_all_recorded_attempts': total, 'denominator_observed_triggers': triggered,
+              'observed_trigger_denominator_scope': 'non_excluded_trials_with_validated_raw_trigger',
               'counts': counts, 'documented_completion_count': completed if policy is not None else None,
               'documented_completion_rate_all_attempts': completed / total if policy is not None and total else None,
               'documented_completion_rate_triggered_only': completed / triggered if policy is not None and triggered else None,
@@ -754,7 +767,10 @@ def analyze_v2(journal, alert_rows, manifest):
         run.update(clock_verified=True, clock_offset_ms=0, clock_uncertainty_ms=0, clock_ref='v2 per-device')
         require(run['run_id'] not in runs, 'duplicate run_id')
         runs[run['run_id']] = run
-    load_runs({'version': 1, 'runs': list(runs.values())})
+    # Reuse the v1 detection core without silently sending it v2-only policies.
+    legacy_manifest = {'version': 1, 'runs': [
+        {key: value for key, value in run.items() if key != 'ar_policies'} for run in runs.values()]}
+    load_runs(legacy_manifest)
     for trial, _ in journal:
         require(trial.get('run_id') in runs, 'unknown run_id')
         run = runs[trial['run_id']]
@@ -768,7 +784,7 @@ def analyze_v2(journal, alert_rows, manifest):
             copy.update(status='INVALID', reason='SESSION_CLOCK_LIMIT_EXCEEDED')
         copy['t_source'] = None  # v2 metrics are calculated below, not by v1 clock convention.
         legacy.append((copy, ref))
-    result = analyze(legacy, alert_rows, {'version': 1, 'runs': list(runs.values())})
+    result = analyze(legacy, alert_rows, legacy_manifest)
     alerts, _ = normalize_alerts(alert_rows)
     stage_owners = defaultdict(set)
     by_ref = {ref: a['key'] for a in alerts for ref in a['refs']}
@@ -791,6 +807,7 @@ def analyze_v2(journal, alert_rows, manifest):
         row['session_id'] = trial['session_id']
         row['exclusion_reason'] = row['status'] if row['status'] in EXCLUDED else None
         row['stage_alert_refs'] = {}
+        row['exclusion_details'] = [row['reason']] if row['exclusion_reason'] and row.get('reason') else []
         if row['exclusion_reason'] is None and trial['phase'] != 'BASELINE' and trial['uc'] != 'UC-01':
             signature = tuple(sorted((stage, tuple(sorted(s['rule_ids'])), tuple(sorted(s['levels'])),
                                       tuple(sorted(s['target_key'])))
@@ -812,8 +829,9 @@ def analyze_v2(journal, alert_rows, manifest):
                 first = matches[0] if matches else None
                 value = to_ms(first['raw']['timestamp']) if first else None
                 if trial[stage] is not None and trial[stage] != value:
-                    row.update(exclusion_reason='INVALID', status='INVALID', eligible=False,
-                               reason='CLAIMED_TIMESTAMP_DIFFERS_FROM_RAW_ALERT:' + stage)
+                    detail = 'CLAIMED_TIMESTAMP_DIFFERS_FROM_RAW_ALERT:' + stage
+                    row['exclusion_details'].append(detail)
+                    row.update(exclusion_reason='INVALID', status='INVALID', eligible=False, reason=detail)
                 trial[stage] = value
                 row['stage_alert_refs'][stage] = [r for a in matches for r in a['refs']]
         row['timeline_ms'] = {key: trial[key] for key in TIMES}
@@ -823,6 +841,7 @@ def analyze_v2(journal, alert_rows, manifest):
     ambiguous = {identity for ids in stage_owners.values() if len(ids) > 1 for identity in ids}
     for row in result['trials']:
         if (row['run_id'], row['trial_id']) in ambiguous:
+            row['exclusion_details'].append('STAGE_MATCHES_MULTIPLE_TRIALS')
             row.update(exclusion_reason='AMBIGUOUS', status='AMBIGUOUS', eligible=False, reason='STAGE_MATCHES_MULTIPLE_TRIALS')
         if row['exclusion_reason']:
             row['metrics_s'] = {k: None for k in row['metrics_s']}

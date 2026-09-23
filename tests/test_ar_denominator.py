@@ -1,5 +1,9 @@
 """Synthetic AR evidence denominators; never laboratory outcome data."""
 import copy
+import contextlib
+import io
+import json
+import tempfile
 import importlib.util
 from pathlib import Path
 import unittest
@@ -222,6 +226,99 @@ class ARDenominatorTests(unittest.TestCase):
     def test_raw_t5_success_log_rejected_before_summary(self):
         t,a=case(completion_kind='script_log')
         with self.assertRaises(m.InputError):evaluate(t,a)
+
+    def test_uc07_opt_in_rejects_non_fim_trigger_and_wrong_level(self):
+        for rule, level in [('87105', 7), ('108001', 12), ('554', 7), ('100301', 12)]:
+            t, a = case()
+            t['stage_selectors']['t2'].update(rule_ids=[rule], levels=[level])
+            a[0]['rule'] = {'id': rule, 'level': level}
+            with self.subTest(rule=rule, level=level), self.assertRaisesRegex(m.InputError, 'UC-07 AR t2'):
+                evaluate(t, a)
+
+    def test_uc07_supported_linux_and_windows_fim_rules(self):
+        for rule in ['100300', '100301', '100303', '100304']:
+            t, a = case(); t['stage_selectors']['t2']['rule_ids'] = [rule]; a[0]['rule']['id'] = rule
+            self.assertEqual(evaluate(t, a)['trials'][0]['ar']['state'], 'COMPLETED_WITHIN_WINDOW')
+
+    def test_uc07_without_policy_preserves_existing_stage_contract(self):
+        t, a = case(); t['stage_selectors']['t2']['rule_ids'] = ['554']; a[0]['rule']['id'] = '554'
+        self.assertEqual(evaluate(t, a, f.manifest_v2())['trials'][0]['ar']['state'], 'POLICY_NOT_DECLARED')
+
+    def test_legacy_policy_rejected_in_core_and_cli(self):
+        c = f.manifest(); c['runs'][0]['ar_policies'] = {'UC-07': policy()}
+        with self.assertRaisesRegex(m.InputError, 'manifest version 2'):
+            m.analyze(f.rows([f.trial()]), f.rows([f.alert()]), c)
+        with tempfile.TemporaryDirectory(dir=ROOT/'build') as directory:
+            paths = {}
+            for name, value in [('manifest', c), ('journal', f.trial()), ('alerts', f.alert())]:
+                paths[name] = Path(directory)/name
+                paths[name].write_text(json.dumps(value)+'\n')
+            out, err = io.StringIO(), io.StringIO()
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                code = m.main([item for name, path in paths.items() for item in ['--'+name, str(path)]])
+            self.assertEqual(code, 2); self.assertEqual(out.getvalue(), '')
+            self.assertIn('ar_policies requires manifest version 2', err.getvalue())
+
+    def test_attempt_policy_override_rejected(self):
+        t, a = case(); t['ar_policies'] = {'UC-07': policy()}
+        with self.assertRaisesRegex(m.InputError, 'belongs to run'):
+            evaluate(t, a)
+
+    def test_ambiguous_claim_keeps_diagnostics_without_assigning_shared_evidence(self):
+        t, a = case(); other = copy.deepcopy(t)
+        other.update(trial_id='two', variant='separate-final', t2=BASE+9999, expected_rule_ids=['108000'])
+        r = m.analyze_v2(f.rows([t, other]), f.rows(a), config())
+        self.assertTrue(all(row['status'] == 'AMBIGUOUS' for row in r['trials']))
+        self.assertIn('CLAIMED_TIMESTAMP_DIFFERS_FROM_RAW_ALERT:t2', r['trials'][1]['exclusion_details'])
+        self.assertIn('STAGE_MATCHES_MULTIPLE_TRIALS', r['trials'][1]['exclusion_details'])
+        self.assertTrue(all(row['ar']['state'] == 'EXCLUDED' for row in r['trials']))
+
+    def test_attempt_clock_correction_is_explicit_not_silent_run_override(self):
+        t, a = case(t5=BASE+122000)
+        self.assertEqual(evaluate(t, a)['trials'][0]['ar']['state'], 'TIMING_UNCERTAIN')
+        t['ntp_offset_ms']['observer'] = 99
+        ar = evaluate(t, a)['trials'][0]['ar']
+        self.assertEqual(ar['state'], 'COMPLETED_WITHIN_WINDOW')
+        self.assertEqual(ar['clock_correction_source'], 'attempt.ntp_offset_ms')
+        self.assertEqual(ar['clock_offsets_differ_from_run'], ['observer'])
+        self.assertFalse(ar['acceptance_approved'])
+
+    def test_raw_manager_window_and_corrected_coverage_are_consistent(self):
+        t, a = case(t5=BASE+299900)
+        c = config(); c['runs'][0]['devices']['manager']['ntp_offset_ms'] = 90
+        t['ntp_offset_ms']['manager'] = 90
+        # Last raw alert is inside the raw manager window. Offset is applied
+        # to BOTH its timestamp and observe_until, not by parsing ISO strings.
+        a[1]['timestamp'] = m.iso_ms(BASE+300000)
+        r = evaluate(t, a, c); row = r['trials'][0]
+        self.assertEqual(row['ar']['state'], 'COMPLETED_LATE')
+        self.assertEqual(row['ar']['completion_from_trigger_s'], (299900-1910)/1000)
+        self.assertTrue(row['alert_refs'])
+        self.assertEqual(row['status'], 'MISSED')  # outside detection deadline, inside observation
+
+    def test_conditional_trigger_scope_explicit_for_exclusions(self):
+        t, a = case(name='good'); other, b = case(name='blocked', exclusion_reason='BLOCKED', reason='fixture')
+        ar = m.analyze_v2(f.rows([t, other]), f.rows(a+b), config())['summaries'][0]['ar']
+        self.assertEqual(ar['documented_completion_rate_all_attempts'], .5)
+        self.assertEqual(ar['documented_completion_rate_triggered_only'], 1)
+        self.assertEqual(ar['observed_trigger_denominator_scope'], 'non_excluded_trials_with_validated_raw_trigger')
+
+    def test_missing_event_confirmation_has_v2_diagnostic(self):
+        t, a = case(); t.pop('event_valid')
+        with self.assertRaisesRegex(m.InputError, 'v2 non-excluded attempt requires event_valid=true'):
+            evaluate(t, a)
+
+    def test_policy_unknown_fields_fail_closed(self):
+        for location in ['policy', 'precision']:
+            c = config(); p = c['runs'][0]['ar_policies']['UC-07']
+            (p if location == 'policy' else p['precision_ms'])['future_field'] = 1
+            with self.subTest(location=location), self.assertRaises(m.InputError):
+                evaluate(cfg=c)
+
+    def test_inconsistent_internal_trigger_invariant_remains_fatal(self):
+        row = evaluate()['trials'][0]; row['timeline_ms']['t2'] = None
+        with self.assertRaisesRegex(m.InputError, 'AR trigger reference without timestamp'):
+            m.ar_outcome(row, config()['runs'][0])
 
 
 if __name__ == '__main__':
