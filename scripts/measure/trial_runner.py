@@ -441,9 +441,18 @@ def main(argv=None):
                 if args.lab:
                     trial['t0'] = time.time_ns() // 1000000
                     trial['time_refs']['t0'] = str(output) + '#' + trial['run_id'] + '/' + trial['trial_id'] + '/t0'
+                journal.seek(0)
+                prefix_hash = hashlib.sha256()
+                prefix_bytes = 0
+                for chunk in iter(lambda: journal.read(65536), b''):
+                    prefix_hash.update(chunk)
+                    prefix_bytes += len(chunk)
+                    m.require(prefix_bytes <= m.MAX_BYTES, 'journal size bound exceeded')
                 trial['runner'] = {'mode': 'lab' if args.lab else 'replay', 'command': command,
                                    'state': 'PREPARED_NOT_COMPLETED',
-                                   'manifest_sha256': so.r.digest(so.r.json_bytes(manifest))}
+                                   'manifest_sha256': so.r.digest(so.r.json_bytes(manifest)),
+                                   'journal_path': os.path.abspath(output), 'journal_prefix_bytes': prefix_bytes,
+                                   'journal_prefix_sha256': prefix_hash.hexdigest()}
                 write_all(pfd, encoded(trial))
                 sync_parent(pending)  # output + launch-intent names durable BEFORE command
             try:
