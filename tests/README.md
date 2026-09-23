@@ -644,6 +644,66 @@ CLI على Linux يقرأ فقط: يرفض symlink النهائي وFIFO وال�
 
 **المتبقي محليًا:** جامع قراءة فقط للخدمة والحالة وتوقيت المراقب، ربطه بالخطة وهوية الجولة وبايتات المصادر، وربطcanary أصلي بمخزن خاص، واختبارات الانقطاع والتدوير والتلاعب. لا يلغيه وجود محلل الإقرارات. **المتبقي الأصلي:** جرد وإعداد وساعات معتمدة، خمس دورات لكل نظام مؤهل تحت إشراف، ومراجعة تقنية وبشرية للأدلة. t4/t5 وISSUE-068 وتدقيق الفصول مسارات مستقلة غير مكتملة.
 
+## UC-01 collector/binder — مرشح قراءة فقط، 2026-09-23
+
+هذا القسم أحدث من عبارة «الجامع غير منفذ» في لقطة المحلل أعلاه. `connection_collect.py` ينفذ capture/export/bind، مع44 اختبارًا اصطناعيًا فيdf53b47 و796 اختبارًا كليًا ناجحًا على94e6ae7. **ليس جامعًا أصليًا مكتمل القبول لكل منصات المشروع**: محول الخدمة الحالي محدود بوحدات Linux/systemd التي تعرض active/running وMainPID موجبًا وInvocationID وExecMainStartTimestamp؛ Windows والحاويات دون systemd ووحدة Wazuh القياسية ذات active/exited تحتاج محول هوية عمليات إضافيًا. هذه برمجة محلية باقية، وليست عائق بيئة فقط.
+
+### الأوامر الثابتة وعقد التخزين
+
+- manager: `/var/ossec/bin/agent_control -i <plan.agent_id> -j`،64 عينة بفاصل5ث حتى315ث من الأولى. لا `-R` أوenrollment أوrestart أوcanary. غلاف JSON الأصلي error=0/data؛ تطابق id/name والحالات الأربع مطلوب. hostname المحلي يطابق manager_name حرفيًا.
+- service: `/usr/bin/systemctl show wazuh-agent.service --no-pager --property=ActiveState,SubState,InvocationID,MainPID,ExecMainStartTimestamp`، لقطة واحدة مع `/proc/sys/kernel/random/boot_id`. hostname يطابق agent_name. هوية الوحدة boot:InvocationID، لاPID منفرد. timestamp إنجليزي UTC بدقة ثانية؛ precision=1000ms على الأقل، ولا تحويل إلى دقة ميلي ثانية مختلقة.
+- الملفات التنفيذية ومساراتها المحلولة وأسلافها root-owned وغير قابلة للكتابة للمجموعة/الآخرين. fixed argv دونshell، بيئة نظيفة وstdin/stderr مغلقان؛ bounded_process بمهلة1.5ث وإخراج مقبول≤64KiB، ومدّة عينة مسجلة≤2ث. مهلة العملية لا تحد كل عمليات القرص أوfsync.
+- المخزن دليل موجود فارغ خاص0700، والأسلاف موثوقة وفقrunner.directory. ملفات0600 منتظمة أحادية الرابط، nofollow وwrite-once وfsync وقفل الدليل. لا overwrite أوretry عند فشل جزئي. لا تنقل أدلة خام أومفاتيح إلىGit.
+- الترتيب: plan.json ثمintent.json قبل أول query، ثمsample-NNN.bin وsample-NNN.json، ثمterminal.json. intent يحويschema_version=1 وkind وcycle_id وcapture_id UUID عشوائي وplan_sha256 وsource_sha256 وacceptance_approved=false. nonce يجعل لقطتين متطابقتين مختلفتين في الهوية؛ ليس توقيعًا أوأداة إثبات ترتيب.
+- metadata لكل عينة: start_ms/end_ms وstart_monotonic_ms/end_monotonic_ms وraw_sha256 وhostname وboot_id. ساعةmanager poll هيobserver؛ ساعةservice هيendpoint. offset=device−UTC، ولا تطبيقoffset أثناءcapture.
+- terminal: intent_sha256 وstatus وcount وreason. فقطcomplete/count64 أو1 قابلة للتصدير؛ failed أوpartial أوغيابterminal لا يملأ أي وقت ناجح. فشل query ينتجCAPTURE_FAILED؛ الانقطاع يتركINTERRUPTED إذا أمكن نشرterminal. kill9/تعطل القرص قد يترك مخزنًا ناقصًا مرفوضًا.
+- export يحتاج بصمةintent المتوقعة، exact plan bytes،kind/cycle، وإصدار المصادر نفسه. يعيدhash raw والparse والتوقيت/الفجوات ويفحص قائمة أسماء الملفات. تغير أي ملف مصدر مشارك يستلزم تشغيل أداة النسخة الأصلية لمخازنه؛ لا تعطل فحصsource hashes. ملفاتmetadata غير موقعة؛ stored_bytes_verified تعني سلامة إعادة القراءة والتحقق البنيوي، لا أصالة الوقت/المضيف.
+
+### الربط offline
+
+`--request` كائن خاص ذو مفاتيح حصرية:
+
+```json
+{"schema_version":1,"run_id":"RUN_ID","cycle_id":"CYCLE_ID","request_ms":0,"command_end_ms":0,"controller_ref":"REQUIRED_ORIGINAL_CONTROLLER_EVIDENCE_REFERENCE"}
+```
+
+الصفران أعلاه placeholders بنيوية **وليستا وقتين صالحين للتجربة**. request/end يظلان إقرارين منcontroller؛ لا يدّعي هذا الجامع تنفيذ أمر إعادة التشغيل أو تسجيل توقيته الأصلي.
+
+`--stores` كائن خاص له manager/before/after/source، كل منها `{ "path": "ABSOLUTE_PRIVATE_STORE", "sha256": "EXPECTED_INTENT_SHA256" }`. الأربع بصمات متميزة؛ قبل/بعد مخزناservice مستقلان، وsource مخزن `source_observer.py` قائم، ليس JSON محولًا يدويًا.
+
+الربط يتحقق من تصدير المخازن، ومن running وهويتين مختلفتين ولقطةقبل تقع بكامل مجال خطئها قبلrequest ولقطةبعد تقع بعدcommand_end. يطابق مصدرcanary معrun/cycle/device=endpoint/clock_ref/target_path؛ غياب الحدث أووجود الملف مسبقًا أوخطأ محتواه مرفوض. مجال آخرمشاهدةغياب يجب أن يأتي بعدcommand_end. plan.endpoint.precision_ms يغطي1000ms للخدمة وكاملbracket المصدر (فيfixture1051ms)؛ ليس معاملًا لتجميل النتائج بل حد قياس معلن قبل التجربة.
+
+الناتج **سجل دورة فقط** وفقconnection_measure، لا تقرير قبول. ref يربطrequest bytes ومخزنيbefore/after؛canary.source_ref هوintent المصدر؛كلpoll.ref يحويintent وعينة. يمر الناتج لاحقًا إلىالمحلل معraw alerts والخطة؛ غياب الأربع دورات الأخرى يبقيهاMISSING_RECORD. نجاحbind لا يعني صلاحيةكلالتوقيت أوالتغطية للتصنيف؛ classify يقرر ذلك. لاt4/t5 أوMTTD أوWilson.
+
+### التشغيل المصرح فقط
+
+هذه أوامر دليل مستقبلية، لم تُنفّذ علىSOC في التطوير:
+
+```bash
+python3 -B scripts/measure/connection_collect.py capture --lab \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --kind manager --store PRIVATE_MANAGER_STORE
+python3 -B scripts/measure/connection_collect.py capture --lab \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --kind service --store PRIVATE_SERVICE_STORE
+python3 -B scripts/measure/connection_collect.py export \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --kind manager \
+  --store PRIVATE_MANAGER_STORE --sha256 EXPECTED_INTENT_SHA256
+python3 -B scripts/measure/connection_collect.py bind \
+  --plan PRIVATE_PLAN.json --request PRIVATE_REQUEST.json --stores PRIVATE_STORE_DESCRIPTORS.json
+python3 -B -m unittest discover -s tests -p test_connection_collect.py
+```
+
+تحتاج القراءة فقط --lab فيcapture؛export/bind offline. استعمل أمكنة مخازن منفصلة عن دليلcanary؛ source_observer يرفض تداخل المصدر والمخزن. ابدأmanager قبلrequest بفترة تكفيالمجالات وينتهي بعدنافذة300ث، ولا تعتبر315ث كافية لأي بدءمتأخر أوprecisionكبير؛المحلل يفحصالتغطية. raw alerts/coverage وتسجيلكلالدورات مسؤولية بروتوكولالجمع، لايجمعهاهذاالملف.
+
+CLI لا ينشئ ملفexport تلقائيًا. عند حفظstdout استخدمumask077 وملفًا جديدًا خاصًا دونoverwrite. capturefailed يعيدexit2 وJSONfailed؛الرفض exit2 برسالةعامة UC01_COLLECTION_REJECTED؛الإلغاءexit130. لا يعنيexit0 قبولالدورة. لا ضمان ضدكاتببنفسUID أوroot أوACL غيرمراجع أوالتلاعبالمترابطبالمخزن والبصمةالمتوقعة. authenticity_verified وacceptance_approved تبقيانfalse.
+
+### المصادر والمراجعة وحدود القبول
+
+`research/inbox/2026-09-23_collector_sources.json` يحفظ المصادر المثبتة وبصماتالأصل والأرشيف وUTC: Wazuhv4.14.1 agent_control.c وملفاتagent_op/manage_agents ووحدةالخدمة، وsystemdv257 D-Bus XML. قُرئagent_control JSON وغلافه وحقولالخدمة وتوقيتExecMain ومحتوىوحدةWazuh. البحثعنprint_agent_status لم يجدتعريفه فيالملفينالمساعدينالمؤرشفين؛ لاادعاءقراءةتعريفه. هذهإصداراتمرجعية، لاتثبتالمثبتفيالمعمل.
+
+**قيدحقيقي:** وحدةWazuhالمؤرشفة Type=forking وRemainAfterExit=yes بلاPIDFile؛ قدتعرضactive/exited وMainPID=0. لايجوزتخفيفrunning لقبولهاكمشاهدةدايموناتحية. دعمهويةدايموناتمتعددة/nativeprocess أوحاويةغيرsystemd عملمحليمتبقٍ. لاsnapshotيثبتوحدهأنكلدايموناتWazuh تعملأوأنالإعدادالمعلنمطبق.
+
+المراجعةالآليةالجديدة [ccdc4a2c](https://www.genspark.ai/agents?id=ccdc4a2c-aa78-504c-9ef2-bdaf91e9df60) للقطةc7acf13 أُرسلتبنصوصكاملة، وحالتهاعندكتابةهذاالقسمrunning؛ لاتعاد. ليستاعتمادًابشريًا أوnative، والإصلاحاتاللاحقة9429515 واختباراتهاdf53b47 غيرمراجعةمستقلةبأثررجعي.44اختبارًا تغطيالمخازنالحقيقيةالاصطناعيةوالخصوصيةوالتلاعبوالانقطاعوالربطوالدقة؛796كليًامحليًا،CIكلرأسيثبتمنPR28.
+
 ### تحكيم المراجعة المستقلة UC-01
 
 [6f1083f8](https://www.genspark.ai/agents?id=6f1083f8-e7fb-55ae-8d8e-ced1572216f3) انتهت على النصوص الكاملة عندbe7a45c: المحلل واختباراته وmttd.py مع مقتطف الخطة. مراجعة ساكنة، لا تشغيل مجموعة المستودع؛ الحسابات العددية التي أبلغ بها المراجع ليست قبولًا أصليًا. submission/result محفوظان فيresearch/inbox/2026-09-23_uc01_review_*.json. **لا تعاد المهمة.** الإصلاحات اللاحقة ليست مشمولة بمراجعة مستقلة بأثر رجعي.
