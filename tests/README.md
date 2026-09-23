@@ -564,3 +564,74 @@ python3 -B -m unittest discover -s tests -p test_ar_denominator.py
 الإصلاح `fb4100a` ثم تصحيح fresh-checkout في `83ebff9`: **39 اختبارAR** (27+12)، و134 اختبار قياس سابق ناجحة. **680 اختبارًا كليًا في28.865s على dd87465** مع ALL CHECKS PASSED. لا يحتاج اختبارAR مجلد build موجودًا؛ ملفات CLI مؤقتة تحت جذر المستودع وتحذف تلقائيًا. CI الرأس النهائي منفصل في PR28.
 
 **تنبيه توافق:** السياسة خاصة بـrun في manifestv2؛ لا override بالمحاولة. تصحيح الوقت يستخدم offsets المحاولة، بينما قيم run تبقى مرجع فحص جلسة وليست التصحيح المطبق. اختلافهما لا يصادق على المصدر: يجب مراجعة clock_ref/time_refs والنسخ المؤرخة قبل القياس. تظل السياسة والساعات إقرارات، لا نظام مصادقة أدلة.
+
+
+## UC-01 — محلل دورات الاتصال offline (2026-09-23)
+
+`python3 -B scripts/measure/connection_measure.py --help`
+
+هذه أداة مستقلة عن `mttd.py` وعن مقام كشف الهجمات. تحلل **إقرارات أدلة** جُمعت مسبقًا، وتطابق تنبيهًا خامًا بملف تحقق فريد. لا تعيد تشغيل خدمة أو تسجيل وكيل، ولا تتصل بالمدير أو SSH أو API، ولا تنشئ ملف التحقق. مجمع الأدلة الأصلي وربط السجلات به ما زالا **عملًا برمجيًا محليًا متبقيًا**؛ الاختبارات الاصطناعية ليست قبولًا معمليًا.
+
+### خطة مسبقة وعقد ثابت
+
+مدخل `--plan` كائن JSON خاص. الحقول كاملة وصارمة، ولا تقبل مفاتيح إضافية:
+
+| الحقل | العقد |
+|---|---|
+| schema_version / kind | العدد الصحيح1 / uc01_connection_plan |
+| run_id / protocol_ref | نص غير فارغ ومرجع بروتوكول مثبت قبل التجربة؛ المرجع لا يثبت التسجيل المسبق بذاته |
+| identity | manager_name، agent_id غير000، agent_name، os=linux/windows، config_sha256 بصمة64hex |
+| clocks | أربعة أدوار: controller وendpoint وmanager وobserver؛ لكل دور offset_ms وuncertainty_ms وprecision_ms وref |
+| window_s / poll_interval_ms |300 ثانية و5000ms وفق TEST_PLAN؛ ليست معاملات لتغيير النافذة بعد رؤية النتائج |
+| coverage | start_ms/end_ms على ساعة المدير الخام وref؛ إقرار استمرارية أرشيف التنبيهات وليس إثباتًا آليًا لها |
+| cycles |5 إلى100 دورة معلنة مسبقًا؛ لكل دورة cycle_id وtarget_path فريدان، وقائمتا rule_ids وlevels حسب الإعداد المعتمد |
+
+قيم الساعة صحيحة بالميلي ثانية: offset=device−UTC، والمصحح=raw−offset مرة واحدة. uncertainty غير سالب وprecision موجب ويمثل حد±محافظًا؛ القيم حتى60000 للتحقق البنيوي، لكن |offset|>100 أوuncertainty>100 يمنع نجاح الدورات المسجلة. precision ليس دقة العرض أو عدد الخانات. لكل نقطة مجال `[raw−offset−error, raw−offset+error]` حيث error=precision+uncertainty. جميع الدورات تستخدم الساعات المثبتة في هذه الخطة؛ لا override من صف المحاولة. تغير الإعداد أو قياس الساعة يستلزم خطة/run جديدة.
+
+المسار حرفي ومطلق وفق النظام، بلا `.` أو`..` أو أجزاء فارغة؛ مقارنة المسار في التنبيه exact. اختلاف حالة أحرف مسارات Windows في **الخطة** يمنع تكرار هدف واحد، لكن المطابقة الخام تظل حرفية؛ يجب تطبيع المصدر مسبقًا بطريقة مراجعة، ولا يعاد تفسير raw alert تلقائيًا. لا وصول إلى target_path من المحلل. لا تعد البصمة وحدها هوية محاولة؛ يجب اختيار ملف جديد لكل دورة قبل التنفيذ.
+
+### السجل المطبع لكل دورة
+
+`--records` ملف JSONL، صف واحد على الأكثر لكل cycle_id مخطط؛ غياب الصف مسموح ويصدر MISSING_RECORD. لا يجوز إسقاط دورة من الخطة لتجميل المعدل. مفاتيح كل صف:
+
+- schema_version=1، run_id، cycle_id.
+- exclusion_reason: null أوBLOCKED/INVALID/INTERFERED/AMBIGUOUS؛ reason=null عند عدم الاستبعاد، وإلا سبب نصي مطلوب.
+- restart: null أو كائن يحوي request_ms وcommand_end_ms وold_instance وnew_instance وservice_started_ms وservice_running وref. request على ساعةcontroller؛ نهاية أمر إعادة التشغيل عليها أيضًا، وservice_started على ساعةendpoint. نهاية الأمر وبداية الخدمة والهويتان nullable، لكن النقص يمنع إثبات إعادة تشغيل جديدة. service_running قيمةboolean.
+- canary: null أو `{created_ms, path, source_ref}`؛ الوقت من شاهد إنشاء علىendpoint، لاmtime ولاوقت عرضDashboard. source_ref مرجع شاهد مستقل محدد بالدورة، لا سجل نجاح الأمر وحده.
+- polls: مصفوفة حتى128 عينة؛ كل عينة `{start_ms, end_ms, start_monotonic_ms, end_monotonic_ms, status, manager_name, agent_id, agent_name, ref}`. كل الأزمنة صحيحة؛ wall clock علىobserver، وmonotonic من عملية مراقب واحدة دون إعادة ضبط. الحالات فقط active/disconnected/pending/never_connected/error.
+
+**هوية الخدمة ليستPID منفردًا.** يحتاج الجامع المقبل هوية incarnation مربوطة بـboot/session ووقت بداية أصلي ودليل هوية الوكيل/الإعداد؛ old_instance وnew_instance هنا نصان مصرح بهما، لا يثبت المحلل مصدرهما. command_end أوexit0 لا يثبتان service_started. إعادة استخدام new_instance أومرجعrestart أوsource_ref بين الدورات تجعل الدورات المرتبطة AMBIGUOUS_EVIDENCE حتى لو كانت إحداها مستبعدة.
+
+المثال البنيوي الكامل الاصطناعي موجود في `tests/test_connection_measure.py` داخلplan()/record()/alert()، وهو **ليس بيانات معمل ولا قالبًا لقيم ساعات أصلية**. يشغّل الاختبار دورة واحدة مكتملة وأربع دورات مفقودة عمدًا لاختبار المقام. لا يُرفع raw log أوإقرار حساس إلىGit.
+
+### التغطية والزمن والنتيجة
+
+- يبدأ الرصد قبلrequest وينتهي بعد كامل نافذة300ث مع هامش حدود الساعة؛ الاكتمال المبكر لا يلغي شرط التغطية. عدم تغطية الطرفين فيpolls أوcoverage يعطي OBSERVATION_INCOMPLETE.
+- دورة الاستطلاع5000±1000ms علىmonotonic، والطلب≤2000ms، ولا تداخل طلبات. سماح جدولة1000ms **ليس سماح خطأ ساعة**: اختلافwall/monotonic، داخل الطلب وبين الطلبات وبالنسبة لأول عينة، لا يتجاوز مجموع خطأي نقطتين علىobserver. تجاوز ذلك CLOCK_JUMP؛ فقد عينة أو تغيير ترتيبها POLL_GAP.
+- تغير هوية الوكيل أوالمدير في أي عينة يرفض الدورة؛ عينةerror ليست disconnected ولا تصلح حدًا سالبًا، وتمنع نجاحها. تداخل نوافذ300ث لدورتين مع حدود الخطأ يجعل كلتيهما OVERLAPPING_CYCLE؛ الدورات لا تشغّل بالتوازي لهذا الوكيل.
+- اتصالمرصود: أولactive بعد بدء الخدمة الأصلي، مع آخرpending/disconnected/never_connected بعد البدء، يولد transition_interval_s. بلا مشاهدة سلبية بعد البدء يبقى المجالnull وconnection_state=ACTIVE_WITHOUT_TRANSITION_BRACKET؛ لا نختلق وقت إعادة اتصال منcachedactive.
+- التحقق الوظيفي مستقل: يحتاج إعادة تشغيل جديدة ودليلservice_running، وعينةactive، وشاهدإنشاءملف بعد بدء الخدمة ونهاية الأمر، ثم تنبيه خام جديد مطابق للهوية والمسار والقاعدة والمستوى. تنبيه سابق للإنشاء لا يُتجاوز لصالح تنبيه لاحق، بل PREEXISTING_CANARY_ALERT؛ تداخل مجال الوقت يعطيTIMING_UNCERTAIN.
+- functional_confirmation_interval_s مجال أدلة مكونات التحقق، وليس زمن أول ظهور فيIndexer: أكبر الأوقات المصححة للـactive ونهايةالأمر وبدءالخدمة وتنبيهالمدير، ناقصrequest مع حدودالخطأ. high≤300 يعنيFUNCTIONAL_EVIDENCE_WITHIN_WINDOW؛ low>300 يعنيFUNCTIONAL_EVIDENCE_LATE؛ تقاطعالحد يعطيTIMING_UNCERTAIN. لا يسمى أي منهماMTTD.
+- توجد أيضًا RESTART_UNPROVEN وNO_ACTIVE_OBSERVED وCANARY_NOT_SUPPLIED وCANARY_ALERT_NOT_OBSERVED وغيرها؛ غياب FIM لا يشخّص فشل التسجيل. connection_state منفصل عنstate الوظيفية. لا تحويلnullإلىصفر.
+
+المقام **جميع الدورات المخططة**، لا المسجلة فقط ولاالناجحة. البسط FUNCTIONAL_EVIDENCE_WITHIN_WINDOW فقط؛ سجلcounts وrecorded_cycles والمفقود والاستبعاد. لاWilson افتراضيًا أوخيارلتفعيله هنا؛ خمس دورات لا تثبت استقلالًا أوفعالية عامة. `acceptance_approved=false` و`causality_authenticated=false` و`independence_verified=false` ثابتة. الناتج مطابقة بنيوية وزمنية لإقرارات وraw alert، وليس مصادقة شهود أوإثبات سببية أوأصالة.
+
+### التشغيل والخصوصية
+
+```bash
+python3 -B scripts/measure/connection_measure.py \
+  --plan PRIVATE_PLAN.json --records PRIVATE_CYCLES.jsonl --alerts PRIVATE_ALERTS.jsonl
+python3 -B -m unittest discover -s tests -p test_connection_measure.py
+```
+
+CLI علىLinux يقرأ الملفات فقط: لاsymlink نهائي، ولاFIFO أوdirectory، مالكهاUIDالحالي وصلاحياتها0600 أوأضيق، regular أحاديةالرابط، حتى8MiB لكلملف و20000تنبيه. المجلداتالوسيطةموثوقة؛ لا ادعاء حماية منكاتبخبيثبنفسUID أوأننسخالملفاتالثلاثةsnapshotذري. استخدمصادراتثابتةخاصة. blankline أوduplicateJSONkey أوNaNأومدخلتالف يفشل كليًا بـexit2 وstdoutفارغ ورسالةعامةUC01_INPUT_REJECTED لاتسرب المحتوى. الملفاتالفارغةrecords/alerts مسموحة. نجاحالحسابexit0 لايعني نجاحالدورات؛ خزّنstdoutفيملفخاصبصلاحياتمقيدةإذااحتجتإلىالاحتفاظبه.
+
+يحتويالناتجinput_sha256 لبايتاتالمدخلات وsource_sha256 للمحلل وmttd.py، ولاينسخالمدخلاتالخامإلىالتقرير. hashليس توقيعهوية. التطابقمعكودمخططلايعنياستخدامهفعليًا علىالوكيل.
+
+### مصدر القرار وحدود الإنجاز
+
+المرجع الداخلي TEST_PLAN §UC-01: خمس دورات،300ث،poll5ث،خدمة+active+حدثجديد؛ لا إعادةتثبيتأوتسجيلأوحذفkeys فيكلدورة. روجعت [وثيقة agent_control الرسمية](https://documentation.wazuh.com/current/user-manual/reference/tools/agent-control.html) في2026-09-23: `-l` للاستعلام، و`-R` يعيدالتشغيل؛ لا يستخدمالمحلل أيًا منهما. صفحةcurrent لاتثبتإصدارالمعمل، وحالةactive المؤقتة لا تثبتعودةجديدة. وثيقةlifecycleالمؤرشفةسابقًاتذكرdefault15m للانقطاع؛ ليس بديلًالتعريفالقياس.
+
+المنفذمحليًا: evaluator صارم ومقامخطةواختبارات50عندbe7a45c، ثم3اختباراتساعةوإصلاحdf1616b. الفحصالكامل730عندbe7a45c؛ العددبعدالإصلاحيتحققمنالجولةالكاملةالتالية. المراجعةالآلية6f1083f8 قيدالمتابعةعندوضعهذاالدليل؛ لااعتمادمسبق.
+
+**المتبقي محليًا:** جامعأدلةقراءةفقط للخدمةوالحالةوتوقيتالمراقب، ربطهبهوياتالخطةوالجولةوببايتاتالمصادر، وربطcanaryأصليوملخصمراجعمصرحبالمخزن، معاختباراتالانقطاعوالتدويروالتلاعب. لا يلغيه وجودمحللالإقرارات. **المتبقيالأصلي:** جردوإعدادوساعاتمعتمدة، تجربتانظاميتانLinux/Windowsحسبالنطاق، تنفيذخمسدوراتتحتإشراف، ومراجعةالأدلة. t4/t5وISSUE-068 وتدقيقالفصولتبقىمساراتمستقلة.
