@@ -18,5 +18,35 @@
     "sha256": "d4e804af76e7d50b458b0d964117a2eb8ee812ab54a7070b667acadeef625ca0",
     "archive": "research/inbox/2026-09-23_collector_systemd_service_xml.gz",
     "archive_sha256": "38c7b10ee6dc50ad735ec0108a3396653a06adbca9128bd41e698ac032517cfb"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/wazuh/wazuh/v4.14.1/src/init/templates/wazuh-agent.service",
+    "resolved_url": "https://raw.githubusercontent.com/wazuh/wazuh/v4.14.1/src/init/templates/wazuh-agent.service",
+    "retrieved_utc": "2026-09-23T04:11:56.614208+00:00",
+    "content_type": "text/plain; charset=utf-8",
+    "bytes": 403,
+    "sha256": "6d34a49f741dae389b5649c78a1d95abaca2d8c53221fb438fc2ba8cc1e1812f",
+    "archive": "research/inbox/2026-09-23_collector_wazuh_agent_service.gz",
+    "archive_sha256": "81bcabef94736e19587420d5f7b98b5ff8504897eb39fdac7bcbdadbe489a06f"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/wazuh/wazuh/v4.14.1/src/shared/agent_op.c",
+    "resolved_url": "https://raw.githubusercontent.com/wazuh/wazuh/v4.14.1/src/shared/agent_op.c",
+    "retrieved_utc": "2026-09-23T04:11:56.709214+00:00",
+    "content_type": "text/plain; charset=utf-8",
+    "bytes": 26162,
+    "sha256": "8eb1a21ff891ab9ec614b8db130f519d04f2c3393e76dcb42383442d1bdc7bc8",
+    "archive": "research/inbox/2026-09-23_collector_wazuh_agent_op_c.gz",
+    "archive_sha256": "109c1e7640947426abbf862bf35ee78db1675191afcc1c99e6a85766e75d9bc0"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/wazuh/wazuh/v4.14.1/src/addagent/manage_agents.c",
+    "resolved_url": "https://raw.githubusercontent.com/wazuh/wazuh/v4.14.1/src/addagent/manage_agents.c",
+    "retrieved_utc": "2026-09-23T04:11:56.823994+00:00",
+    "content_type": "text/plain; charset=utf-8",
+    "bytes": 21470,
+    "sha256": "fefdcd027f2a68c9c82bd0536c661ce17dd6ef3b4167746f566eae015da29691",
+    "archive": "research/inbox/2026-09-23_collector_wazuh_manage_agents_c.gz",
+    "archive_sha256": "4f893e8af71ebac203c6a34040a7ee25784eaef35a217342a5642e959ae07c35"
   }
 ]
