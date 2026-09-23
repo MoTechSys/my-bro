@@ -331,3 +331,10 @@ Versioned Wazuh service source shows Type=forking, RemainAfterExit=yes and no PI
 ## ISSUE-106 — Introduction/implementation chapter drift (2026-09-23)
 
 **PARTIAL FIXED-IN-REPO.** Chapters1/4 aligned with ADR014 and existing tools/vector figures; removed OVA-from-prompt reasoning from operative claims, qualified unmeasured economics/time benefits and current-version assumptions, separated YARA from containment and conditional network scope from exclusion. Historical author change log retained and labeled. Full image/reference audit and current-cloud diagram remain open; no new experiment or human academic approval.
+
+
+## ISSUE-107 — Linux daemon evidence instead of systemd-only snapshots (2026-09-23)
+
+**IMPLEMENTED-IN-REPO / NEEDS-NATIVE.** connection_process.py and linuxproc collector integration now support fixed five-daemon procfs evidence without systemd.38 tests,838 total on c395a61; report08768699 completed and adjudicated in tests/README. Identity is not PID alone; binary inode/path/protection, boot/time namespaces and both scans must match. Binder rejects partial replacement or namespace changes and uses latest required daemon birth, not readiness.
+
+State D may be physically alive but violates the documented R/S gate; diagnostic corrected to PROC_DAEMON_STATE_REJECTED. No hidden retry or broadened acceptance. Native executable/comm/kernel/ACL/hidepid validation remains open. Windows and controller evidence remain local programming, as do t4/t5 and ISSUE-068. This partially advances ISSUE-105 without claiming complete native collection or deployment.
