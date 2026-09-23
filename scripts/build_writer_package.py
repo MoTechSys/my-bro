@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -51,6 +52,14 @@ def text(value, maximum=90):
     return value
 
 
+def technical(value, maximum):
+    text(value, maximum)
+    # Restrict the editable technical alphabet at the Mermaid boundary. Arabic
+    # captions remain unrestricted Unicode; embedded line/control chars are not.
+    require(not any(c in value for c in '|\\[]{}#`'), 'Mermaid delimiter refused')
+    return value
+
+
 def ident(value):
     require(isinstance(value, str) and re.fullmatch(r'[a-z][a-z0-9_]{0,59}', value), 'identifier')
     return value
@@ -69,6 +78,7 @@ def source_file(name, root=ROOT):
 
 
 def validate(spec, root=ROOT):
+    require(isinstance(spec, dict), 'diagram object')
     common = {'id', 'title', 'caption_ar', 'status', 'sources', 'kind'}
     fields = {'nodes', 'edges', 'height'} if spec.get('kind') == 'graph' else {'participants', 'messages'}
     require(set(spec) == common | fields, 'diagram fields')
@@ -87,7 +97,7 @@ def validate(spec, root=ROOT):
             require(node['kind'] in COLORS, 'node kind')
             require(isinstance(node['lines'], list) and 1 <= len(node['lines']) <= 4, 'node lines')
             for line in node['lines']:
-                text(line, 29)
+                technical(line, 29)
             for other in nodes.values():
                 require(abs(node['x']-other['x']) >= 310 or abs(node['y']-other['y']) >= 110, 'node overlap')
             nodes[node['id']] = node
@@ -95,7 +105,7 @@ def validate(spec, root=ROOT):
         for edge in spec['edges']:
             require(set(edge) == {'from', 'to', 'label', 'points', 'label_at', 'direction'}, 'edge fields')
             require(edge['from'] in nodes and edge['to'] in nodes, 'edge endpoint')
-            text(edge['label'], 56)
+            technical(edge['label'], 56)
             require(edge['direction'] in ('forward', 'both', 'none'), 'edge direction')
             require(isinstance(edge['points'], list) and 2 <= len(edge['points']) <= 8, 'edge points')
             for point in edge['points'] + [edge['label_at']]:
@@ -118,11 +128,11 @@ def validate(spec, root=ROOT):
         ids = set()
         for p in spec['participants']:
             require(set(p) == {'id', 'label'}, 'participant fields')
-            ident(p['id']); text(p['label'], 20); require(p['id'] not in ids, 'duplicate participant'); ids.add(p['id'])
+            ident(p['id']); technical(p['label'], 20); require(p['id'] not in ids, 'duplicate participant'); ids.add(p['id'])
         require(isinstance(spec['messages'], list) and 1 <= len(spec['messages']) <= 25, 'message count')
         for msg in spec['messages']:
             require(set(msg) == {'from', 'to', 'label'}, 'message fields')
-            require(msg['from'] in ids and msg['to'] in ids, 'message endpoint'); text(msg['label'], 90)
+            require(msg['from'] in ids and msg['to'] in ids, 'message endpoint'); technical(msg['label'], 90)
     return spec
 
 
@@ -198,7 +208,7 @@ def mermaid(spec):
     # Technical labels deliberately exclude Mermaid syntax. SVG supports escaped
     # XML text; Mermaid is a convenient derivative, not a second truth source.
     def safe(s):
-        return s.replace('&', '&amp;').replace('"', '&quot;').replace('<', '&lt;').replace('>', '&gt;')
+        return ''.join(f'#{ord(c)};' if c in '&\"<>;' else c for c in s)
     if spec['kind'] == 'graph':
         lines = ['flowchart TB']
         for n in spec['nodes']:
@@ -213,8 +223,9 @@ def mermaid(spec):
     return ('\n'.join(lines) + '\n').encode()
 
 
-def catalog():
-    raw = (FIGURES / 'catalog.json').read_bytes()
+def catalog(raw=None):
+    if raw is None:
+        raw = source_file('docs/thesis/figures/catalog.json').read_bytes()
     require(len(raw) <= 1024*1024, 'catalog size')
     data = json.loads(raw, object_pairs_hook=strict_pairs)
     require(set(data) == {'schema_version', 'diagrams'} and type(data['schema_version']) is int
@@ -225,12 +236,13 @@ def catalog():
     return specs
 
 
-def generated():
+def generated(specs=None):
+    specs = catalog() if specs is None else specs
     outputs = {}
     index = ['# فهرس المخططات ومصادرها\n',
              'مولد من `catalog.json` بواسطة `scripts/build_writer_package.py`. المصادر القابلة للتحرير JSON، وMermaid مشتق للعلاقات لا لتطابق التخطيط.\n',
              'الأشكال تصميم/شرح للكود وليست لقطات تشغيل أو نتائج تجارب. النص التقني داخل SVG بالإنجليزية، والوصف العربي أسفل كل شكل.\n']
-    for s in catalog():
+    for s in specs:
         outputs[s['id']+'.svg'] = render(s)
         outputs[s['id']+'.mmd'] = mermaid(s)
         index += [f'## {s["id"]} — {s["title"]}\n', f'![{s["title"]}]({s["id"]}.svg)\n',
@@ -241,8 +253,8 @@ def generated():
     return outputs
 
 
-def check():
-    outputs = generated()
+def check(specs=None):
+    outputs = generated(specs)
     for name, raw in outputs.items():
         path = FIGURES / name
         require(path.is_file() and not path.is_symlink() and path.read_bytes() == raw, 'stale figure: '+name)
@@ -252,15 +264,20 @@ def check():
 
 
 def bundle_files():
-    outputs = check()
+    catalog_raw = source_file('docs/thesis/figures/catalog.json').read_bytes()
+    specs = catalog(catalog_raw)
+    outputs = check(specs)
     paths = ['docs/thesis/'+c for c in CHAPTERS]
     paths += ['docs/thesis/WRITER_HANDOFF.md', 'docs/thesis/figures/catalog.json',
               'scripts/build_writer_package.py', 'tests/test_writer_package.py']
     # Explicit allowlist: never traverse the repository, .git, runtime or raw evidence.
     paths += ['docs/thesis/figures/'+name for name in outputs]
-    for s in catalog():
+    for s in specs:
         paths.extend(s['sources'])
     files = {p: source_file(p).read_bytes() for p in sorted(set(paths))}
+    require(files['docs/thesis/figures/catalog.json'] == catalog_raw, 'catalog changed during bundle')
+    for name, raw in outputs.items():
+        require(files['docs/thesis/figures/'+name] == raw, 'figure changed during bundle')
     draft = ('# مسودة الكاتب المجمعة — ليست نتائج أو قبولاً نهائياً\n\n'
              'اقرأ [دليل الكاتب](WRITER_HANDOFF.md) و[فهرس الأشكال](figures/INDEX.md) أولاً.\n\n')
     for name in CHAPTERS:
@@ -280,16 +297,48 @@ def package(output):
     require(output.parent.resolve().is_relative_to(ROOT) and output.parent.is_dir(), 'workspace output required')
     require(output.suffix == '.zip' and not output.is_symlink(), 'new zip required')
     files = bundle_files()
-    # Exclusive creation; partial output after I/O failure remains for inspection.
-    fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-    with os.fdopen(fd, 'wb') as stream:
-        with zipfile.ZipFile(stream, 'w', compression=zipfile.ZIP_STORED) as archive:
-            for name, raw in sorted(files.items()):
-                info = zipfile.ZipInfo(name, date_time=(2026, 9, 23, 0, 0, 0))
-                info.create_system = 3; info.external_attr = 0o100600 << 16
-                archive.writestr(info, raw)
-        stream.flush(); os.fsync(stream.fileno())
-    return {'path': str(output), 'sha256': digest(output.read_bytes()), 'files': len(files)}
+    # Build completely in a private workspace staging file. Publish by hard
+    # link: exclusive final-name creation, unlike replace(), never overwrites.
+    with tempfile.TemporaryDirectory(prefix='.writer-stage-', dir=output.parent) as directory:
+        staged = Path(directory) / 'archive.zip'
+        with staged.open('xb') as stream:
+            os.chmod(staged, 0o600)
+            with zipfile.ZipFile(stream, 'w', compression=zipfile.ZIP_STORED) as archive:
+                for name, raw in sorted(files.items()):
+                    info = zipfile.ZipInfo(name, date_time=(2026, 9, 23, 0, 0, 0))
+                    info.create_system = 3; info.external_attr = 0o100600 << 16
+                    archive.writestr(info, raw)
+            stream.flush(); os.fsync(stream.fileno())
+        with zipfile.ZipFile(staged) as archive:
+            require(archive.testzip() is None, 'archive integrity')
+        sha = digest(staged.read_bytes())
+        os.link(staged, output, follow_symlinks=False)
+        # Namespace fsync can fail after publication; propagate failure. The
+        # complete final ZIP may remain, never silently replace it on retry.
+        parent = os.open(output.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(parent)
+        finally:
+            os.close(parent)
+    return {'path': str(output), 'sha256': sha, 'files': len(files)}
+
+
+def render_all():
+    outputs = generated()
+    require(not FIGURES.is_symlink(), 'figure directory symlink')
+    with tempfile.TemporaryDirectory(prefix='.figure-stage-', dir=FIGURES.parent) as directory:
+        for name, raw in outputs.items():
+            staged = Path(directory) / name
+            with staged.open('xb') as stream:
+                stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+        for name in outputs:
+            path = FIGURES / name
+            require(not path.is_symlink(), 'symlink output')
+            os.replace(Path(directory) / name, path)
+    # Per-file replacement, NOT a group transaction. An interruption during
+    # publication can leave mixed versions; check() rejects them before package.
+    check()
+    return len(outputs)
 
 
 def main(argv=None):
@@ -301,12 +350,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.render:
-            outputs = generated()
-            for name, raw in outputs.items():
-                path = FIGURES / name
-                require(not path.is_symlink(), 'symlink output')
-                path.write_bytes(raw)
-            print(json.dumps({'rendered_diagrams': len(catalog())}))
+            print(json.dumps({'verified_files': render_all()}))
         elif args.check:
             print(json.dumps({'verified_files': len(check()), 'acceptance_approved': False}))
         else:

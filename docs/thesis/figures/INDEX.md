@@ -172,13 +172,13 @@ Wazuh Indexer مخزن وثائق OpenSearch؛ id داخل التنبيه ليس
 
 **المراجع داخل المستودع:** `scripts/measure/recovery.py`, `scripts/measure/trial_runner.py`, `tests/test_recovery.py`
 
-## fig15_timeline — Measurement timeline and evidence boundaries
+## fig15_timeline — Independent measurement stages and evidence types
 
-![Measurement timeline and evidence boundaries](fig15_timeline.svg)
+![Independent measurement stages and evidence types](fig15_timeline.svg)
 
 خريطة تعريفات وليست محوراً زمنياً بمقياس أو رسماً لنتائج. event/action_confirmed من M2-A يثبت فعل الملف ولا يملأ t1. t2 وt6 من التنبيهات الأصلية، وt3 مراقب ظهور مستقل. t4/t5 غير منفذين بعد، ولا يثبت اختفاء الملف وحده سببية الحذف.
 
-**الحالة:** Conceptual stages, NOT a guaranteed ordering of t3 versus AR stages
+**الحالة:** Definition cards only - no time axis, durations or cross-lane ordering
 
 [SVG](fig15_timeline.svg) · [Mermaid](fig15_timeline.mmd) · المصدر: كائن `fig15_timeline` في [catalog.json](catalog.json).
 

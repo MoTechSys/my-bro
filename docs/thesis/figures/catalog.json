@@ -686,22 +686,22 @@
         {
           "from": "endpoints",
           "to": "soc",
-          "label": "events / configured AR return",
+          "label": "event telemetry",
           "points": [
             [
               360,
-              220
+              205
             ],
             [
               800,
-              220
+              205
             ]
           ],
           "label_at": [
             580,
-            208
+            193
           ],
-          "direction": "both"
+          "direction": "forward"
         },
         {
           "from": "soc",
@@ -798,6 +798,26 @@
             515
           ],
           "direction": "forward"
+        },
+        {
+          "from": "soc",
+          "to": "endpoints",
+          "label": "configured rule-driven AR",
+          "direction": "forward",
+          "points": [
+            [
+              800,
+              245
+            ],
+            [
+              360,
+              245
+            ]
+          ],
+          "label_at": [
+            580,
+            234
+          ]
         }
       ],
       "height": 780
@@ -1019,22 +1039,22 @@
         {
           "from": "match",
           "to": "enrich",
-          "label": "trigger / enrichment event",
+          "label": "configured enrichment trigger",
           "points": [
             [
               800,
-              600
+              580
             ],
             [
               360,
-              600
+              580
             ]
           ],
           "label_at": [
             580,
-            588
+            568
           ],
-          "direction": "both"
+          "direction": "forward"
         },
         {
           "from": "match",
@@ -1231,6 +1251,26 @@
             140
           ],
           "direction": "forward"
+        },
+        {
+          "from": "enrich",
+          "to": "match",
+          "label": "enrichment event returned",
+          "direction": "forward",
+          "points": [
+            [
+              360,
+              625
+            ],
+            [
+              800,
+              625
+            ]
+          ],
+          "label_at": [
+            580,
+            614
+          ]
         }
       ],
       "height": 1330
@@ -3167,9 +3207,9 @@
     },
     {
       "id": "fig15_timeline",
-      "title": "Measurement timeline and evidence boundaries",
+      "title": "Independent measurement stages and evidence types",
       "caption_ar": "خريطة تعريفات وليست محوراً زمنياً بمقياس أو رسماً لنتائج. event/action_confirmed من M2-A يثبت فعل الملف ولا يملأ t1. t2 وt6 من التنبيهات الأصلية، وt3 مراقب ظهور مستقل. t4/t5 غير منفذين بعد، ولا يثبت اختفاء الملف وحده سببية الحذف.",
-      "status": "Conceptual stages, NOT a guaranteed ordering of t3 versus AR stages",
+      "status": "Definition cards only - no time axis, durations or cross-lane ordering",
       "sources": [
         "scripts/measure/mttd.py",
         "scripts/measure/trial_runner.py",
@@ -3180,7 +3220,7 @@
       "nodes": [
         {
           "id": "n0",
-          "x": 430,
+          "x": 60,
           "y": 170,
           "kind": "process",
           "lines": [
@@ -3190,8 +3230,8 @@
         },
         {
           "id": "n1",
-          "x": 430,
-          "y": 350,
+          "x": 800,
+          "y": 170,
           "kind": "process",
           "lines": [
             "t1: native source timestamp",
@@ -3200,8 +3240,8 @@
         },
         {
           "id": "n2",
-          "x": 430,
-          "y": 530,
+          "x": 60,
+          "y": 370,
           "kind": "process",
           "lines": [
             "t2: manager alert",
@@ -3210,8 +3250,8 @@
         },
         {
           "id": "n3",
-          "x": 430,
-          "y": 710,
+          "x": 800,
+          "y": 370,
           "kind": "process",
           "lines": [
             "t3: first observed visibility",
@@ -3220,8 +3260,8 @@
         },
         {
           "id": "n4",
-          "x": 430,
-          "y": 890,
+          "x": 60,
+          "y": 570,
           "kind": "pending",
           "lines": [
             "t4: actual AR start",
@@ -3230,8 +3270,8 @@
         },
         {
           "id": "n5",
-          "x": 430,
-          "y": 1070,
+          "x": 800,
+          "y": 570,
           "kind": "pending",
           "lines": [
             "t5: independent completion",
@@ -3240,8 +3280,8 @@
         },
         {
           "id": "n6",
-          "x": 430,
-          "y": 1250,
+          "x": 60,
+          "y": 770,
           "kind": "process",
           "lines": [
             "t6: manager confirmation",
@@ -3250,7 +3290,7 @@
         }
       ],
       "edges": [],
-      "height": 1460
+      "height": 980
     }
   ]
 }

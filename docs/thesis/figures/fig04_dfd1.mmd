@@ -15,7 +15,7 @@ flowchart TB
     collect -->|"enveloped events"| decode
     config -->|"decoder definitions"| decode
     decode -->|"decoded fields"| match
-    match <-->|"trigger / enrichment event"| enrich
+    match -->|"configured enrichment trigger"| enrich
     match -->|"configured AR triggers"| respond
     respond -->|"result / error logs"| arlog
     match -->|"eligible alert"| alerts
@@ -24,3 +24,4 @@ flowchart TB
     analyst <-->|"query / display"| present
     config -->|"rule / CDB definitions"| match
     arlog -->|"feedback log collection"| collect
+    enrich -->|"enrichment event returned"| match

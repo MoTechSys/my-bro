@@ -4,7 +4,7 @@ flowchart TB
     clock["Device clock records / clock_ref / offset / precision / uncertainty"]
     alert["Original alert records / Identity + timestamp / Selected by trial contract"]
     source["Source evidence store / intent / polls / snapshots / Bound spec + file hash"]
-    observer["Visibility evidence store / identity / responses / polls / Bound t2 -&gt; observed t3"]
+    observer["Visibility evidence store / identity / responses / polls / Bound t2 -#62; observed t3"]
     recovery["Recovery snapshots / journal / pending / manifest / Prefix + canonical bindings"]
     report["Derived measurement report / All-attempt denominator / Null missing timestamps"]
     manifest ---|"one run : many attempts"| attempt

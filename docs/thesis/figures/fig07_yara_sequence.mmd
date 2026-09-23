@@ -4,14 +4,14 @@ sequenceDiagram
     participant ar as soc_ar yara
     participant yara as YARA process
     participant store as Filebeat / Indexer
-    agent->>manager: FIM event -&gt; configured Linux trigger 100300 or 100301
-    manager->>ar: AR add with exact approved extra_args; delete -&gt; no-op
-    ar->>ar: Require allowed path; pin regular single-link file without following links
-    ar->>ar: Wait for stable identity; reject if not stable within bounded loop
+    agent->>manager: FIM event -#62; configured Linux trigger 100300 or 100301
+    manager->>ar: AR add with exact approved extra_args#59; delete -#62; no-op
+    ar->>ar: Require allowed path#59; pin regular single-link file without following links
+    ar->>ar: Wait for stable identity#59; reject if not stable within bounded loop
     ar->>ar: Check root-owned non-writable regular binary and rule file
-    ar->>yara: yara -w -a 10 -l 100 RULES /proc/self/fd/FD; no shell or recursion
-    yara->>ar: 25 s subprocess timeout; CPU/address-space limits; require exit 0
-    ar->>ar: Recheck file identity; validate each rule name and descriptor output
-    ar->>agent: Write match lines and scan_complete audit; failures logged separately
+    ar->>yara: yara -w -a 10 -l 100 RULES /proc/self/fd/FD#59; no shell or recursion
+    yara->>ar: 25 s subprocess timeout#59; CPU/address-space limits#59; require exit 0
+    ar->>ar: Recheck file identity#59; validate each rule name and descriptor output
+    ar->>agent: Write match lines and scan_complete audit#59; failures logged separately
     agent->>manager: yara_decoder / 108001 for positive match, not every completed scan
-    manager->>store: alerts.json -&gt; Filebeat -&gt; Indexer -&gt; Dashboard
+    manager->>store: alerts.json -#62; Filebeat -#62; Indexer -#62; Dashboard

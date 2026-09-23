@@ -30,7 +30,7 @@ flowchart TB
     n2["Architecture / and data contracts"]
     n3["Implementation / and local regression tests"]
     n4["Authorized native pilot / PILOT: 5 per scenario"]
-    n5["Measured trials + baseline / planned_n &gt;= 30; &gt;= 12 h"]
+    n5["Measured trials + baseline / planned_n #62;= 30#59; #62;= 12 h"]
     n6["Human review / and final thesis"]
     n0 -->|"next stage"| n1
     n1 -->|"next stage"| n2
@@ -198,11 +198,12 @@ flowchart TB
     analyst["Security analyst / Search / investigate"]
     operator["Lab operator / Authorized test actions"]
     reviewer["Human evaluator / Independent labels/reviews"]
-    endpoints <-->|"events / configured AR return"| soc
+    endpoints -->|"event telemetry"| soc
     soc <-->|"hash request / reputation reply"| vt
     soc <-->|"alerts / search requests"| analyst
     operator -->|"authorized test events"| endpoints
     reviewer -->|"review evidence"| analyst
+    soc -->|"configured rule-driven AR"| endpoints
 ```
 
 **التحليل:** معظم التدفقات ثنائية الاتجاه (نقاط النهاية ترسل أحداثاً وتستقبل أوامر استجابة؛ VirusTotal يستقبل هاشاً ويعيد حكماً)، بينما تدفق المهاجم أحادي الاتجاه نحو الأهداف. ويُلاحَظ أن **المهاجم لا يتفاعل مع المنصة مباشرة** بل تُلاحَظ آثاره عبر نقاط النهاية والشبكة — وهذا جوهر المراقبة السلبية (Passive Monitoring).
@@ -229,7 +230,7 @@ flowchart TB
     collect -->|"enveloped events"| decode
     config -->|"decoder definitions"| decode
     decode -->|"decoded fields"| match
-    match <-->|"trigger / enrichment event"| enrich
+    match -->|"configured enrichment trigger"| enrich
     match -->|"configured AR triggers"| respond
     respond -->|"result / error logs"| arlog
     match -->|"eligible alert"| alerts
@@ -238,6 +239,7 @@ flowchart TB
     analyst <-->|"query / display"| present
     config -->|"rule / CDB definitions"| match
     arlog -->|"feedback log collection"| collect
+    enrich -->|"enrichment event returned"| match
 ```
 
 **الحلقات المغلقة الثلاث** (ميزة التصميم):
@@ -297,20 +299,20 @@ sequenceDiagram
     participant execd as execd / wrapper
     participant ar as soc_ar remove
     participant store as Filebeat / Indexer
-    agent->>manager: FIM event -&gt; configured 100200/100201 trigger
+    agent->>manager: FIM event -#62; configured 100200/100201 trigger
     manager->>vt: Hash reputation request through integration
-    vt->>manager: Reputation event -&gt; rule 87105 when matched
+    vt->>manager: Reputation event -#62; rule 87105 when matched
     manager->>execd: Dispatch configured local remove-threat response
-    execd->>ar: Read bounded JSON add; delete is a no-op
-    ar->>ar: Require rule 87105 and approved path; derive agent/path/md5 keys
+    execd->>ar: Read bounded JSON add#59; delete is a no-op
+    ar->>ar: Require rule 87105 and approved path#59; derive agent/path/md5 keys
     ar->>execd: check_keys handshake
-    execd->>ar: abort -&gt; return; continue -&gt; proceed; otherwise reject
+    execd->>ar: abort -#62; return#59; continue -#62; proceed#59; otherwise reject
     ar->>ar: Open no-follow single-link regular file under pinned parent
     ar->>ar: Compare source MD5 and stable descriptor/name identity
-    ar->>ar: os.unlink(basename, dir_fd=parent); final name-swap risk remains
-    ar->>agent: Write success/error log; log is not independent completion evidence
-    agent->>manager: Recollect log; configured success/failure rules may match
-    manager->>store: alerts.json -&gt; Filebeat -&gt; Indexer -&gt; Dashboard
+    ar->>ar: os.unlink(basename, dir_fd=parent)#59; final name-swap risk remains
+    ar->>agent: Write success/error log#59; log is not independent completion evidence
+    agent->>manager: Recollect log#59; configured success/failure rules may match
+    manager->>store: alerts.json -#62; Filebeat -#62; Indexer -#62; Dashboard
 ```
 
 التسلسل أعلاه يشرح مسار Linux دون قياس مدد؛ حالات abort/delete/errors لا تنفذ المسار الناجح كاملاً. يفصل عقد القياس D_VT عند توفر t2_prime عن المقاييس الأخرى، ولا يجمع مدد خدمات مفترضة لتكوين نتيجة. الحذف os.unlink تحت أب مثبت بعد فحص MD5 والهوية، مع بقاء مخاطرة تبديل الاسم النهائية؛ راجع SECURITY_REVIEW.
@@ -326,17 +328,17 @@ sequenceDiagram
     participant ar as soc_ar yara
     participant yara as YARA process
     participant store as Filebeat / Indexer
-    agent->>manager: FIM event -&gt; configured Linux trigger 100300 or 100301
-    manager->>ar: AR add with exact approved extra_args; delete -&gt; no-op
-    ar->>ar: Require allowed path; pin regular single-link file without following links
-    ar->>ar: Wait for stable identity; reject if not stable within bounded loop
+    agent->>manager: FIM event -#62; configured Linux trigger 100300 or 100301
+    manager->>ar: AR add with exact approved extra_args#59; delete -#62; no-op
+    ar->>ar: Require allowed path#59; pin regular single-link file without following links
+    ar->>ar: Wait for stable identity#59; reject if not stable within bounded loop
     ar->>ar: Check root-owned non-writable regular binary and rule file
-    ar->>yara: yara -w -a 10 -l 100 RULES /proc/self/fd/FD; no shell or recursion
-    yara->>ar: 25 s subprocess timeout; CPU/address-space limits; require exit 0
-    ar->>ar: Recheck file identity; validate each rule name and descriptor output
-    ar->>agent: Write match lines and scan_complete audit; failures logged separately
+    ar->>yara: yara -w -a 10 -l 100 RULES /proc/self/fd/FD#59; no shell or recursion
+    yara->>ar: 25 s subprocess timeout#59; CPU/address-space limits#59; require exit 0
+    ar->>ar: Recheck file identity#59; validate each rule name and descriptor output
+    ar->>agent: Write match lines and scan_complete audit#59; failures logged separately
     agent->>manager: yara_decoder / 108001 for positive match, not every completed scan
-    manager->>store: alerts.json -&gt; Filebeat -&gt; Indexer -&gt; Dashboard
+    manager->>store: alerts.json -#62; Filebeat -#62; Indexer -#62; Dashboard
 ```
 
 #### 3.7.4 سجل معرّفات القواعد المخصصة (جدول 3.4)
