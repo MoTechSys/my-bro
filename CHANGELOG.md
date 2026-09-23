@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased] — 2026-09-23 — Linux procfs UC-01 adapter
+
+- Added two-scan fixed-daemon procfs evidence with executable inode/protection checks, PID/start-tick/boot/namespace identities and explicitly derived birth-time precision. No native execution or service control.
+- Integrated linuxproc capture/export/bind; all daemons must be replaced after request bounds, within the same PID/time namespaces. Existing systemd backend and evaluator schema remain unchanged.
+-38 new regressions,838 full tests passed on c395a61. Independent static review08768699 completed/adjudicated; rejected-state diagnostic corrected without relaxing admission or adding retries.
+- Archived four Linux/man-page references; updated runbook and handoff. Native acceptance, Windows/controller, t4/t5/config protection and remaining academic work remain open.
+
 > **خاتمة هذه الدفعة — 2026-09-23:** انتهت مراجعةcollector ccdc4a2c وحُكمت بنودها التسعة فيtests/README؛ لا تعاد. أضيف اتساق ساعةmanager/observer في6853581 واختباراه في414384d؛ **48 اختبارcollector و800 كليًا ناجحة على414384d**. ذكرrunning أو46/798 أدناه لقطة سابقة. محولات الدايمونات/Windows/controller وt4/t5 وISSUE-068 وبقية التدقيق ما زالت أعمالًا محلية؛ لا نشر أو قبول أصلي. رأس التسليم وCI النهائي فيPR28.
 
 ## [Unreleased] — 2026-09-23 — [AI] bounded UC-01 collector and partial thesis audit
