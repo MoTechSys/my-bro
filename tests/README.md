@@ -646,7 +646,7 @@ CLI على Linux يقرأ فقط: يرفض symlink النهائي وFIFO وال�
 
 ## UC-01 collector/binder — مرشح قراءة فقط، 2026-09-23
 
-هذا القسم أحدث من عبارة «الجامع غير منفذ» في لقطة المحلل أعلاه. `connection_collect.py` ينفذ capture/export/bind، مع44 اختبارًا اصطناعيًا فيdf53b47 و796 اختبارًا كليًا ناجحًا على94e6ae7. **ليس جامعًا أصليًا مكتمل القبول لكل منصات المشروع**: محول الخدمة الحالي محدود بوحدات Linux/systemd التي تعرض active/running وMainPID موجبًا وInvocationID وExecMainStartTimestamp؛ Windows والحاويات دون systemd ووحدة Wazuh القياسية ذات active/exited تحتاج محول هوية عمليات إضافيًا. هذه برمجة محلية باقية، وليست عائق بيئة فقط.
+هذا القسم أحدث من عبارة «الجامع غير منفذ» في لقطة المحلل أعلاه. `connection_collect.py` ينفذ capture/export/bind، مع46 اختبارًا اصطناعيًا في0d6742f و798 اختبارًا كليًا ناجحًا على4b85b6f. **ليس جامعًا أصليًا مكتمل القبول لكل منصات المشروع**: محول الخدمة الحالي محدود بوحدات Linux/systemd التي تعرض active/running وMainPID موجبًا وInvocationID وExecMainStartTimestamp؛ Windows والحاويات دون systemd ووحدة Wazuh القياسية ذات active/exited تحتاج محول هوية عمليات إضافيًا. هذه برمجة محلية باقية، وليست عائق بيئة فقط.
 
 ### الأوامر الثابتة وعقد التخزين
 
@@ -657,7 +657,7 @@ CLI على Linux يقرأ فقط: يرفض symlink النهائي وFIFO وال�
 - الترتيب: plan.json ثمintent.json قبل أول query، ثمsample-NNN.bin وsample-NNN.json، ثمterminal.json. intent يحويschema_version=1 وkind وcycle_id وcapture_id UUID عشوائي وplan_sha256 وsource_sha256 وacceptance_approved=false. nonce يجعل لقطتين متطابقتين مختلفتين في الهوية؛ ليس توقيعًا أوأداة إثبات ترتيب.
 - metadata لكل عينة: start_ms/end_ms وstart_monotonic_ms/end_monotonic_ms وraw_sha256 وhostname وboot_id. ساعةmanager poll هيobserver؛ ساعةservice هيendpoint. offset=device−UTC، ولا تطبيقoffset أثناءcapture.
 - terminal: intent_sha256 وstatus وcount وreason. فقطcomplete/count64 أو1 قابلة للتصدير؛ failed أوpartial أوغيابterminal لا يملأ أي وقت ناجح. فشل query ينتجCAPTURE_FAILED؛ الانقطاع يتركINTERRUPTED إذا أمكن نشرterminal. kill9/تعطل القرص قد يترك مخزنًا ناقصًا مرفوضًا.
-- export يحتاج بصمةintent المتوقعة، exact plan bytes،kind/cycle، وإصدار المصادر نفسه. يعيدhash raw والparse والتوقيت/الفجوات ويفحص قائمة أسماء الملفات. تغير أي ملف مصدر مشارك يستلزم تشغيل أداة النسخة الأصلية لمخازنه؛ لا تعطل فحصsource hashes. ملفاتmetadata غير موقعة؛ stored_bytes_verified تعني سلامة إعادة القراءة والتحقق البنيوي، لا أصالة الوقت/المضيف.
+- export يحتاج بصمةintent المتوقعة، exact plan bytes،kind/cycle، وإصدار المصادر نفسه. يرفض وقت بداية خدمة يقع قطعًا بعد مجال زمن لقطة رصدها (523359a)، ويعيدhash raw والparse والتوقيت/الفجوات ويفحص قائمة أسماء الملفات. تغير أي ملف مصدر مشارك يستلزم تشغيل أداة النسخة الأصلية لمخازنه؛ لا تعطل فحصsource hashes. ملفاتmetadata غير موقعة؛ stored_bytes_verified تعني سلامة إعادة القراءة والتحقق البنيوي، لا أصالة الوقت/المضيف.
 
 ### الربط offline
 
@@ -702,7 +702,7 @@ CLI لا ينشئ ملفexport تلقائيًا. عند حفظstdout استخد�
 
 **قيدحقيقي:** وحدةWazuhالمؤرشفة Type=forking وRemainAfterExit=yes بلاPIDFile؛ قدتعرضactive/exited وMainPID=0. لايجوزتخفيفrunning لقبولهاكمشاهدةدايموناتحية. دعمهويةدايموناتمتعددة/nativeprocess أوحاويةغيرsystemd عملمحليمتبقٍ. لاsnapshotيثبتوحدهأنكلدايموناتWazuh تعملأوأنالإعدادالمعلنمطبق.
 
-المراجعةالآليةالجديدة [ccdc4a2c](https://www.genspark.ai/agents?id=ccdc4a2c-aa78-504c-9ef2-bdaf91e9df60) للقطةc7acf13 أُرسلتبنصوصكاملة، وحالتهاعندكتابةهذاالقسمrunning؛ لاتعاد. ليستاعتمادًابشريًا أوnative، والإصلاحاتاللاحقة9429515 واختباراتهاdf53b47 غيرمراجعةمستقلةبأثررجعي.44اختبارًا تغطيالمخازنالحقيقيةالاصطناعيةوالخصوصيةوالتلاعبوالانقطاعوالربطوالدقة؛796كليًامحليًا،CIكلرأسيثبتمنPR28.
+المراجعةالآليةالجديدة [ccdc4a2c](https://www.genspark.ai/agents?id=ccdc4a2c-aa78-504c-9ef2-bdaf91e9df60) للقطةc7acf13 أُرسلتبنصوصكاملة، وحالتهاعندكتابةهذاالقسمrunning؛ لاتعاد. ليستاعتمادًابشريًا أوnative، والإصلاحاتاللاحقة9429515 واختباراتهاdf53b47 غيرمراجعةمستقلةبأثررجعي.46اختبارًا تغطيالمخازنالحقيقيةالاصطناعيةوالخصوصيةوالتلاعبوالانقطاعوالربطوالدقة؛798كليًامحليًا،CIكلرأسيثبتمنPR28.
 
 ### تحكيم المراجعة المستقلة UC-01
 
