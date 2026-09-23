@@ -153,7 +153,7 @@ def plan(data, allow_legacy=False, *, journal_path=None):
                 {k: existing.get(k) for k in pending if k not in MUTABLE}, 'EXISTING_TRIAL_CONFLICT')
         require(existing.get('t0') == pending.get('t0'), 'EXISTING_TRIAL_CONFLICT')
         er = existing.get('runner', {})
-        require(er.get('state') in ('COLLECTED', 'COLLECTION_FAILED', 'RECOVERED_INTERRUPTED') and
+        require(er.get('state') in ('COLLECTED', 'COLLECTION_FAILED', 'COLLECTION_INTERRUPTED', 'RECOVERED_INTERRUPTED') and
                 all(er.get(k) == runner.get(k) for k in ('mode', 'command', 'manifest_sha256', 'journal_path',
                                                            'journal_prefix_bytes', 'journal_prefix_sha256')), 'EXISTING_RUNNER_CONFLICT')
         if er.get('state') == 'RECOVERED_INTERRUPTED':
@@ -204,8 +204,10 @@ def recover(journal, manifest, store, pins, *, operator_stopped=False, allow_leg
                     os.close(fd)
             finally:
                 os.close(parent)
-        except Exception:
+        except (ValueError, OSError):
             terminal.update(status='failed', reason='RECOVERY_REJECTED', result=None)
+        except Exception:
+            terminal.update(status='failed', reason='RECOVERY_INTERNAL_ERROR', result=None)
         except KeyboardInterrupt:
             terminal.update(status='failed', reason='RECOVERY_INTERRUPTED', result=None)
             raise
@@ -237,7 +239,7 @@ def export(store, expected, *, summary=False, output_path=None):
                 and terminal['intent_sha256'] == expected, 'TERMINAL_SCHEMA')
         if terminal['status'] == 'failed':
             require(summary and terminal['result'] is None and terminal['reason'] in
-                    ('RECOVERY_INCOMPLETE', 'RECOVERY_REJECTED', 'RECOVERY_INTERRUPTED'), 'INCOMPLETE_RECOVERY')
+                    ('RECOVERY_INCOMPLETE', 'RECOVERY_REJECTED', 'RECOVERY_INTERNAL_ERROR', 'RECOVERY_INTERRUPTED'), 'INCOMPLETE_RECOVERY')
             return dict(terminal, artifacts_verified=False, acceptance_approved=False)
         require(terminal['status'] == 'completed' and terminal['reason'] is None, 'TERMINAL_STATE')
         require(set(os.listdir(fd)) == {'intent.json', 'terminal.json', 'attempts.jsonl', *INPUTS}, 'UNEXPECTED_STORE_ENTRY')

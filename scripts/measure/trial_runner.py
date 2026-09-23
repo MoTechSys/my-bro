@@ -455,6 +455,7 @@ def main(argv=None):
                                    'journal_prefix_sha256': prefix_hash.hexdigest()}
                 write_all(pfd, encoded(trial))
                 sync_parent(pending)  # output + launch-intent names durable BEFORE command
+            cancelled = False
             try:
                 if args.lab and trial['exclusion_reason'] is None:
                     trial['runner'].update(execute(command, args.timeout))
@@ -475,15 +476,20 @@ def main(argv=None):
                 if trial['exclusion_reason']:
                     trial['reason'] = current['reason']
                 trial['runner']['state'] = 'COLLECTED'
-            except (OSError, ValueError, KeyError, TypeError, OverflowError, KeyboardInterrupt) as exc:
+            except KeyboardInterrupt:
+                trial.update(exclusion_reason='INVALID', reason='INTERRUPTED_DURING_EXECUTION_OR_COLLECTION')
+                trial['runner']['state'] = 'COLLECTION_INTERRUPTED'
+                cancelled = True
+            except (OSError, ValueError, KeyError, TypeError, OverflowError) as exc:
                 trial.update(exclusion_reason='INVALID', reason='RUNNER_ERROR:' + str(exc))
                 trial['runner']['state'] = 'COLLECTION_FAILED'
             write_all(fd, encoded(trial))
-            pending.unlink()
+            if not cancelled:
+                pending.unlink()
             sync_parent(output)
         print(json.dumps({'run_id': trial['run_id'], 'trial_id': trial['trial_id'],
                           'exclusion_reason': trial['exclusion_reason'], 'output': str(output)}))
-        return 2 if trial['exclusion_reason'] else 0
+        return 130 if cancelled else (2 if trial['exclusion_reason'] else 0)
     except KeyboardInterrupt:
         # The durable pending intent is recovery evidence, never automatically removed.
         print('trial runner interrupted; retain pending evidence and do not rerun', file=sys.stderr)
