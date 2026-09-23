@@ -297,6 +297,18 @@ class Source(unittest.TestCase):
         evidence = (self.store, result['intent_sha256'])
         return runner, manifest, run, trial, evidence
 
+    def test_review_unicode_directory_roundtrip_and_single_jsonl_newline(self):
+        renamed = self.base/'مصدر'
+        self.source.rename(renamed); self.source = renamed
+        self.file = self.source/self.file.name
+        self.spec['directory'] = str(self.source)
+        runner, manifest, run, trial, evidence = self.measurement()
+        row = s.export(*evidence); raw = s.r.json_bytes(row)
+        self.assertEqual(raw.count(b'\n'), 1)
+        self.assertEqual(json.loads(raw.decode('ascii'))['target_key']['syscheck.path'], str(self.file))
+        runner.collect(trial, run, None, [], [], [], evidence)
+        self.assertTrue(trial['event_valid']); self.assertIsNone(trial['t1'])
+
     def test_sensor_miss_keeps_full_denominator_without_t1(self):
         runner, manifest, run, trial, evidence = self.measurement()
         runner.collect(trial, run, None, [], [], [], evidence)
