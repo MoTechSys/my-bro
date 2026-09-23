@@ -595,6 +595,134 @@ def baseline_summary(trials, runs, alerts):
     return summaries
 
 
+AR_UCS = {'UC-03': 't2_prime', 'UC-07': 't2'}
+AR_POLICY_KEYS = {'window_s', 'precision_ms', 'protocol_ref', 'independent_trials'}
+
+
+def validate_ar_policies(run):
+    """Opt-in predeclared response deadlines; no retrofit inferred from outcomes."""
+    policies = run.get('ar_policies', {})
+    require(isinstance(policies, dict) and set(policies) <= set(AR_UCS), 'invalid AR policy scope')
+    for policy in policies.values():
+        require(isinstance(policy, dict) and set(policy) == AR_POLICY_KEYS, 'invalid AR policy fields')
+        require(type(policy['window_s']) is int and 1 <= policy['window_s'] <= 3600, 'invalid AR window')
+        text(policy['protocol_ref'], 'AR predeclared protocol reference')
+        require(type(policy['independent_trials']) is bool, 'AR independence declaration required')
+        precision = policy['precision_ms']
+        require(isinstance(precision, dict) and set(precision) == {'t0', 'trigger', 't4', 't5'},
+                'AR precision map required')
+        for value in precision.values():
+            require(type(value) is int and 1 <= value <= 60000, 'invalid AR timestamp precision')
+
+
+def ar_outcome(row, run):
+    """Evidence classification, not authenticated causal/native AR acceptance.
+
+    Trigger is VT 87105 for UC-03, FIM for UC-07. t6 and exit codes never
+    replace t5. Missing observations are not proof that no action occurred.
+    Precision values are conservative declared +/- bounds, plus clock uncertainty.
+    """
+    output = {'state': 'NOT_APPLICABLE', 'trigger_observed': False,
+              'completion_from_trigger_s': None, 'execution_s': None,
+              'completion_interval_s': None, 'exclusion_reason': row['exclusion_reason'],
+              'causality_authenticated': False, 'acceptance_approved': False}
+    if row['uc'] not in AR_UCS or row['phase'] == 'BASELINE':
+        return output
+    policy = run.get('ar_policies', {}).get(row['uc'])
+    if policy is None:
+        output['state'] = 'POLICY_NOT_DECLARED'
+        return output
+    if row['exclusion_reason']:
+        output['state'] = 'EXCLUDED'
+        return output
+    stage = AR_UCS[row['uc']]
+    timeline = row['timeline_ms']; offsets = row['ntp_offset_ms']
+    fields = {'t0': 't0', 'trigger': stage, 't4': 't4', 't5': 't5'}
+    points, errors = {}, {}
+    for name, field_name in fields.items():
+        device = run['clock_map'][field_name]
+        points[name] = timeline[field_name] - offsets[device] if timeline[field_name] is not None else None
+        errors[name] = policy['precision_ms'][name] + run['devices'][device]['uncertainty_ms']
+    output['trigger_observed'] = bool(row['stage_alert_refs'].get(stage))
+    if not output['trigger_observed']:
+        output['state'] = ('UNBOUND_RESPONSE_EVIDENCE' if points['t4'] is not None or points['t5'] is not None
+                           else 'NO_TRIGGER_OBSERVED')
+        return output
+    require(points['trigger'] is not None, 'AR trigger reference without timestamp')
+    if points['t0'] is None:
+        output['state'] = 'MISSING_LAUNCH_TIMESTAMP'
+        return output
+    manager = run['clock_map'][stage]
+    observed_end = to_ms(row['input']['observe_until']) - offsets[manager]
+    window_ms = policy['window_s'] * 1000
+    if observed_end - run['devices'][manager]['uncertainty_ms'] < points['trigger'] + errors['trigger'] + window_ms:
+        output['state'] = 'OBSERVATION_INCOMPLETE'
+        return output
+    if points['t4'] is None:
+        output['state'] = 'COMPLETION_WITHOUT_START' if points['t5'] is not None else 'NO_START_OBSERVED'
+        return output
+    ordered = ['t0', 'trigger', 't4'] + (['t5'] if points['t5'] is not None else [])
+    if any(points[b] < points[a] for a, b in zip(ordered, ordered[1:])):
+        output['state'] = 'INVALID_TIMELINE'
+        return output
+    if any(points[key] > observed_end for key in ordered):
+        output['state'] = 'OUTSIDE_OBSERVATION'
+        return output
+    if any(points[b] - points[a] < errors[a] + errors[b] for a, b in zip(ordered, ordered[1:])):
+        output['state'] = 'TIMING_UNCERTAIN'
+        return output
+    if points['t5'] is None:
+        output['state'] = 'NO_COMPLETION_OBSERVED'
+        return output
+    if points['t5'] + errors['t5'] > observed_end - run['devices'][manager]['uncertainty_ms']:
+        output['state'] = 'TIMING_UNCERTAIN'
+        return output
+    delta = points['t5'] - points['trigger']
+    uncertainty = errors['t5'] + errors['trigger']
+    low, high = delta - uncertainty, delta + uncertainty
+    output['completion_interval_s'] = [low / 1000, high / 1000]
+    if high <= window_ms:
+        output['state'] = 'COMPLETED_WITHIN_WINDOW'
+    elif low > window_ms:
+        output['state'] = 'COMPLETED_LATE'
+    else:
+        output['state'] = 'TIMING_UNCERTAIN'
+    output['completion_from_trigger_s'] = delta / 1000
+    output['execution_s'] = (points['t5'] - points['t4']) / 1000
+    return output
+
+
+def ar_summary(rows, run, uc):
+    """Denominator is ALL recorded attempts in this run/UC/variant/phase group.
+
+    Pending/unrecorded planned attempts cannot be reconstructed from alerts;
+    recovery and original collection completeness remain external requirements.
+    """
+    if uc not in AR_UCS:
+        return None
+    policy = run.get('ar_policies', {}).get(uc)
+    total = len(rows)
+    counts = dict(Counter(r['ar']['state'] for r in rows))
+    completed = counts.get('COMPLETED_WITHIN_WINDOW', 0)
+    triggered = sum(r['ar']['trigger_observed'] for r in rows)
+    output = {'status': 'EVALUATED_DECLARED_EVIDENCE' if policy is not None else 'POLICY_NOT_DECLARED',
+              'denominator_all_recorded_attempts': total, 'denominator_observed_triggers': triggered,
+              'counts': counts, 'documented_completion_count': completed if policy is not None else None,
+              'documented_completion_rate_all_attempts': completed / total if policy is not None and total else None,
+              'documented_completion_rate_triggered_only': completed / triggered if policy is not None and triggered else None,
+              'wilson_95_all_attempts': wilson(completed, total) if policy and policy['independent_trials'] else None,
+              'independence_verified': False, 'causality_authenticated': False, 'acceptance_approved': False,
+              'protocol': policy,
+              'notice': 'Rates describe supplied evidence, not independently authenticated causal success. '
+                        'All recorded attempts include exclusions and missing observations; no missing planned rows are invented. '
+                        'Wilson is conditional on declared independence, not proof of it.'}
+    output['completion_from_trigger_s'] = describe([r['ar']['completion_from_trigger_s'] for r in rows
+        if r['ar']['state'] in {'COMPLETED_WITHIN_WINDOW', 'COMPLETED_LATE'}])
+    output['execution_s'] = describe([r['ar']['execution_s'] for r in rows
+        if r['ar']['state'] in {'COMPLETED_WITHIN_WINDOW', 'COMPLETED_LATE'}])
+    return output
+
+
 def analyze_v2(journal, alert_rows, manifest):
     """Explicit v2 contract; legacy v1 is never silently upgraded to v3 evidence."""
     require(type(manifest.get('version')) is int and manifest['version'] == 2, 'manifest version must be 2')
@@ -604,6 +732,7 @@ def analyze_v2(journal, alert_rows, manifest):
     runs, session_devices, rejected = {}, {}, set()
     for raw in raw_runs:
         run = dict(raw)
+        validate_ar_policies(run)
         session = text(run.get('session_id'), 'session_id')
         devices = run.get('devices')
         require(isinstance(devices, dict) and devices, 'session devices required')
@@ -698,6 +827,7 @@ def analyze_v2(journal, alert_rows, manifest):
         if row['exclusion_reason']:
             row['metrics_s'] = {k: None for k in row['metrics_s']}
             row['metric_status'] = {k: 'EXCLUDED' for k in row['metrics_s']}
+        row['ar'] = ar_outcome(row, runs[row['run_id']])
     summaries = []
     groups = defaultdict(list)
     for row in result['trials']:
@@ -725,6 +855,7 @@ def analyze_v2(journal, alert_rows, manifest):
                           'detection_rate_valid': successes / valid if valid else None,
                           'wilson_95_valid': wilson(successes, valid), 'metrics_s': stats,
                           'pilot_recommended_n': recommended, 'minimum_measured_n': minimum,
+                          'ar': ar_summary(rows, runs[run_id], uc),
                           'warnings': ['BELOW_PLANNED_MINIMUM'] if phase == 'MEASURED' and valid < minimum else []})
     h4 = []
     for comparison in manifest.get('h4_comparisons', []):
@@ -746,6 +877,7 @@ def analyze_v2(journal, alert_rows, manifest):
             'baseline': baseline_summary(result['trials'], runs, alerts),
             'duplicate_alert_lines': result['duplicate_alert_lines'],
             'pending_features': ['native source/AR/visibility instrumentation acceptance',
+                                 'AR t4/t5 causal producers and original acceptance; rates are declared-evidence only',
                                  'UC-01 connection verification', 'independent review and laboratory PILOT'],
             'evidence_notice': 'Raw alert stages verified; other time/clock/config references are attestations unless supplied by a reviewed observer. Metrics in seconds; raw clocks are device-minus-UTC milliseconds.'}
 
