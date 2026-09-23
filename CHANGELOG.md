@@ -1,5 +1,7 @@
 # Changelog
 
+> **خاتمة هذه الدفعة — 2026-09-23:** انتهت مراجعةcollector ccdc4a2c وحُكمت بنودها التسعة فيtests/README؛ لا تعاد. أضيف اتساق ساعةmanager/observer في6853581 واختباراه في414384d؛ **48 اختبارcollector و800 كليًا ناجحة على414384d**. ذكرrunning أو46/798 أدناه لقطة سابقة. محولات الدايمونات/Windows/controller وt4/t5 وISSUE-068 وبقية التدقيق ما زالت أعمالًا محلية؛ لا نشر أو قبول أصلي. رأس التسليم وCI النهائي فيPR28.
+
 ## [Unreleased] — 2026-09-23 — [AI] bounded UC-01 collector and partial thesis audit
 
 - Added read-only fixed manager/systemd queries, unique durable intents, private raw-byte replay and binding to source-observer stores and the existing evaluator. No restart, enrollment or native execution in development.
