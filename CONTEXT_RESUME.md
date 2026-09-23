@@ -1,5 +1,17 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
+> **تحديث خدمة Windows — 2026-09-23:** أضيف منتجPowerShell للقراءة فقط ومستوردWindowsservice الخاص علىLinux، معهويةboot/PID/creation ونسخةالمنتج وصورةالبرنامج وحدودالوقت. **34 اختبارًا جديدًا و872 كليًا ناجحة على6fe661c بلاskips محليًا**؛ PowerShell7.4.13 اختُبرparser/core معCIM mocks علىLinux، لاWindows أصلي. المراجعة9dbf6ede وذيلها انتهيا وحُكما. Windowscanary/مخزنه وتوقيتcontroller ما زالا برمجةمحلية، وكذلكt4/t5 وISSUE-068 والتكامل وبقيةالتدقيق. لا نشر أوتجاربأصلية؛ السجلات التالية تاريخية.
+
+## الاستئناف الأحدث — Windows service، 2026-09-23
+
+- البداية66c19de؛المنتج46991c0 والمحققf6c50cd والمستورد346b376.الاختبارات2644987..6fe661c؛7952f70 يصلحkind والاتفاق،fdde1d5/fe96c8d يستخرجcore ويختبره.34اختبارًا و872كليًا على6fe661c؛رأسالتسليم وCI النهائي فيPR28.
+- `connection_windows.ps1` ينتجstdout UTF8 خاصًا، لاWindowsdurablestore. يستعلمCIMمحليًاWazuhSvc/process/boot مرتين،يتحققمنimagepath/hash ومعرفPID وcreationDateKind،يرفضUnspecified وغموضDST،ويتأكدمناتفاقboot/العينتين ومنحد2ث.لاrestart/enrollment.القيمةالمطَبّعةprocessbirth لاreadiness.
+- `connection_windows.py` يعيدتحققschemaوالأوقاتوالهوية؛`connection_collect.py import-windows` يستقبلpayload/binaryspec خاصين وبصمةraw مستقلة وينشئمخزنًاLinuxwrite-once. exportkind=windowsservice يعيدقراءةالبايتاتوالhashes. قبل/بعدهماkind=windowsservice وثباتboot/image؛الـsourceWindowsغيرمنفذ،فاختبارbind يحاكيحدsource وmanager صراحة.
+- راجعtests/README قسمWindowsلخصوصيةstdout وUTF8/NTFS وسياسةالمسارالحرفي/الحالة. hashscript/image إقراراتلاexecutionauth؛producer_authenticity_verified وloaded_image_hash_verified false. نسخةPowerShellportable7.4.13 داخلbuildفقط معhashمثبتبـwindows_sources.json؛ليسPowerShell5.1/Windowsnative.7اختباراتقدتُتجاوزإذاpwshغائب،فلا تُخفِskips.
+- مراجعة9dbf6ede-9324-5e6c-97db-3cbbe0210519 **انتهت وحُكمت؛لاتعاد**. originalانقطعمنتصف5؛ذيلهطُلبمنالمشروعنفسه وهوwindows_review_tail.json. التحكيم1..10 فيtests/README. المراجعاعترفأنالبدءالقديميُرفضبالمحلل،لاfalseaccept.بقيةالحدودمعلنةوالإصلاحاتاللاحقةليستمعتمدةاستقلاليًا.
+- التالي بالضبط:شاهدcanary Windows ومخزنه وربطه بالمصدر، ثممنتجتوقيتcontroller الأصلي؛t4/t5 والسببية وISSUE-068 والتكامل وبقيةالفصول/المراجع. لا تعاودمحولLinux أوWindowsservice. لا تقولإنUC-01 Windowsمكتمل أوأنالبيئةفقطمتبقية.
+- جميعالكتاباتداخلmy-bro وGitfast-forward،لاخادمأومشروعأبمعدل. pushبالـgh auth git-credential المؤقتكمافيالسجل؛لاreset/force/squash.
+
 > **تحديث محول عمليات Linux — 2026-09-23:** أضيف `connection_process.py` وربطه بالجامع عبر `--kind linuxproc`؛ لا يعتمد systemd ولا ينفذ أوامر خدمة. يتحقق من الدايمونات الخمسة وهويةPID/start_ticks/boot/namespace والملف التنفيذي، ويشترط تبدلها جميعًا. **38 اختبارًا جديدًا و838 كليًا ناجحة علىc395a61**. المراجعة08768699 انتهت وحُكمت فيtests/README. التوقيت ولادة عمليات مشتقة، لا جاهزية أو قبول أصلي. Windows وcontroller وt4/t5 وISSUE-068 وبقية التدقيق باقية محليًا؛ السجلات التالية تاريخية.
 
 ## الاستئناف الأحدث — محول procfs، 2026-09-23
