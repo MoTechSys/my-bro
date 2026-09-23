@@ -138,6 +138,13 @@ def check_times(entries, kind, plan):
                         (q['start_monotonic_ms'] - entries[0]['start_monotonic_ms'])) <= tolerance, 'CLOCK_JUMP')
 
 
+def check_snapshot(value, query, kind, plan):
+    if kind == 'service' and value['started_ms'] is not None:
+        # Native wall timestamp must not assert a start after this observation.
+        require(c.point(plan, 'endpoint', value['started_ms'])[0] <=
+                c.point(plan, 'endpoint', query['end_ms'])[1], 'SERVICE_START_AFTER_SNAPSHOT')
+
+
 def capture(plan_raw, cycle_id, kind, store):
     plan = c.check_plan(c.m.strict_json(plan_raw.decode('utf-8')))
     require(kind in KINDS and cycle_id in {x['cycle_id'] for x in plan['cycles']}, 'CAPTURE_IDENTITY')
@@ -161,7 +168,8 @@ def capture(plan_raw, cycle_id, kind, store):
                 payload, host, boot = native_sample(kind, plan)
                 q.update(end_ms=time.time_ns()//1000000, end_monotonic_ms=time.monotonic_ns()//1000000,
                          raw_sha256=r.digest(payload), hostname=host, boot_id=boot)
-                normalize(kind, payload, host, boot, plan)
+                value = normalize(kind, payload, host, boot, plan)
+                check_snapshot(value, q, kind, plan)
                 check_times(entries + [q], kind, plan)
                 r.write_once(fd, f'sample-{i:03d}.bin', payload)
                 r.write_once(fd, f'sample-{i:03d}.json', r.json_bytes(q))
@@ -209,6 +217,7 @@ def export(store, expected, plan_raw, cycle_id, kind):
             data = r.read_at(fd, name+'.bin', LIMIT)
             require(r.digest(data) == q['raw_sha256'], 'SAMPLE_BYTES')
             value = normalize(kind, data, q['hostname'], q['boot_id'], plan)
+            check_snapshot(value, q, kind, plan)
             if kind == 'manager':
                 value.update({key: q[key] for key in ('start_ms', 'end_ms', 'start_monotonic_ms', 'end_monotonic_ms')})
                 value['ref'] = expected + ':' + name
