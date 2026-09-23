@@ -1,0 +1,60 @@
+{
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/wazuh/wazuh/v4.14.1/src/win32/win_service.c",
+      "resolved_url": "https://raw.githubusercontent.com/wazuh/wazuh/v4.14.1/src/win32/win_service.c",
+      "retrieved_utc": "2026-09-23T05:23:05.134107+00:00",
+      "content_type": "text/plain; charset=utf-8",
+      "bytes": 10637,
+      "sha256": "a1eac5894caaf650f7b5b304ef8dff92ee310eb57cb0063fbb43f3960829db2b",
+      "archive": "research/inbox/2026-09-23_windows_wazuh_service.gz",
+      "archive_sha256": "193b36650a66dc54b8f78d7c055a02b8398c4398719bc5ee5a12dd900b95e7f8"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/wazuh/wazuh/v4.14.1/src/win32/wazuh-installer.wxs",
+      "resolved_url": "https://raw.githubusercontent.com/wazuh/wazuh/v4.14.1/src/win32/wazuh-installer.wxs",
+      "retrieved_utc": "2026-09-23T05:23:05.194901+00:00",
+      "content_type": "text/plain; charset=utf-8",
+      "bytes": 57093,
+      "sha256": "e645a670f4655a63935df37b7665a19c7e4def9e7efb125f53679d7c870871c8",
+      "archive": "research/inbox/2026-09-23_windows_wazuh_wix.gz",
+      "archive_sha256": "dd90eab563dc8c27b900ef0d9fd6f2773c677c5fa858f73fd4b7b4f7b2e8da20"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-process",
+      "resolved_url": "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-process",
+      "retrieved_utc": "2026-09-23T05:23:05.450627+00:00",
+      "content_type": "text/html",
+      "bytes": 104228,
+      "sha256": "9e11546bbd268547996837b0d3dbc2fbd21f33c9634a7eed5edd9fc9899f42fc",
+      "archive": "research/inbox/2026-09-23_windows_win32_process.gz",
+      "archive_sha256": "40d385da71f1c76c2eaf3b707ec63746f84fdc3f555fcce45cd47cb91d9e64b4"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-service",
+      "resolved_url": "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-service",
+      "retrieved_utc": "2026-09-23T05:23:05.596632+00:00",
+      "content_type": "text/html",
+      "bytes": 93082,
+      "sha256": "3afc3c8cb1a11bbdd071d6f2538bdf9c0337c6dbb137d7aeae8a4491a9aeb131",
+      "archive": "research/inbox/2026-09-23_windows_win32_service.gz",
+      "archive_sha256": "b90e2e5aaf0d48d8f032f487283a04dabc6dbe9090a52338b301466fe0fcf770"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-operatingsystem",
+      "resolved_url": "https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-operatingsystem",
+      "retrieved_utc": "2026-09-23T05:23:05.775511+00:00",
+      "content_type": "text/html",
+      "bytes": 150097,
+      "sha256": "daa5afe5078099c34da9be73b39183ad9b5950258de8f587b30168f774483073",
+      "archive": "research/inbox/2026-09-23_windows_win32_os.gz",
+      "archive_sha256": "e6db28d45c2301497e7bbef377cf44e608083a6ebfbe4848957dcb9280cf86e3"
+    }
+  ],
+  "local_parser": {
+    "version": "PowerShell7.4.13 Linux x64",
+    "url": "https://github.com/PowerShell/PowerShell/releases/download/v7.4.13/powershell-7.4.13-linux-x64.tar.gz",
+    "sha256": "59e5df675dacbfe45374c32c1bf2480168a33243423c9b19252d0476fd1b748c",
+    "scope": "Parser and mocked function bodies only; not Windows PowerShell5.1 or native CIM acceptance"
+  }
+}
