@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased] — 2026-09-23 — [AI] pending recovery and traceable thesis review build
+
+- Added offline, private, byte-pinned pending recovery with complete derived journals, duplicate preservation, no invented execution/timing, safe continuation export and original-file retention.
+- Bound new pending intents to canonical manifest and exact journal path/prefix; retained explicit inner cancellation and bounded internal-fault diagnostics after independent source review.
+- Added46 recovery regressions and one Unicode source integration regression. Added13 review-build tests and an actual43-page DOCX/PDF build with private runtime and source/tool/output receipts.
+- Full local validator:605 tests on68d4e1e. Original data, native acceptance, t4/t5, UC-01/AR denominator and final academic formatting remain uncompleted; no deployment or model inference.
+
 ## [Unreleased] — 2026-09-22 — [AI] M2-A, transport and review follow-up
 
 - Read-only prospective source observer with private byte snapshots, bounded reads, stable identity checks, explicit failure/left-censoring, offline export and frozen trial/path/spec/clock binding. Never fabricates t1/t4/t5 or AR causality.
