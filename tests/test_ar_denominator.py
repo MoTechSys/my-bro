@@ -248,7 +248,7 @@ class ARDenominatorTests(unittest.TestCase):
         c = f.manifest(); c['runs'][0]['ar_policies'] = {'UC-07': policy()}
         with self.assertRaisesRegex(m.InputError, 'manifest version 2'):
             m.analyze(f.rows([f.trial()]), f.rows([f.alert()]), c)
-        with tempfile.TemporaryDirectory(dir=ROOT/'build') as directory:
+        with tempfile.TemporaryDirectory(dir=ROOT, prefix='.ar-tests-') as directory:
             paths = {}
             for name, value in [('manifest', c), ('journal', f.trial()), ('alerts', f.alert())]:
                 paths[name] = Path(directory)/name
