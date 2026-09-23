@@ -103,7 +103,7 @@ def normalize(kind, raw, host, boot, plan):
         require(sep and key in PROPERTIES and key not in fields, 'SYSTEMD_PROPERTIES')
         fields[key] = value
     require(set(fields) == set(PROPERTIES), 'SYSTEMD_PROPERTIES')
-    require(re.fullmatch(r'\d{1,10}', fields['MainPID']), 'SYSTEMD_PID')
+    require(re.fullmatch(r'[0-9]{1,10}', fields['MainPID']), 'SYSTEMD_PID')
     invocation = fields['InvocationID']
     require(invocation == '' or re.fullmatch(r'[0-9a-f]{32}', invocation), 'INVOCATION_ID')
     started = None
@@ -112,6 +112,7 @@ def normalize(kind, raw, host, boot, plan):
         value = fields['ExecMainStartTimestamp']
         require(re.fullmatch(r'[A-Z][a-z]{2} \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC', value), 'SYSTEMD_TIMESTAMP_FORMAT')
         dt = datetime.strptime(value, '%a %Y-%m-%d %H:%M:%S UTC').replace(tzinfo=timezone.utc)
+        require(dt.strftime('%a %Y-%m-%d %H:%M:%S UTC') == value, 'SYSTEMD_TIMESTAMP_CANONICAL')
         started = int(dt.timestamp()) * 1000
     running = fields['ActiveState'] == 'active' and fields['SubState'] == 'running' and int(fields['MainPID']) > 0
     return {'instance': boot + ':' + invocation if invocation else None,
@@ -189,11 +190,13 @@ def export(store, expected, plan_raw, cycle_id, kind):
         intent = c.m.strict_json(raw.decode())
         require(isinstance(intent, dict) and isinstance(intent.get('capture_id'), str) and
                 re.fullmatch(r'[0-9a-f]{32}', intent['capture_id']), 'CAPTURE_NONCE')
+        require(type(intent.get('schema_version')) is int and intent.get('acceptance_approved') is False, 'INTENT_TYPES')
         require(intent == {'schema_version': 1, 'kind': kind, 'cycle_id': cycle_id, 'capture_id': intent['capture_id'],
                            'plan_sha256': r.digest(plan_raw), 'source_sha256': source_hashes(),
                            'acceptance_approved': False}, 'INTENT_BINDING')
         require(r.read_at(fd, 'plan.json') == plan_raw, 'PLAN_BYTES')
         terminal = c.m.strict_json(r.read_at(fd, 'terminal.json').decode())
+        require(isinstance(terminal, dict) and type(terminal.get('count')) is int, 'TERMINAL_TYPES')
         require(terminal == {'intent_sha256': expected, 'status': 'complete',
                              'count': COUNT if kind == 'manager' else 1, 'reason': None}, 'INCOMPLETE_CAPTURE')
         allowed = {'plan.json', 'intent.json', 'terminal.json'}
@@ -246,6 +249,7 @@ def bind(plan_raw, request_raw, manager, before, after, source):
     require(c.point(plan, 'endpoint', old['captured_end_ms'])[1] < c.point(plan, 'controller', request['request_ms'])[0] and
             c.point(plan, 'endpoint', new['captured_start_ms'])[0] > c.point(plan, 'controller', request['command_end_ms'])[1], 'SNAPSHOT_ORDER')
     event = s.export(source['path'], source['sha256'])
+    require(isinstance(event, dict), 'SOURCE_EVENT_REQUIRED')
     cycle = next(x for x in plan['cycles'] if x['cycle_id'] == cid)
     require(event['run_id'] == plan['run_id'] and event['trial_id'] == cid and
             event['device'] == 'endpoint' and event['clock_ref'] == plan['clocks']['endpoint']['ref'] and
