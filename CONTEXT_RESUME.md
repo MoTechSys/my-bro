@@ -1,5 +1,17 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
+## الاستئناف الحاكم — جامع UC-01 محدود وتدقيق جزئي، 2026-09-23 [AI]
+
+> **تحديث التنفيذ — 2026-09-23:** جامع UC-01 المحدود وexport/bind موجودان مع46 اختبارًا جديدًا؛ **798 اختبارًا كليًا ناجحًا على4b85b6f**. محول Linux/systemd ليس دعمًا عامًا لوحدة Wazuh القياسية active/exited أوWindows أوالحاويات؛ محول الدايمونات وتوقيتcontroller الأصلي ما زالا برمجة محلية. المراجعة الآليةccdc4a2c للقطةc7acf13 ما زالت قيد التنفيذ عند هذا التحديث. صُحح الفصلان1/4 جزئيًا، والرسوم15SVG لم تتغير. الدليل tests/README والحالة التفصيلية CONTEXT_RESUME؛ لا نشر أوتجارب أصلية، والمشروع غير مكتمل. السجلات التالية تاريخية.
+
+- أحدث كودCollector في523359a، اختباراته46 في0d6742f؛798اختبارًا كليًا على4b85b6f. لا تعاود بناءconnection_measure أوsource/visibility observers. Collector هوcapture/export/bind، وليس تسجيلrestart أوnative acceptance.
+- المخازن private/write-once/nonce/raw hashes/current source hashes. Binder يقرأمخازنmanager وبefore/after وsource ويصدرصفدورة؛ controller times/config/clock refs تبقىإقرارات. source timestamp bracket وليسt1. غيابالمصدر يرفضبـSOURCE_EVENT_REQUIRED.
+- قيدموثق: systemd active/running/MainPID فقط. مصدرWazuhv4.14.1 القياسي forking/RemainAfterExit بلاPIDFile؛ محولدايموناتمتعددةوالحاويةدونsystemd وWindows وتسجيلcontroller الأصلي أعمالمحليةغيرمنفذة. لا تضعactive/exited كـrunning لتجاوزالقيد.
+- المراجعةالجديدة https://www.genspark.ai/agents?id=ccdc4a2c-aa78-504c-9ef2-bdaf91e9df60 للقطةc7acf13؛ عندهذاالتحديثrunning. متابعةrun_id منresearch/inbox/2026-09-23_collector_review_submission.json عبرgsk task status ثمinfo، **لاcreateجديد**. لمتُحكمبعد، والإصلاحاتاللاحقةليستمراجعةمستقلةبأثررجعي.
+- المصادر5 فيcollector_sources.json؛ch1v3 وch4v2 صُححاجزئيًا، الأصولبلاحذف أوتعديل. مخططfig08 تاريخيوليسسحابيًا؛جميع15SVGباقيةpassivevector.
+- Gitفيالمستودعالصحيح فقط، لاreset/force/squash. الاعتمادالمخزنقديم؛pushيعملبخياري `-c credential.helper= -c "credential.helper=!gh auth git-credential"` دونحفظتوكن. PR28 مفتوح؛CIالرأسوالتسليمفيتعليقاته.
+- المتبقيالمحلي: تحكيمالمراجعة، المحولاتأعلاه،t4/t5 والسببية،ISSUE-068،التكامل،بقيةالمراجعوالعرضوالملاحق. الأصلية/البشرية: clocks/inventory/model/native/labels/PILOT/MEASURED/BASELINE. لا يقالإنالبيئةفقطباقية.
+
 ## الاستئناف الحاكم — محلل UC-01، 2026-09-23 [AI]
 
 متابعة طلب المالك «استمر كمل بدقة» فوقdf09bee؛ المساحة الصحيحة `/home/user/webapp/my-bro`، لم يغير المستودع الأب أوالخادم. جميع التغييرات على الفرع المشترك fast-forward مع تحديثPR28؛ لا reset أوforce أوتعديل تاريخ الفريق.
