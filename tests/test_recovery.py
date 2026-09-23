@@ -248,6 +248,64 @@ class Recovery(unittest.TestCase):
         self.assertEqual(terminal['reason'], 'RECOVERY_INTERRUPTED')
         self.assertTrue(self.pending.exists())
 
+    def test_private_continuation_journal_published_once(self):
+        result = self.run_recovery(); output = self.base/'continued.jsonl'
+        receipt = v.export(self.store, result['intent_sha256'], output_path=output)
+        self.assertEqual(receipt['row_count'], 1)
+        self.assertEqual(output.read_bytes(), self.exported(result))
+        self.assertEqual(output.stat().st_mode & 0o777, 0o600)
+        with self.assertRaises(FileExistsError): v.export(self.store, result['intent_sha256'], output_path=output)
+
+    def test_publication_refuses_originals_store_aliases_and_pending(self):
+        result = self.run_recovery()
+        for path in (self.journal, self.pending, self.manifest_path, self.store/'replacement'):
+            with self.subTest(path=path), self.assertRaises(ValueError):
+                v.export(self.store, result['intent_sha256'], output_path=path)
+        alias = self.base/'alias'; alias.symlink_to(self.journal)
+        with self.assertRaises(FileExistsError): v.export(self.store, result['intent_sha256'], output_path=alias)
+        output = self.base/'blocked.jsonl'; self.write(Path(str(output)+'.pending'), b'held')
+        with self.assertRaisesRegex(ValueError, 'DESTINATION_PENDING_EXISTS'):
+            v.export(self.store, result['intent_sha256'], output_path=output)
+        self.assertFalse(output.exists())
+
+    def test_failed_store_cannot_publish_output(self):
+        self.write(self.pending, b'broken')
+        result = self.run_recovery(); output = self.base/'no-output'
+        with self.assertRaises(ValueError): v.export(self.store, result['intent_sha256'], output_path=output)
+        self.assertFalse(output.exists())
+
+    def test_existing_recovered_row_is_not_added_twice(self):
+        result = self.run_recovery(); raw = self.exported(result)
+        self.write(self.journal, raw)
+        self.store = self.base/'second'; self.store.mkdir(mode=0o700)
+        second = self.run_recovery()
+        self.assertEqual(self.exported(second), raw)
+
+    def test_continuation_runner_preserves_recovered_identity_and_denominator(self):
+        result = self.run_recovery(); output = self.base/'continued.jsonl'
+        v.export(self.store, result['intent_sha256'], output_path=output)
+        spec_path = self.base/'next.json'; alerts = self.base/'alerts.jsonl'; self.write(alerts, b'')
+        next_trial = copy.deepcopy(self.trial); next_trial['trial_id'] = 'next'
+        self.write(spec_path, v.r.json_bytes({'attempt': next_trial}))
+        command = [sys.executable, '-I', '-B', str(ROOT/'scripts/measure/trial_runner.py'), '--replay',
+                   '--spec', str(spec_path), '--manifest', str(self.manifest_path), '--alerts', str(alerts), '--output', str(output)]
+        run = subprocess.run(command, capture_output=True, timeout=5)
+        self.assertEqual(run.returncode, 2)  # no action evidence in this synthetic second attempt
+        data = v.rows(output.read_bytes()); self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]['runner']['state'], 'RECOVERED_INTERRUPTED')
+        report = v.m.analyze_v2([(row, str(i)) for i, row in enumerate(data)], [], self.manifest)
+        self.assertEqual(report['summaries'][0]['denominator_all_attempts'], 2)
+        self.write(spec_path, v.r.json_bytes({'attempt': self.trial}))
+        retry = subprocess.run(command, capture_output=True, timeout=5)
+        self.assertEqual(retry.returncode, 2); self.assertIn(b'duplicate trial', retry.stderr)
+        self.assertEqual(len(v.rows(output.read_bytes())), 2)
+
+    def test_canonical_manifest_binding_tolerates_json_whitespace_not_changes(self):
+        self.write(self.manifest_path, json.dumps(self.manifest, indent=4).encode())
+        result = self.run_recovery(); self.assertEqual(result['status'], 'completed')
+        self.assertEqual(v.export(self.store, result['intent_sha256'], summary=True)['result']['manifest_binding'],
+                         'pending_canonical_manifest')
+
     def test_actual_cli_recovery_and_export(self):
         command = [sys.executable, '-I', '-B', str(ROOT/'scripts/measure/recovery.py')]
         pins = self.pins()
