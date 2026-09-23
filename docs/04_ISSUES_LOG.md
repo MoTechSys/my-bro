@@ -1,5 +1,7 @@
 # 04 — سجل الأخطاء والتعارضات (Issues Log)
 
+> **الحالة الحاكمة للاستئناف — 2026-09-23:** اقرأ [الملخص الموحد](../CONTEXT_RESUME.md#session-handoff-2026-09-23) قبل السجل أدناه. الإصدار السابق المتحقق `0ccbd84`: **872 اختبارًا بلا skips محليًا وفي CI**. رأس جولة التوثيق ونتائجه اللاحقة في PR28. Collector وLinux/procfs وWindows service منفذة، ومراجعاتها مكتملة ومحكّمة؛ لا توجد مراجعة معلقة. التالي برمجيًا: **Windows canary/source والتخزين الخاص الأصلي، ثم controller timestamps**، ثم t4/t5 وISSUE-068 والتكامل والتدقيق الأكاديمي. لا قبول Windows أصلي أو نتائج تجريبية، ولا اكتمال شامل. عبارات «الأحدث/التالي/running» في اللقطات السابقة لا تتجاوز هذا الملخص.
+
 > **خاتمة هذه الدفعة — 2026-09-23:** انتهت مراجعةcollector ccdc4a2c وحُكمت بنودها التسعة فيtests/README؛ لا تعاد. أضيف اتساق ساعةmanager/observer في6853581 واختباراه في414384d؛ **48 اختبارcollector و800 كليًا ناجحة على414384d**. ذكرrunning أو46/798 أدناه لقطة سابقة. محولات الدايمونات/Windows/controller وt4/t5 وISSUE-068 وبقية التدقيق ما زالت أعمالًا محلية؛ لا نشر أو قبول أصلي. رأس التسليم وCI النهائي فيPR28.
 
 > كل خطأ اكتُشف في المصادر أو الإعدادات أو الرسالة. **لا يُحذف أي بند** — يُغلق بتغيير حالته وذكر الـ commit.
@@ -345,3 +347,10 @@ State D may be physically alive but violates the documented R/S gate; diagnostic
 **SERVICE ADAPTER IMPLEMENTED / NATIVE AND SOURCE WORK OPEN.** Added PowerShell producer, offline validator and private Linux importer/exporter.34 tests,872 total on6fe661c with no local skips. Actual Linux PowerShell parser and mocked capture core are exercised; no Windows native CIM/NTFS/PowerShell5.1 acceptance. Consumer/source-boundary mocks are explicitly not original end-to-end evidence.
 
 Review9dbf6ede plus continuation adjudicated in tests/README. Fixed producer agreement, DateTime-kind ambiguity, PID matching, stream cleanup and aggregate-completion checks. Kept strict producer-version attestation and nonverification flags; stale birth cannot become functional success. Windows canary/native persistence and controller timestamps remain programming work. Exact host case and narrow no-arguments service-image paths are deliberate limits. No service control or deployment.
+
+
+## ISSUE-109 — انجراف مؤشرات الاستئناف بين اللقطات (2026-09-23)
+
+**FIXED-IN-REPO للمؤشرات الحالية / التدقيق الشامل يبقى OPEN.** كانت بعض مداخل التوثيق تعرض752 أو6fe661c كآخر تحقق، وتعرض مهامcollector/Windows أومراجعات منتهية كأنها باقية. أضيف ملخص حاكم قابل للقراءة في CONTEXT_RESUME، بروابط0ccbd84/CI/الحزمة؛ وصُححت مؤشراتSTATE وSTART_HERE وREADME وأضيفت حالة TASKBOARD الحالية. بقيت السجلات التاريخية وأدلة المؤلفين محفوظة ومعلّمة.
+
+أضيف تنبيه حاكم للبروتوكول القديم: لا إعادة كتابة للتاريخ المنشور أو دمج PR تلقائيًا. لا تساوي هذه المعالجة تدقيق جميع الفصول/المراجع/الصور أو إغلاقISSUE-068 و105..108. جولة توثيق فقط؛ نتائج التحقق للرأس اللاحق مثبتة في PR28.
