@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] — 2026-09-23 — [AI] bounded UC-01 collector and partial thesis audit
+
+- Added read-only fixed manager/systemd queries, unique durable intents, private raw-byte replay and binding to source-observer stores and the existing evaluator. No restart, enrollment or native execution in development.
+- Added46 synthetic tests, including real private stores through evaluator;798 full tests passed on4b85b6f. Fixed strict boolean/integer handling, missing source diagnostics, timestamp canonicalization and future snapshot chronology.
+- Archived five versioned source files and provenance. Stock Wazuh forking/RemainAfterExit may not satisfy the strict main-process adapter: multi-daemon, Windows/non-systemd and original controller capture remain local work.
+- Updated chapters1/4 for ADR014, bounded claims, historical inventory, explicit Filebeat and existing vector references. No full source-image/reference audit or original results claimed.
+- Independent automated reviewccdc4a2c targets c7acf13 and was still running at this entry; receipt in research/inbox. CI and final delivery checkpoint inPR28.
+
 ## [Unreleased] — 2026-09-23 — [AI] UC-01 offline connection evidence evaluator
 
 - Added a standalone private-input evaluator for predeclared connection cycles; keeps missing/excluded planned cycles in the denominator and never exports MTTD or Wilson.
