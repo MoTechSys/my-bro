@@ -1,0 +1,106 @@
+# مراجعة مستقلة — استعادة نية `pending` المتوقفة (`scripts/measure/recovery.py`)
+
+> **طبيعة المراجعة:** قراءة ساكنة للنص المُقدَّم فقط، دون تنفيذ أو تعديل أو جلب من المستودع. راجعت الملفات الأربعة المذكورة + مقتطف مساعدات التخزين. لم أشغّل الاختبارات: «30 اختبارًا ناجحًا» شهادة المؤلف، وأتعامل مع `tests/test_recovery.py` كدليل على النية لا كإثبات. هذه ليست مراجعة بشرية ولا قبولًا أصليًا. المراجعة على النص المُقدَّم، لا على شجرة الالتزام `724433ca…` (لم أجلبها)، فإن اختلفت الشجرة يلزم إعادة إرساء المراسي.
+
+## 1) المسار القابل للتتبع (ما أنشأت عليه الأحكام)
+
+```
+recover()  → store_lock(store)  → write_once('intent.json')
+           → os.open(journal, dir_fd=pinned_parent) + flock(LOCK_EX|LOCK_NB)
+           → read_fd(journal) / private_read(pending, manifest)
+           → pins check  → write_once(3 snapshots)
+           → plan()  → write_once('attempts.jsonl')  → terminal.json
+export()   → store_lock → intent → terminal → data = snapshots → plan(data, intent['allow_legacy'])
+                     → require(output == attempts.jsonl and result == terminal['result'])
+```
+
+## 2) التحققات التي طلبتَها — النتيجة لكل بند
+
+| الحماية المُعلنة | النتيجة |
+|---|---|
+| لا تنفيذ / لا retry / لا unlink للأصل | **مؤكَّدة**: كل القراءات `O_RDONLY\|O_NOFOLLOW`, وكل الكتابات عبر `r.write_once` داخل مخزن مقفل |
+| لقطات خاصة مربوطة بالواصف | **مؤكَّدة** لـ`pending/manifest` (`private_read` ثم `os.stat(name, dir_fd=parent, follow_symlinks=False)` في `read_fd`) وللـjournal؛ لكن القفل على journal فقط (انظر P2-7) |
+| بايتات مثبّتة (pins) إلزامية | **مؤكَّدة**: `set(pins)==set(INPUTS)` + `r.digest(data[name])==pins[name]`، والـCLI يلزم الثلاثة، والفحص **قبل** كتابة أي لقطة |
+| ربط pending بالـmanifest الكانوني مقابل الوضع القديم الصريح | **مؤكَّدة** (`PENDING_MANIFEST_MISMATCH` / `LEGACY_MANIFEST_UNBOUND`)؛ لكن الربط بالمُسلسَل الكانوني لا ببايتات الملف، وفجوة الربط بالـjournal قائمة (P1-3) |
+| الحفاظ على الصفوف السابقة وإضافة صف INVALID واحد بلا اختلاق | **مؤكَّدة**: كل `m.TIMES` عدا `t0` → `None` مع `INTERRUPTED_NOT_OBSERVED`، و`exit_code/timed_out=None`، و`execution_started=None` |
+| لا استبدال صف منشور | **مؤكَّدة** عبر فرع `already_recorded` ومقارنة مفاتيح `MUTABLE` |
+| الإصدار يعيد بناء السجل المشتق كاملًا | **مؤكَّدة**: يُعاد تشغيل `plan` من اللقطات دون قراءة الأصل |
+| operator-stopped تأكيد غير مُتحقَّق منه | **مؤكَّدة**: `operator_asserted_stopped: True` حرفيًا في الـintent |
+| سطر جزئي يُرفض ولا يُسقط | **مؤكَّدة** للثلاثة (`rows` يشترط `\n`، و`strict_json` يرفض القطع) |
+| لا قراءة لتصديرات التنبيه ولا تقرير مقاييس | **مؤكَّدة**: `alert_rows=[]` وقيمة إرجاع `analyze_v2` مُهمَلة |
+
+## 3) عيوب P1 (صحّة/أدلة قابلة للوصول)
+
+### P1-1 — إسكات `KeyboardInterrupt` داخل نافذة الجمع يحوّل «إيقاف المشغّل» إلى `RUNNER_ERROR` **ويمحو** `pending`
+**المرساة** (`trial_runner.py`, `main`, داخل `with os.fdopen(fd, 'r+b', …)`):
+
+```python
+except (OSError, ValueError, KeyError, TypeError, OverflowError, KeyboardInterrupt) as exc:
+    trial.update(exclusion_reason='INVALID', reason='RUNNER_ERROR:' + str(exc))
+    trial['runner']['state'] = 'COLLECTION_FAILED'
+write_all(fd, encoded(trial))
+pending.unlink()
+```
+
+**العينة المضادة:** تشغيل `--lab`، ينتهي الأمر، ثم `SIGTERM`/Ctrl-C أثناء `time.sleep(args.wait)` (أو الإلغاء المؤجَّل الذي يعيد تشغيله `so.r.launch_cancellation_guard()` بعد إسناد Popen داخل `execute`). المُعالج `interrupted()` يرفع `KeyboardInterrupt('termination requested')` → يُلتقط هنا → يُكتب صف `INVALID / RUNNER_ERROR:termination requested` → ثم `pending.unlink()` ينفَّذ (فهو في نفس المستوى بعد `try/except`).
+**الأثر:** (أ) الأدلة الدائمة التي وُجد `recovery.py` لالتقاطها يمحوها الـrunner نفسه، فيستحيل `recover` بعدها (`private_read(pending)` → `FileNotFoundError` → `RECOVERY_REJECTED`)؛ (ب) تسمية مُضلِّلة: إيقاف مشغّل يُصبح «خطأ داخلي»؛ (ج) `str(exc)` (قد يحمل مسارات/وسطاء) يدخل السجل، مخالفًا نمط الأكواد المُحدَّدة (`WORKER_CLEANUP_FAILED`, `RECOVERY_REJECTED`)؛ (د) تناقض مع المُعالج الخارجي الذي يعامل **نفس** الاستثناء كـ«أبقِ pending» (`return 130`).
+**اتجاه الإصلاح:** `except KeyboardInterrupt` منفصل → `state='INTERRUPTED_UNCOLLECTED'`, `reason='INTERRUPTED_AFTER_EXECUTION'`, **إبقاء** `pending`، وإخراج `str(exc)` خارج الصف.
+
+### P1-2 — `.decode('ascii')` على ناتج `json_bytes` (المكتوب `ensure_ascii=False`) في `collect`
+**المرساة** (`trial_runner.py`, `collect`):
+
+```python
+lines.append((so.r.json_bytes(verified_source).decode('ascii'), 'source-intent:sha256:' + source_evidence[1]))
+```
+
+و`runner.json_bytes` = `a.encoded(value) + b'\n'`، بينما `encoded` الشقيقة في `trial_runner` تستخدم `ensure_ascii=False`.
+**العينة المضادة:** مسار عربي/غير ASCII في `syscheck.path` داخل صف مصدر مُتحقَّق ⇒ `UnicodeDecodeError` (وهو `ValueError` فرعي) ⇒ يُلتقط في `main` ⇒ `RUNNER_ERROR` وضياع الجمع، مع أن نفس المسار عبر `--observers` يُقرأ بايتات بـ`raw.decode('utf-8')` في `snapshot`. وبما أن `a.encoded` تُضيف `\n` ثم `json_bytes` تضيف `\n` أخرى، فالصف المُصنَّع يحمل `\n` مُضمَّنًا؛ يتسامح معه `strict_json` هنا، لكنه ليس سطر JSONL سليمًا.
+**الوسم:** *شرطي — يحتاج التبعية*: يعتمد على `ensure_ascii` في `a.encoded` (غير موجود في النص المُقدَّم). نمط `.decode('ascii')` مُستنسخ من `visibility_observer` حيث الناتج ASCII بحكم الإنشاء.
+**اتجاه الإصلاح:** `json_bytes(...).decode('utf-8').rstrip('\n')`.
+
+### P1-3 — لا ربط بين `pending` والـ`journal` مع أن الربط متاح داخل الصف
+**المرساة** (`recovery.py`, `plan`): الهوية المُستعملة هي `identity = (pending.get('run_id'), pending.get('trial_id'))` فقط، بينما الـrunner يكتب في وضع `--lab`:
+
+```python
+trial['time_refs']['t0'] = str(output) + '#' + trial['run_id'] + '/' + trial['trial_id'] + '/t0'
+```
+
+**العينة المضادة:** المشغّل يمرّر `--journal A` (جديد/فارغ) مع `pending` أُنتج مقابل `journal B` بنفس `(run_id, trial_id)`. لا شيء يقارن مسار الإخراج المُسجَّل بالـjournal المُمرَّر ⇒ فرع `existing is None` ⇒ يُضاف الصف إلى `attempts.jsonl` المشتق لـ`A`. وضع `--replay` لا يملك حتى هذا الربط الضعيف (`time_refs['t0'] == 'runner pending'`).
+**الأثر:** أثر مشتق يمكن أن يحمل محاولة لا تنتمي إليه، ولا يلتقطه أي pin (الـpins تربط البايتات فرديًا، لا العلاقة بين الملفات).
+**اتجاه الإصلاح:** في وضع `--lab` اشترط بدء `time_refs['t0']` بـ`str(journal)+'#'`؛ وإلا فسجِّل `journal_path_binding` صريحًا أو ألزم خيار `--journal-output-ref`.
+
+## 4) عيوب P2 وفجوات تصلّب
+
+| # | المرساة | الفجوة والأثر | اتجاه الإصلاح |
+|---|---|---|---|
+| P2-1 | `require(len(output) <= r.MAX_ARTIFACT, 'OUTPUT_TOO_LARGE')` + `read_fd` يستخدم `MAX_INPUT = 2*1024*1024` | ثلاث حدود من مصدرين (`MAX_INPUT` المحلي، `r.MAX_ARTIFACT = a.MAX_INPUT`)؛ إن اختلفت، يُرفض عند `write_once` سجلٌ قُرئ قانونيًا | اشتقّ ثابتًا واحدًا من `r.MAX_ARTIFACT`. *شرطي — `a.MAX_INPUT` غير موجود في النص* |
+| P2-2 | `except Exception:` → `reason='RECOVERY_REJECTED'` | كل الأخطاء (`IndexError` من `rows(...)[0]` على pending فارغ، `KeyError` على `time_refs` مفقود) تُدمج مع رفض التلاعب المُشروع؛ لا يمكن تمييز عطل داخلي من رفض | أكواد عطل داخلية مُقيَّدة (بلا حمولة نصية) أو `RECOVERY_INTERNAL_ERROR` مستقل |
+| P2-3 | `m.analyze_v2([(recovered, 'pending')], [], manifest)` بعد فرعي `if/else` | يُتحقَّق من صف **لا يُصدَر** في فرع `already_recorded` ⇒ يمكن رفض مخزن ناتجه سليم بايتًا، مع تقرير `RECOVERY_REJECTED` أعمى | حصر التحقق في فرع الإلحاق، أو تسجيل اسم الفحص الفاشل |
+| P2-4 | `require(all(os.path.commonpath([str(store), str(p)]) != str(store) …), 'STORE_INPUT_OVERLAP')` | يرفض اتجاه «store سلف للـinput» فقط؛ الاتجاه المعاكس غير مرفوض (آمن في المسار الحالي لأن الملفات عادية، لكنه غير موثَّق) و**بلا اختبار** | وثّق الاتجاه، أو افحص كلا الاتجاهين صراحةً |
+| P2-5 | `require(intent['source_sha256'] == source_hashes(), 'CODE_OR_PINS_CHANGED')` | أي تعديل (حتى وثيقي) في `recovery.py/trial_runner.py/mttd.py/source_observer.py` يُبطل إصدار المخازن القديمة، دون بيان **أي** ملف تغيّر | اطبع مفاتيح الخريطة المتغيرة كتشخيص مُقيَّد (الخريطة محفوظة أصلًا في الـintent) |
+| P2-6 | `run.add_argument('--operator-stopped', action='store_true', required=True)` | الحارس على مستوى argparse يُخرج usage/exit 2 بدل مسار JSON، والحارس المكتبي `STOPPED_OPERATOR_ASSERTION_REQUIRED` مُختبَر بينما CLI غير مُختبَر | توحيد نمط الفشل |
+| P2-7 | القفل في `recover` على `fd` الخاص بـjournal فقط | `pending/manifest` تُلتقط بلا قفل؛ لا يوجد تحقق أن مُنتِج الـpending قد مات — البوابة الوحيدة `operator_stopped=True` | ضمن حدود same-UID المُعلنة؛ يُستحسن توثيق صريح |
+| P2-8 | intent: `journal_path`/`manifest_path`/`pins`، والصف فيه `collected_inputs` | الأثر المشتق يحمل مسارات مطلقة ⇒ **لا يجوز التزامه/نشره** | قيد تشغيلي موثَّق |
+| P2-9 | `rows(data['pending.json'], single=True)[0]` | pending فارغ ⇒ `IndexError` يُسقط في P2-2؛ عدّاد `20000` سطر سقف ضمني | فحص صريح لعدد صفوف `single` |
+| P2-10 | `--allow-legacy-unbound` | «legacy» يخفّف ربط الـ**pending** فقط؛ `analyze_v2` يشترط `manifest['version'] == 2` ⇒ journal/مانيفست v1 لا يُستعاد أبدًا. اسم العلم يوحي بتسامح أوسع | إعادة تسمية/توثيق النطاق الدقيق |
+
+## 5) حدود مُعلنة — ليست أخطاء
+كاتب same-UID خبيث يمكنه تزوير المخزن والسجل (لا أصالة تعمية؛ الـpins تجزئات يوفّرها المشغّل فلا تُصادق إلا على «لم يتغير منذ تجزئته»)؛ D-state/SIGKILL ليسا ضمان زمن صارم؛ رفض `pending` الجزئي بدل إصلاحه مقصود؛ `operator-stopped` تأكيد غير مُتحقَّق منه بحكم التعريف؛ أي تعديل كود يمنع إصدار مخازن قديمة (بند مقصود ذو أثر تشغيلي، P2-5).
+
+## 6) تحققات إيجابية أكّدتها القراءة
+- **`MUTABLE` مطابق تمامًا** لما يعدّله الـrunner بعد نشر `pending`: `t0..t6/t2_prime` + `time_refs, missing_reasons, event_valid, source_ref, source_precision_ms, timestamp_precision_ms, match_start, window_start, window_ref, observe_until, exclusion_reason, reason, runner, collected_inputs, completion_kind` — لم أجد حقلًا يعدّله الـrunner خارج هذه المجموعة. (ربط صيانة: أي حقل جديد يُعدَّل بعد النشر يجب أن يُضاف إلى `MUTABLE` وإلا انفجر `EXISTING_TRIAL_CONFLICT`.)
+- المصدر الأصلي لا يُلمس: `os.open(..., O_RDONLY|O_NOFOLLOW|O_NONBLOCK|O_CLOEXEC)` للثلاثة، و`pending.unlink()` غير موجود في `recovery.py` إطلاقًا.
+- فحص الـpins يسبق كتابة اللقطات (`INPUT_HASH_MISMATCH` يترك `intent.json` فقط).
+- إصدار مُكتفٍ بذاته: `plan` يُعاد تشغيله من اللقطات، ويقارن **الاثنين** (`result == terminal['result']` و`output == read_at('attempts.jsonl')`) فيصمد ضد إعادة تجزئة `terminal.json`.
+- `bound_source`/`collect` أغلقا ثغرة `clock_ref` لمرحلة `event` (أصبح الفحص `if 'clock_ref' in row` يشملها).
+- نافذة انهيار `write_all(fd) → pending.unlink() → sync_parent(output)`: كل الحالات تنتهي إما `already_recorded` أو إلحاق صف INVALID — آمنة في الاتجاهين.
+
+## 7) فجوات اختبار (مسارات غير مُختبَرة في `test_recovery.py`)
+`STORE_INPUT_OVERLAP` · `MANIFEST_OBJECT_REQUIRED` · `LEGACY_FLAG` · `OUTPUT_TOO_LARGE` · `ACTION_JOURNAL_ONLY` · `UNEXPECTED_STORE_ENTRY` · فرع `runner.state == 'COLLECTION_FAILED'` · `EXISTING_RECOVERY_CONFLICT` (استعادة ثانية مقابل صف `RECOVERED_INTERRUPTED` ببصمة pending مختلفة) · `already_recorded` لصف استعادة سابق (المُختبَر حالة `COLLECTED` فقط) · `rows(..., single=True)` على pending فارغ/سطرين · حمولة غير ASCII في مسار `json_bytes(...).decode('ascii')` (مرتبط بـP1-2).
+
+## 8) الأولوية المقترحة
+1. **P1-1** (فقدان دليل الاستعادة + تسمية مُضلِّلة) — الأكثر أثرًا تشغيليًا.
+2. **P1-3** (ربط pending↔journal) ثم **P1-2** بعد تأكيد `a.encoded`.
+3. **P2-2/P2-3** لتشخيص قابل للمساءلة، ثم بقيّة P2، ثم سدّ فجوات الاختبار في §7.
+
+**ملاحظة ختامية:** لم أجد مسارًا يكتب خارج المخزن، أو يمحو أصلًا، أو ينفّذ أمرًا — أي لا أُصنّف شيئًا هنا P0. الأحكام المعلَّمة «شرطي/يحتاج التبعية» تبقى **غير مؤكَّدة** حتى تُقرأ `evaluate.py` (لـ`a.encoded`/`a.MAX_INPUT`) و`source_observer.py` (لـ`export`/`SOURCE_BINDING`) و`launch_cancellation_guard`.
