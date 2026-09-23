@@ -1,5 +1,7 @@
 # 📋 TASKBOARD — لوحة المهام المشتركة (Claude + Astra)
 
+> **حجز MD/SVG — 2026-09-23 [AI]:** فوق0ed5c21؛ طلب المالك في owner-messages/2026-09-23_markdown_svg_handoff.md. الحجز: scripts/build_writer_package.py، tests/test_writer_package.py، docs/thesis/figures ومصادرها، WRITER_HANDOFF والفصل3 وأدلة التسليم. تصحيح المعمارية وVT/YARA ونماذج JSON، ثم فحص SVG ومراجعة الحزمة. لا تغيير AR أو t4/t5 ضمن حزمة الرسوم، ولا Word/PDF جديد أو تعديل سحابي.
+
 > **حجز الاستكمال والبحث — 2026-09-22 [AI]:** فوق5e98757، بتفويض المالك المحفوظ فيdocs/owner-messages/2026-09-22_complete_available_work.md. الحزم: T-70 نقلHTTP اصطناعي عبرالعامل الحقيقي، M2 دليل مصدر مستقل دون ادعاء t4/t5، ثم T-16 تنظيمالوثائق وخطةإغلاقمبنيةعلىمصادررسمية. الملفات ai_agent/tests وscripts/measure/tests وأدلتها؛ المراجعة المنفصلة قراءة فقط. لا نموذجحي أوبياناتC4أصلية أوتغييرسحابي. العمل المحلي المتبقي لا يسمى عائقبيئة.
 
 > ⚠️ **2026-09-09 — تسليم كامل:** CLAUDE أنهى كل مهامه وسلّم المشروع بالكامل إلى **ASTRA** (اقرأ `docs/HANDOFF_CLAUDE_TO_ASTRA.md`). كل مهمة "CLAUDE" أدناه أصبحت مملوكة لـ ASTRA.
