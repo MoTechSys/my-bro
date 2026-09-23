@@ -338,3 +338,10 @@ Versioned Wazuh service source shows Type=forking, RemainAfterExit=yes and no PI
 **IMPLEMENTED-IN-REPO / NEEDS-NATIVE.** connection_process.py and linuxproc collector integration now support fixed five-daemon procfs evidence without systemd.38 tests,838 total on c395a61; report08768699 completed and adjudicated in tests/README. Identity is not PID alone; binary inode/path/protection, boot/time namespaces and both scans must match. Binder rejects partial replacement or namespace changes and uses latest required daemon birth, not readiness.
 
 State D may be physically alive but violates the documented R/S gate; diagnostic corrected to PROC_DAEMON_STATE_REJECTED. No hidden retry or broadened acceptance. Native executable/comm/kernel/ACL/hidepid validation remains open. Windows and controller evidence remain local programming, as do t4/t5 and ISSUE-068. This partially advances ISSUE-105 without claiming complete native collection or deployment.
+
+
+## ISSUE-108 — Windows service evidence and producer contract (2026-09-23)
+
+**SERVICE ADAPTER IMPLEMENTED / NATIVE AND SOURCE WORK OPEN.** Added PowerShell producer, offline validator and private Linux importer/exporter.34 tests,872 total on6fe661c with no local skips. Actual Linux PowerShell parser and mocked capture core are exercised; no Windows native CIM/NTFS/PowerShell5.1 acceptance. Consumer/source-boundary mocks are explicitly not original end-to-end evidence.
+
+Review9dbf6ede plus continuation adjudicated in tests/README. Fixed producer agreement, DateTime-kind ambiguity, PID matching, stream cleanup and aggregate-completion checks. Kept strict producer-version attestation and nonverification flags; stale birth cannot become functional success. Windows canary/native persistence and controller timestamps remain programming work. Exact host case and narrow no-arguments service-image paths are deliberate limits. No service control or deployment.
