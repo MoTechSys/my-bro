@@ -1,5 +1,134 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
+<a id="session-handoff-2026-09-23"></a>
+## ملخص الاستئناف الحاكم — إقفال توثيقي للجلسة، 2026-09-23
+
+هذا القسم هو نقطة الدخول الحالية؛ الأقسام التالية سجل زمني وليست قائمة مهام جارية. يحسم عبارات «الأحدث» و«running» و«Windows غير منفذ» في اللقطات القديمة دون محوها. **المشروع IN-PROGRESS، وليس مكتملًا 100%، وليس المتبقي مجرد بيئة.**
+
+طلب المالك محفوظ حرفيًا في [سجل طلب التوثيق](docs/owner-messages/2026-09-23_session_documentation_handoff.md). هذه الجولة توثيق فقط: لا تنفيذ جديد أو مراجعة مستقلة جديدة أو قبول معملي/أكاديمي شامل.
+
+### 1. المكان والقيود
+
+- GitHub: `MoTechSys/my-bro`؛ checkout الصحيح: `/home/user/webapp/my-bro`، وليس مشروع الضيافة في المجلد الأب.
+- الفرع المشترك: `genspark_ai_developer`؛ [PR28 المفتوح](https://github.com/MoTechSys/my-bro/pull/28) إلى `main`. لا دمج PR أو نشر ضمن هذا التسليم.
+- جميع الكتابات داخل مساحة العمل المصرح بها؛ لا SSH/cloud writes أو restart/enrollment أو تجارب أصلية ضمنيًا. AI استشاري: `execution_authority=none`.
+- حافظ على تاريخ المتعاونين المنشور: لا reset أو force-push أو squash للمنشور. أوامر إعادة كتابة التاريخ القديمة في سجلات التعاون ليست تعليمات لهذه الجلسة.
+- المنفذ يتولى البرمجة والاختبارات؛ المراجعة المستقلة مساعدة، لا إحالة العمل غير المنجز إلى «فريق».
+
+### 2. آخر إصدار مسلّم وأدلته
+
+**رأس الدخول والإصدار السابق المتحقق:** `0ccbd848bacebdbf232b90de1295403a390f5f4b`؛ عند بدء جولة التوثيق كان نظيفًا ومطابقًا لـorigin، وmain/الفرع متزامنين. لا تسمِّه رأس التوثيق النهائي: SHA الجديد ونتائج فحصه تُثبَّت في PR28 بعد commit، ويجب التحقق منهما عند الاستئناف.
+
+| الدليل | النتيجة المثبتة للإصدار 0ccbd84 |
+|---|---|
+| تحقق محلي | 872 اختبارًا في 47.621 ثانية، `OK` و`ALL CHECKS PASSED`، بلا skips؛ السجل المحلي المهمل `build/windows_validation_0ccbd84.log` |
+| CI الخاص بـPR | [35823261298](https://github.com/MoTechSys/my-bro/actions/runs/35823261298)، ناجح على SHA نفسه، Python 3.12/3.13 |
+| CI الخاص بـpush | [35823259084](https://github.com/MoTechSys/my-bro/actions/runs/35823259084)، ناجح على SHA نفسه، Python 3.12/3.13 |
+| عدد CI | 872 وبلا skips في الوظائف الأربع، حسب سجلات التسليم السابقة؛ أعيد التحقق من حالة التشغيل وhead SHA في جولة التوثيق |
+| التسليم السابق | [تعليق الأدلة والبصمات](https://github.com/MoTechSys/my-bro/pull/28#issuecomment-5789702565) |
+| حزمة الكاتب | [Markdown/SVG — J55LKsh1](https://www.genspark.ai/api/files/s/J55LKsh1)، 64 مدخل ZIP، 1,085,731 بايت؛ أعيد حساب البصمة في هذه الجولة |
+
+بصمة الحزمة السابقة SHA256:
+
+```text
+759d753bc413b68d387881765844271f4ffc566fe87dda099a0d8a801962add4
+```
+
+اسمها المحلي: `build/soc_writer_md_svg_2026-09-23_0ccbd84.zip`. هذه **حزمة مختارة للكاتب، وليست checkout قابلًا للتشغيل**؛ لا تفترض شمول كل وحدات الجامع فيها. لا تتضمن هذا الملخص اللاحق، ولا تستبدل رابطها بإصدار أحدث دون بصمة وتاريخ واضحين. مخرج هذه الجولة ملف Markdown للاستئناف؛ لا Word/PDF جديد ولا ZIP بديل ضمنيًا.
+
+### 3. ما هو منفذ فعلًا — لا تعاود بناءه
+
+| المكوّن | الملفات/المرجع | حدود الإنجاز |
+|---|---|---|
+| قياس ومقامات AR | `scripts/measure/mttd.py`، 39 اختبار AR؛ العقد في `tests/README.md` | opt-in، مقام جميع المحاولات المسجلة؛ t4/t5 المنتجَان الأصليان غير منفذين |
+| UC-01 offline | `connection_measure.py`، 72 اختبارًا | مقام جميع الدورات المخططة، بما فيها المفقودة؛ لا تشغيل خدمة ولا MTTD أو Wilson لهذا المسار |
+| جامع UC-01 | `connection_collect.py`، 48 اختبارًا | manager/systemd، مخازن خاصة وraw replay وexport/bind؛ controller timestamps إقرارات |
+| Linux/procfs | `connection_process.py`، 38 اختبارًا | مسحان لخمسة دايمونات؛ جميع الهويات تتبدل، PID/time namespaces نفسها قبل/بعد؛ لا إعادة إنشاء حاوية أو reboot كدورة خدمة |
+| Windows service | `connection_windows.ps1` و`connection_windows.py` وربط importer بالجامع، 34 اختبارًا | لقطات CIM للخدمة فقط؛ stdout ليس مخزن Windows دائمًا؛ الاستيراد الخاص يتم على Linux |
+| المصدر والظهور والاستعادة | `source_observer.py`، `visibility_observer.py`، `recovery.py`، `trial_runner.py` | موجودة ومختبرة؛ source الحالي ليس منتج Windows أصليًا؛ لا تحويل observation/mtime إلى t1 |
+| AI وC4 | `ai_agent/{analyst,knowledge,evaluate,runner,report}.py`؛ `docs/lab/UC-14_ai_analyst.md` | نواة استشارية وأدلة/تقييم/تقرير ونقل اصطناعي؛ لا نموذج أو labels أو نتائج C4 أصلية |
+| الكاتب | `scripts/build_writer_package.py`، `docs/thesis/WRITER_HANDOFF.md`، الفصول الخمسة | 15 SVG متجهة سلبية، 15 Mermaid، مصدر `catalog.json` وفهرس وقاموس؛ تدقيق الفصول جزئي |
+
+كل أسماء ملفات القياس أعلاه تحت `scripts/measure/`، واختبارات UC-01 تحت `tests/test_connection*.py`. الأعداد الفرعية ليست إعادة حساب كل اختبارات المشروع ولا قبولًا أصليًا.
+
+**حدود لا تُمحى بالتلخيص:**
+
+- systemd يقبل `active/running` وMainPID موجبًا؛ لا يحوّل `active/exited` في وحدة Wazuh القياسية إلى إثبات حياة. البديل Linux/procfs موجود.
+- ولادة الخدمة/العمليات ليست readiness: procfs يستخدم أحدث ولادة من الدايمونات المطلوبة؛ Windows يستخدم CIM process creation. الدليل الوظيفي يحتاج canary جديدًا وتنبيهًا مطابقًا وعينة active بعده.
+- manager/observer في الجامع على المضيف نفسه؛ يشتركان في `offset_ms/uncertainty_ms/ref`. تصحيح الساعة `offset=device−UTC` ثم `corrected=raw−offset`، لا تصحيح مكرر.
+- Windows: السبعة اختبارات PowerShell شغلت parser وhelper/core الفعليين مع CIM mocks على **PowerShell 7.4.13 Linux**؛ ليست Windows PowerShell 5.1 أو CIM/NTFS أصلية. اختبار bind يحاكي حدود manager وsource صراحة.
+- `.NET DateTime.Ticks` ليست FILETIME؛ الخدمة تقبل Utc/Local غير غامضين وترفض Unspecified. حد اللقطة ثانيتان، وليس ضمان مقاطعة kernel/CIM عالق.
+- hashes/schema تثبت تطابق البايتات/التصريح، لا أصالة التنفيذ أو الساعة أو السببية أو صورة العملية المحملة. أعلام acceptance/authenticity تبقى false.
+- t0 طلب لا إثبات تنفيذ؛ t1 مصدر أصلي، t2 تنبيه المدير، t3 ظهور مستقل بعد رصد سلبي؛ t4 بداية AR الفعلية وt5 اكتمال مستقل سببي غير منتجين بعد؛ t6 تأكيد المدير لا بديل t5. UC-03 له t2_prime وD_VT مستقل.
+- عقود التخزين JSON/JSONL/OpenSearch، لا قاعدة SQL مختلقة. fig08 تاريخي وليس جردًا سحابيًا حاليًا؛ بقية الرسوم لا تغطي تفصيل كل backend جديد. Mermaid لم يُتحقق بتصيير محرك Mermaid؛ SVG مولدة مباشرة بـstdlib.
+
+### 4. المراجعات مغلقة لهذه اللقطات — لا توجد مراجعة معلقة
+
+| المسار | معرّف المراجعة | سجل النتيجة |
+|---|---|---|
+| الكاتب/SVG | bdb07323 | التحكيم في `docs/thesis/WRITER_HANDOFF.md` §10 |
+| AR | 46bbb5ff | `research/inbox/2026-09-23_ar_review_result.json` |
+| UC-01 evaluator | 6f1083f8 | `research/inbox/2026-09-23_uc01_review_result.json` |
+| Collector | ccdc4a2c-aa78-504c-9ef2-bdaf91e9df60 | `research/inbox/2026-09-23_collector_review_result.json` |
+| Linux/procfs | 08768699-f804-53c4-8b50-fd7f5743a664 | `research/inbox/2026-09-23_proc_review_result.json` |
+| Windows service | 9dbf6ede-9324-5e6c-97db-3cbbe0210519 | `research/inbox/2026-09-23_windows_review_result.json` و`2026-09-23_windows_review_tail.json` في المجلد نفسه |
+
+التحكيم التفصيلي للقياس في [tests/README.md](tests/README.md). ذيل Windows استكمال لنفس المهمة لا مراجعة جديدة. لا تعاود طلب المراجعات كأنها running؛ الإصلاحات اللاحقة لا تُنسب لتغطية مستقلة بأثر رجعي. المراجعات السابقة الأخرى محفوظة في السجل أدناه، وليست مهام انتظار. المراجع المؤرشفة وبصماتها في `research/inbox/2026-09-23_{collector,proc,windows}_sources.json`؛ upstream versioned ليس إثباتًا لنسخة المعمل.
+
+### 5. المتبقي المحلي وترتيب الجلسة البرمجية القادمة
+
+1. **ابدأ بشاهد canary/source لـWindows وتخزين خاص أصلي وربط البايتات.** اقرأ source_observer وWindows service والجامع واختباراتها والعقد آخر tests/README قبل التصميم. المطلوب عقد واضح للهوية والخطة والساعة والمسار، intent قبل الأثر، نشر حصري وديمومة وخصوصية، حفظ الفشل/الانقطاع، ثم export/import وبناء سلسلة مصدر غير محاكاة. اختبر الترميز وACL/reparse/التبديل والملف الموجود وإعادة استخدام الهوية؛ افصل اختبارات Linux mocks عن قبول Windows. هذه متطلبات العمل التالي، وليست واجهات منفذة أو تصميمًا معتمدًا نهائيًا. لا تستخدم EICAR أو تغيّر السياسة/الخدمة ضمنيًا.
+2. **منتج توقيتات controller الأصلية** للطلب ونهاية الأمر، مع هوية الدورة وwall/monotonic وربط الأدلة؛ لا توهم أن الطلب يثبت بدء التنفيذ. أوامر تشغيل المعمل تظل تحتاج التفويض الخاص بها.
+3. **t4**: وقت بداية AR الفعلية وربطه بهوية المحاولة والمحفز؛ ثم **t5**: إكمال مستقل ذو دليل سببية. غياب ملف/exit0 أو t6 لا يكفي؛ لا مسار تنفيذ من AI إلى AR.
+4. **ISSUE-068**: حماية config بما يتوافق مع Wazuh دون تخفيف guard أو recursive chown؛ التصميم والاختبارات محليان، النشر والـACL الأصليان بوابة أخرى.
+5. تكامل القياس ومسارات الفشل والتعافي؛ لا حذف للمفقود/المستبعد من المقام ولا إعادة محاولات صامتة لتحسين النتائج.
+6. بقية تدقيق الفصول والمراجع والصور والادعاءات، ومخطط السحابة من جرد معتمد، ثم التشغيل/demo والملاحق/front matter والأشكال المتأثرة. لا تَعِد بتدقيق كل المصادر من مراجعة هذا التسليم.
+
+يبقى T-11 وT-16 وT-70 IN-PROGRESS، وISSUE-105..108 لا تعني قبولًا أصليًا شاملًا. لا تحجز جلسة جديدة تلقائيًا باسم متعاون غائب؛ حدّث TASKBOARD بعد التحقق من أي تغييرات جديدة.
+
+### 6. بوابات أصلية وبشرية لا يجوز اختلاقها
+
+- Native Linux/Windows/Wazuh/YARA/CIM/NTFS/PowerShell 5.1 وACL/hidepid، وجرد حالي وساعات مقاسة؛ اختبار Linux لا يغلق Windows.
+- reboot وتعافي daemon والرجوع بأحدث حالة وcanary وفق تفويض منفصل؛ لا إعادة نشر البيئة لمجرد قراءة أمر قديم.
+- اعتماد نموذج/ترخيص/موارد وهوية تشغيل وجرد، و30 labels بشرية وrubric وتحكيم C4 حقيقي.
+- عينة شبكة وجهاز/topology ونطاق معتمد قبل parser/decoder الشبكي؛ ليست كل التوسعات موافقًا عليها.
+- PILOT 5، وMEASURED ≥30 وفق الخطة، وBASELINE ≥12h؛ خمس دورات UC-01 لكل OS مؤهل مسار مختلف، لا نتائج fixtures.
+- قالب الجامعة والأسماء والموعد واعتماد أكاديمي/بصري بشري نهائي. اكتمال التوثيق لا يغلق هذه البوابات.
+
+### 7. بداية الجلسة التالية والتحقق
+
+```bash
+cd /home/user/webapp/my-bro && pwd
+git status --short --branch
+git fetch origin main genspark_ai_developer
+git log -5 --oneline
+gh pr view 28 --json url,state,headRefOid,headRefName,baseRefName
+```
+
+افحص عمل المتعاونين أولًا؛ لا تكرر أوامر تعديل بعد انقطاع دون التحقق من أثرها. إن كان worktree نظيفًا والتاريخ مناسبًا، زامن عبر merge يحفظ التاريخ، لا reset/rebase للمنشور. push يعمل بالاعتماد المؤقت التالي دون طباعة توكن أو تغيير إعداد Git العام:
+
+```bash
+cd /home/user/webapp/my-bro && pwd
+git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin genspark_ai_developer
+```
+
+اقرأ بعد الملخص: `AI_AGENT_START_HERE.md` وSTATE/TASKBOARD وROADMAP، وآخر tests/README وISSUE-068/105..109. التحقق المحلي بعد التأكد من وجود build داخل المستودع:
+
+```bash
+cd /home/user/webapp/my-bro && pwd
+python3 -B scripts/build_writer_package.py --check
+SOC_TRANSPORT_TEST_PORT=18434 TMPDIR=/home/user/webapp/my-bro/build PYTHONDONTWRITEBYTECODE=1 bash scripts/validate/validate_all.sh
+git diff --check
+```
+
+الفاحص يتضمن listener اصطناعيًا مؤقتًا على loopback، لا خدمة SOC أو نشرًا. `build/pwsh-7.4.13/pwsh` مهمل وغير مضمون في checkout جديد؛ إن غاب pwsh ستُتجاوز سبعة اختبارات، فأعلن ذلك ولا تنقل وصف «بلا skips» آليًا. شغّل CI للرأس الجديد وتحقق من عدد الاختبارات والـskips وسجلات الوظائف؛ نجاح رأس قديم ليس نجاحًا للرأس الجديد.
+
+**نص الاستئناف المختصر:** «اقرأ أول CONTEXT_RESUME في MoTechSys/my-bro، تحقق من HEAD وPR28، ثم أكمل Windows canary/native private persistence وربطه بالمصدر، وبعده controller timestamps. لا تعاود المحولات أو المراجعات المنجزة، ولا تنشر أو تعِد تشغيل SOC دون تفويض».
+
+---
+
+## السجل التاريخي — تفاصيل اللقطات السابقة، لا أوامر جارية
+
 > **تحديث خدمة Windows — 2026-09-23:** أضيف منتجPowerShell للقراءة فقط ومستوردWindowsservice الخاص علىLinux، معهويةboot/PID/creation ونسخةالمنتج وصورةالبرنامج وحدودالوقت. **34 اختبارًا جديدًا و872 كليًا ناجحة على6fe661c بلاskips محليًا**؛ PowerShell7.4.13 اختُبرparser/core معCIM mocks علىLinux، لاWindows أصلي. المراجعة9dbf6ede وذيلها انتهيا وحُكما. Windowscanary/مخزنه وتوقيتcontroller ما زالا برمجةمحلية، وكذلكt4/t5 وISSUE-068 والتكامل وبقيةالتدقيق. لا نشر أوتجاربأصلية؛ السجلات التالية تاريخية.
 
 ## الاستئناف الأحدث — Windows service، 2026-09-23
