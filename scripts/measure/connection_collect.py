@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only UC-01 native capture and byte-verified offline binding (Linux).
 
-Fixed agent_control/systemctl queries only. Never restarts services or writes
+Fixed agent_control/systemctl queries or Linux procfs reads. Never restarts services or writes
 canaries. systemd/hostname adapter constraints and remaining attestations are
 explicit in tests/README. Private stores are immutable by convention, not signed.
 """
@@ -30,18 +30,19 @@ def load(name, path):
 
 c = load('_collect_connection', Path(__file__).with_name('connection_measure.py'))
 s = load('_collect_source', Path(__file__).with_name('source_observer.py'))
+p = load('_collect_process', Path(__file__).with_name('connection_process.py'))
 r = s.r
 require = c.require
 LIMIT = 65536
 COUNT = 64  # first poll then every 5 seconds through 315 seconds
-KINDS = {'manager', 'service'}
+KINDS = {'manager', 'service', 'linuxproc'}
 PROPERTIES = ('ActiveState', 'SubState', 'InvocationID', 'MainPID', 'ExecMainStartTimestamp')
 STATUS = {'Active': 'active', 'Disconnected': 'disconnected',
           'Pending': 'pending', 'Never connected': 'never_connected'}
 
 
 def source_hashes():
-    paths = {Path(__file__), Path(c.__file__), Path(c.m.__file__), Path(s.__file__), Path(s.v.__file__)}
+    paths = {Path(__file__), Path(c.__file__), Path(c.m.__file__), Path(s.__file__), Path(s.v.__file__), Path(p.__file__)}
     paths.update(ROOT/'ai_agent'/name for name in r.SOURCE_NAMES)
     return {str(p.relative_to(ROOT)): r.digest(p.read_bytes()) for p in sorted(paths)}
 
@@ -74,11 +75,15 @@ def command(kind, plan):
 
 
 def native_sample(kind, plan):
-    argv = command(kind, plan)
-    trusted_binary(argv[0])
     expected_host = plan['identity']['manager_name' if kind == 'manager' else 'agent_name']
     host = socket.gethostname()
     require(host == expected_host, 'HOSTNAME_BINDING')
+    if kind == 'linuxproc':
+        require(plan['identity']['os'] == 'linux', 'LINUX_PROC_ONLY')
+        raw, boot = p.collect(trusted_binary)
+        return raw, host, boot
+    argv = command(kind, plan)
+    trusted_binary(argv[0])
     boot = None
     if kind == 'service':
         with open('/proc/sys/kernel/random/boot_id', 'rb') as stream:
@@ -105,6 +110,9 @@ def normalize(kind, raw, host, boot, plan):
         require(boot is None, 'MANAGER_BOOT_FIELD')
         return {'status': STATUS[data['status']], 'manager_name': host,
                 'agent_id': data['id'], 'agent_name': data['name']}
+    if kind == 'linuxproc':
+        require(plan['identity']['os'] == 'linux', 'LINUX_PROC_ONLY')
+        return p.normalize(c.m.strict_json(raw.decode('utf-8')), boot)
     require(kind == 'service' and plan['identity']['os'] == 'linux', 'LINUX_SYSTEMD_ONLY')
     require(isinstance(boot, str) and re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', boot), 'BOOT_ID')
     fields = {}
@@ -149,7 +157,7 @@ def check_times(entries, kind, plan):
 
 
 def check_snapshot(value, query, kind, plan):
-    if kind == 'service' and value['started_ms'] is not None:
+    if kind in {'service', 'linuxproc'} and value['started_ms'] is not None:
         # Native wall timestamp must not assert a start after this observation.
         require(c.point(plan, 'endpoint', value['started_ms'])[0] <=
                 c.point(plan, 'endpoint', query['end_ms'])[1], 'SERVICE_START_AFTER_SNAPSHOT')
@@ -158,7 +166,7 @@ def check_snapshot(value, query, kind, plan):
 def capture(plan_raw, cycle_id, kind, store):
     plan = native_plan(plan_raw)
     require(kind in KINDS and cycle_id in {x['cycle_id'] for x in plan['cycles']}, 'CAPTURE_IDENTITY')
-    require(kind != 'service' or plan['identity']['os'] == 'linux', 'LINUX_SYSTEMD_ONLY')
+    require(kind == 'manager' or plan['identity']['os'] == 'linux', 'LINUX_ENDPOINT_ONLY')
     with r.store_lock(store) as fd:
         require(not os.listdir(fd), 'EMPTY_STORE_REQUIRED')
         intent = {'schema_version': 1, 'kind': kind, 'cycle_id': cycle_id, 'capture_id': uuid.uuid4().hex,
@@ -255,18 +263,28 @@ def bind(plan_raw, request_raw, manager, before, after, source):
     c.text(request['controller_ref'], 'CONTROLLER_REF')
     cid = request['cycle_id']
     require(cid in {x['cycle_id'] for x in plan['cycles']}, 'UNPLANNED_CYCLE')
-    for desc in (manager, before, after, source):
-        c.keys(desc, 'path sha256', 'STORE_DESCRIPTOR')
+    for label, desc in [('manager', manager), ('before', before), ('after', after), ('source', source)]:
+        optional = ' kind' if label in {'before', 'after'} and isinstance(desc, dict) and 'kind' in desc else ''
+        c.keys(desc, 'path sha256'+optional, 'STORE_DESCRIPTOR')
         c.text(desc['path'], 'STORE_PATH'); r.e.sha256(desc['sha256'])
+    backend = before.get('kind', 'service')
+    require(isinstance(backend, str) and backend in {'service', 'linuxproc'} and
+            after.get('kind', 'service') == backend, 'SERVICE_BACKEND_BINDING')
     require(len({x['sha256'] for x in (manager, before, after, source)}) == 4, 'DISTINCT_STORES_REQUIRED')
     polls = export(manager['path'], manager['sha256'], plan_raw, cid, 'manager')['samples']
-    old = export(before['path'], before['sha256'], plan_raw, cid, 'service')['samples'][0]
-    new = export(after['path'], after['sha256'], plan_raw, cid, 'service')['samples'][0]
+    old = export(before['path'], before['sha256'], plan_raw, cid, backend)['samples'][0]
+    new = export(after['path'], after['sha256'], plan_raw, cid, backend)['samples'][0]
     require(old['running'] and new['running'] and old['instance'] and new['instance'] and
             old['instance'] != new['instance'] and new['started_ms'] is not None, 'RESTART_NOT_OBSERVED')
     require(plan['clocks']['endpoint']['precision_ms'] >= max(old['precision_ms'], new['precision_ms']), 'SERVICE_PRECISION')
     require(c.point(plan, 'endpoint', old['captured_end_ms'])[1] < c.point(plan, 'controller', request['request_ms'])[0] and
             c.point(plan, 'endpoint', new['captured_start_ms'])[0] > c.point(plan, 'controller', request['command_end_ms'])[1], 'SNAPSHOT_ORDER')
+    if backend == 'linuxproc':
+        require(old['namespaces'] == new['namespaces'], 'PROC_NAMESPACE_CHAIN')
+        require(not set(old['daemon_instances'].values()) & set(new['daemon_instances'].values()),
+                'PARTIAL_DAEMON_RESTART')
+        require(c.point(plan, 'endpoint', new['earliest_started_ms'])[0] >
+                c.point(plan, 'controller', request['request_ms'])[1], 'DAEMONS_NOT_AFTER_REQUEST')
     event = s.export(source['path'], source['sha256'])
     require(isinstance(event, dict), 'SOURCE_EVENT_REQUIRED')
     cycle = next(x for x in plan['cycles'] if x['cycle_id'] == cid)
