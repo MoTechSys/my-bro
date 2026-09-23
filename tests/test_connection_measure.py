@@ -131,6 +131,12 @@ class ConnectionContract(unittest.TestCase):
             with self.subTest(key=key), self.assertRaises(c.m.InputError):
                 c.check_plan(p)
 
+    def test_whitespace_only_provenance_rejected(self):
+        p = plan(); p['protocol_ref'] = '   '
+        with self.assertRaises(c.m.InputError): report(p=p)
+        r = record(); r['canary']['source_ref'] = '   '
+        with self.assertRaises(c.m.InputError): report(records=[r])
+
     def test_unknown_fields_rejected(self):
         for target in ['plan', 'record', 'restart', 'poll', 'canary']:
             p, r = plan(), record()
@@ -397,6 +403,20 @@ class ConnectionCLI(unittest.TestCase):
         for path in [fifo, self.root]:
             self.files['alerts'] = path
             self.assertEqual(self.run_cli()[0], 2)
+
+    def test_line_count_limited_before_json_parse(self):
+        with patch.object(c.m, 'strict_json', side_effect=AssertionError('parser called')):
+            with self.assertRaisesRegex(c.m.InputError, 'INPUT_LINE_LIMIT'):
+                c.parse_lines(b'{}\n'*101, 100)
+
+    def test_jsonl_crlf_and_literal_unicode_separator(self):
+        self.assertEqual(c.parse_lines(b'{}\r\n', 1), [{}])
+        self.assertEqual(c.parse_lines('"one\u2028two"\n'.encode(), 1), ['one\u2028two'])
+        with self.assertRaises(c.m.InputError): c.parse_lines(b'{}\n{}', 1)
+
+    def test_excess_record_lines_cli_fail_closed(self):
+        self.files['records'].write_text('{}\n'*101)
+        self.assertEqual(self.run_cli(), (2, '', 'UC01_INPUT_REJECTED\n'))
 
     def test_input_size_limit(self):
         with patch.object(c, 'MAX_BYTES', 10):

@@ -35,7 +35,7 @@ def keys(value, expected, code):
 
 
 def text(value, code):
-    require(isinstance(value, str) and 1 <= len(value) <= 1024 and
+    require(isinstance(value, str) and 1 <= len(value) <= 1024 and bool(value.strip()) and
             not any(ord(c) < 32 or ord(c) == 127 for c in value), code)
 
 
@@ -313,6 +313,17 @@ def read_private(path):
     return raw
 
 
+def parse_lines(raw, limit):
+    """Bound line count BEFORE JSON parsing; literal LF, not Unicode separators."""
+    if not raw:
+        return []
+    lines = raw.decode('utf-8').split('\n', limit + 1)
+    if lines[-1] == '':
+        lines.pop()
+    require(len(lines) <= limit, 'INPUT_LINE_LIMIT')
+    return [m.strict_json(line) for line in lines]
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--plan', required=True)
@@ -322,8 +333,8 @@ def main(argv=None):
     try:
         raw = {k: read_private(getattr(args, k)) for k in ('plan', 'records', 'alerts')}
         plan = m.strict_json(raw['plan'].decode('utf-8'))
-        records = [m.strict_json(line) for line in raw['records'].decode('utf-8').splitlines()]
-        alerts = [(m.strict_json(line), f'alerts:{i}') for i, line in enumerate(raw['alerts'].decode('utf-8').splitlines(), 1)]
+        records = parse_lines(raw['records'], 100)
+        alerts = [(line, f'alerts:{i}') for i, line in enumerate(parse_lines(raw['alerts'], MAX_ALERTS), 1)]
         result = evaluate(plan, records, alerts)
         result['input_sha256'] = {k: hashlib.sha256(v).hexdigest() for k, v in raw.items()}
         result['source_sha256'] = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
