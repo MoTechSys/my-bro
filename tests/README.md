@@ -495,3 +495,49 @@ python3 -B scripts/measure/recovery.py export \
 | P2-10 legacy | موضح صراحة: نقص binding فقط ضمن v2؛ لا استعادة صيغة v1 أوترقية صامتة. |
 
 اختبارات الاستعادة 46، والمصدر 37، وبناء الرسالة 13؛605 إجمالاً محلياً عند 68d4e1e. ليست اختبارات انقطاع طاقة أوقبول SOC. t4/t5 و UC-01 ومقام AR الشامل مازالت أعمالاً محلية مستقلة.
+
+
+## AR — سياسة أدلة الاستجابة الاختيارية (2026-09-23)
+
+أضيفت في `mttd.py` بوابة opt-in فقط لـUC-03 وUC-07. يظل manifest.version=2 والعقد القديم صالحًا بلا سياسة؛ غيابها ينتج `POLICY_NOT_DECLARED` ونسبًا null، لا فشلًا صفريًا ولا نجاحًا. **لم يُنفذ منتج t4 أوt5، ولم تُثبت سببية الاستجابة.** اختبارات `test_ar_denominator.py` اصطناعية، لا بيانات تجربة.
+
+مقتطف يضاف إلى run واحد في manifest كامل؛ قيمه تعليمية وليست قياسات أو نافذة معتمدة:
+
+```json
+{
+  "ar_policies": {
+    "UC-03": {
+      "window_s": 120,
+      "precision_ms": {"t0": 1000, "trigger": 1000, "t4": 1000, "t5": 1000},
+      "protocol_ref": "REPLACE_WITH_PREDECLARED_REVIEWED_PROTOCOL",
+      "independent_trials": false
+    }
+  }
+}
+```
+
+- يسمح بمفتاحيUC-03 وUC-07 فقط (أحدهما أوكلاهما)، ولكل سياسة هذه الحقول الأربعة بالضبط. `window_s` عدد صحيح1..3600، وكل precision عدد صحيح1..60000 ويمثل حد±محافظًا بالميلي ثانية؛ boolean ليس عددًا صالحًا. الاستقلال boolean ومرجع البروتوكول نص غير فارغ. `{}` لا يفعلAR لأيUC.
+- ثبّت سياسة على مستوىrun قبل القياس؛ لا توجد سياسة override للمحاولة. لا تختر نافذة/دقة بعد رؤية النتائج. النصprotocol_ref لا يثبت التسجيل المسبق؛ احتفظ بنسخة مؤرخة معتمدة خارج مخرجات الحساب. هذه ليست دقة ±1ms ضمنية؛ precision يضاف إلى uncertainty الجهاز، ويطرح offset=device−UTC مرة واحدة.
+- المحفزUC-03 هو `t2_prime` منVT87105، لاFIM؛ UC-07 هو`t2` منFIM. `stage_alert_refs` الخام مطلوبة؛ timestamp مصرح وحده لا يكفي. لا يملأt6 أوexit0 قيمةt5.
+- التغطية يجب أن تستمر حتى نهاية نافذةAR كلها، حتى مع اكتمال مبكر. تنقص uncertainty المدير منobserve_until المصحح، وتضاف uncertainty/precision المحفز إلى بداية الموعد. هذا شرط بروتوكول محافظ وليس قولًا إن الاكتمال المبكر لم يحدث.
+- ترتيبt0≤trigger≤t4≤t5 مطلوب؛ الانعكاس الاسمي INVALID_TIMELINE والتداخل ضمن حدود الخطأTIMING_UNCERTAIN. interval للاكتمال = (t5−trigger)±(خطأt5+خطأtrigger). high≤window يعنيCOMPLETED_WITHIN_WINDOW، low>window يعنيCOMPLETED_LATE، والتقاطعTIMING_UNCERTAIN.
+- other states: EXCLUDED، NO_TRIGGER_OBSERVED، UNBOUND_RESPONSE_EVIDENCE، MISSING_LAUNCH_TIMESTAMP، OBSERVATION_INCOMPLETE، COMPLETION_WITHOUT_START، NO_START_OBSERVED، NO_COMPLETION_OBSERVED، OUTSIDE_OBSERVATION. هذه حالات **أدلة** وليست إثبات عدم حدوث فعل. BASELINE/non-AR →NOT_APPLICABLE؛ لا ملخصAR للـbaseline.
+
+### المقامات والقراءة الصحيحة
+
+لكل `(run_id, uc, variant, phase)` يبقى **جميع ما سُجل** في `denominator_all_recorded_attempts`، بما فيهBLOCKED/INVALID/INTERFERED/AMBIGUOUS والمفقود. البسط فقطCOMPLETED_WITHIN_WINDOW. المفقود من الخطة لا يُختلق من التنبيهات؛ راجعintent/pending/recovery واكتمال الجمع منفصلًا قبل النشر. لا تخلط PILOT وMEASURED أوالمتغيرات والأنظمة.
+
+`denominator_observed_triggers` و`documented_completion_rate_triggered_only` مقام/نسبة ثانويان **للمحفزات التي اجتازت بوابات الاستبعاد**؛ لا يدعيان إحصاء كل محفز في الجهاز. الصف المستبعد لا يُعد محفزه مقبولًا، حتى لو تضمن refs تشخيصية قبل استبعاده. لا تستخدم هذه النسبة الشرطية بدل المقام الشامل.
+
+حالة الكشف منفصلة: قد يبقىUC-07 MISSED لعدم وجود108001 بينما توجد أدلة supplied على اكتمال الفحص. لا تستنتج اكتشاف برمجية خبيثة من اكتمال الفحص. `completion_from_trigger_s` و`execution_s` وصفيان لصفوفCOMPLETED_WITHIN_WINDOW/LATE، **لا يشترطانDETECTED**؛ الملخصات القديمةmetrics_s تحتفظ بشرطDETECTED. المقاييس القديمةL_AR_trigger=t4−t2 لا تتغير؛ معيار مهلةUC-03 الجديد يبدأVT، فلا تخلط الاسمين.
+
+Wilson محجوب افتراضيًا، ولا يظهر إلا مع`independent_trials=true`؛ يظل `independence_verified=false` ويحتاج الاستقلال والتجانس مراجعة تصميم. أعلام`causality_authenticated=false` و`acceptance_approved=false` ثابتة؛ لا حق للمستخدم بتغييرها بتحريرpolicy. `completion_kind=independent_observation` شرط schema لا تصديق للشاهد أوالسببية.
+
+واجهة الحساب نفسها، على **نسخ خاصة مصرح بها**، لا على مخازن التشغيل الحية:
+
+```bash
+python3 -B scripts/measure/mttd.py --manifest PRIVATE_MANIFEST.json   --journal PRIVATE_ATTEMPTS.jsonl --alerts PRIVATE_ALERTS.jsonl
+python3 -B -m unittest discover -s tests -p test_ar_denominator.py
+```
+
+لا تشغل المثال بأسماء وهمية كأنها بيانات. CLI يرفض journal فارغًا؛ الواجهة الداخلية analyze_v2([],[],manifest) لا تختلق صفوفًا. لا رفع لسجلات خام/هويات/مفاتيح إلىGit أوحزمة الكاتب. مراجعة46bbb5ff للقطة5bd2feb قيد المتابعة عند توثيق هذه الواجهة؛ سجل التحكيم النهائي يضاف لاحقًا، لا اعتماد مسبق.
