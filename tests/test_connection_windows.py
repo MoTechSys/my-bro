@@ -122,6 +122,8 @@ class WindowsSchema(unittest.TestCase):
     def test_path_case_insensitivity_without_relaxing_host_binding(self):
         obj = native(); obj['samples'][1]['executable_path'] = IMAGE['path'].upper()
         self.assertTrue(validate(obj)[0]['running'])
+        obj['hostname'] = obj['hostname'].upper()
+        with self.assertRaisesRegex(ValueError, 'BINDING'): validate(obj)
 
     def test_failed_or_linux_evidence_rejected(self):
         obj = native(); obj['status'] = 'failed'
@@ -238,6 +240,15 @@ class WindowsStore(unittest.TestCase):
         result = cc.c.evaluate(self.p, [row], [(raw_alert, 'synthetic')])
         self.assertEqual(result['cycles'][0]['state'], 'FUNCTIONAL_EVIDENCE_WITHIN_WINDOW')
         self.assertFalse(result['acceptance_approved'])
+        stale_dir = self.base/'stale'; stale_dir.mkdir(mode=0o700)
+        stale = self.imported(cc.r.json_bytes(native(self.p, at=BASE+8000, born=BASE-30000, pid=201)), stale_dir)
+        stale_desc = {'path': str(stale_dir), 'sha256': stale['intent_sha256'], 'kind': 'windowsservice'}
+        with patch.object(cc, 'export', side_effect=export), patch.object(cc.s, 'export', return_value=event):
+            row = cc.bind(self.plan_raw, cc.r.json_bytes(request), manager, before_desc, stale_desc,
+                          {'path': str(self.base/'source'), 'sha256': 'e'*64})
+        rejected = cc.c.evaluate(self.p, [row], [(raw_alert, 'synthetic')])
+        self.assertEqual(rejected['cycles'][0]['state'], 'INVALID_TIMELINE')
+        self.assertEqual(rejected['documented_functional_count'], 0)
 
 
 @unittest.skipUnless(Path(PWSH).is_file(), 'PowerShell parser unavailable; native Windows acceptance still required')
@@ -341,6 +352,10 @@ if($Result.status -ne 'complete'){exit 2}
         self.assertIn('WINDOWS_EVIDENCE_REJECTED', out.stderr)
         unspecified = command.replace("[DateTime]'2026-09-23T01:00:03Z'", "[DateTime]::SpecifyKind([DateTime]'2026-09-23T01:00:03',[DateTimeKind]::Unspecified)")
         out = self.run_ps(unspecified)
+        self.assertNotEqual(out.returncode, 0)
+        self.assertIn('WINDOWS_EVIDENCE_REJECTED', out.stderr)
+        wrong_service = command.replace("Name='WazuhSvc'", "Name='other'")
+        out = self.run_ps(wrong_service)
         self.assertNotEqual(out.returncode, 0)
         self.assertIn('WINDOWS_EVIDENCE_REJECTED', out.stderr)
 
