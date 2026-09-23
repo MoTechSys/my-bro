@@ -198,6 +198,107 @@ class WriterPackageTests(unittest.TestCase):
                 w.package(base/'link.zip')
             self.assertEqual(target.read_bytes(), b'original')
 
+    def test_catalog_read_uses_source_guard(self):
+        with patch.object(w, 'source_file', side_effect=ValueError('source file')) as guard:
+            with self.assertRaisesRegex(ValueError, 'source file'):
+                w.catalog()
+            guard.assert_called_once_with('docs/thesis/figures/catalog.json')
+
+    def test_catalog_change_during_bundle_is_rejected(self):
+        original = Path.read_bytes
+        reads = 0
+        def changed(path):
+            nonlocal reads
+            raw = original(path)
+            if path == w.FIGURES/'catalog.json':
+                reads += 1
+                if reads > 1:
+                    return raw + b'\n'
+            return raw
+        with patch.object(Path, 'read_bytes', changed):
+            with self.assertRaisesRegex(ValueError, 'catalog changed'):
+                w.bundle_files()
+
+    def test_mermaid_delimiters_rejected_and_entities_encoded(self):
+        for delimiter in '|\\[]{}#`':
+            s = copy.deepcopy(self.graph); s['nodes'][0]['lines'] = ['test'+delimiter]
+            with self.subTest(delimiter=delimiter), self.assertRaisesRegex(ValueError, 'Mermaid delimiter'):
+                w.validate(s)
+        self.graph['nodes'][0]['lines'] = ['a;b < c & d']
+        self.assertIn(b'a#59;b #60; c #38; d', w.mermaid(self.graph))
+
+    def test_render_staging_failure_preserves_old_files(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+            base = Path(directory); (base/'a.svg').write_bytes(b'old')
+            with patch.object(w, 'FIGURES', base), patch.object(w, 'generated', return_value={'a.svg': b'new'}), \
+                    patch.object(w.os, 'fsync', side_effect=OSError('staging fault')):
+                with self.assertRaisesRegex(OSError, 'staging fault'):
+                    w.render_all()
+            self.assertEqual((base/'a.svg').read_bytes(), b'old')
+
+    def test_render_partial_group_rejected_not_truncated(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+            base = Path(directory)
+            for name in ('a.svg', 'b.svg'):
+                (base/name).write_bytes(b'old')
+            replace = w.os.replace; calls = 0
+            def fail_second(src, dst):
+                nonlocal calls
+                calls += 1
+                if calls == 2:
+                    raise OSError('publish fault')
+                return replace(src, dst)
+            outputs = {'a.svg': b'complete new a', 'b.svg': b'complete new b'}
+            with patch.object(w, 'FIGURES', base), patch.object(w, 'generated', return_value=outputs):
+                with patch.object(w.os, 'replace', fail_second), self.assertRaisesRegex(OSError, 'publish fault'):
+                    w.render_all()
+                self.assertEqual((base/'a.svg').read_bytes(), b'complete new a')
+                self.assertEqual((base/'b.svg').read_bytes(), b'old')
+                with self.assertRaisesRegex(ValueError, 'stale figure'):
+                    w.check()
+
+    def test_zip_write_failure_has_no_final_name(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+            out = Path(directory)/'new.zip'
+            with patch.object(zipfile.ZipFile, 'writestr', side_effect=OSError('write fault')):
+                with self.assertRaisesRegex(OSError, 'write fault'):
+                    w.package(out)
+            self.assertFalse(out.exists())
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_zip_fsync_failure_before_publication_has_no_final_name(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+            out = Path(directory)/'new.zip'
+            with patch.object(w.os, 'fsync', side_effect=OSError('sync fault')):
+                with self.assertRaisesRegex(OSError, 'sync fault'):
+                    w.package(out)
+            self.assertFalse(out.exists())
+
+    def test_zip_namespace_sync_failure_keeps_complete_archive(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+            out = Path(directory)/'new.zip'; real = w.os.fsync
+            def fail_directory(fd):
+                if stat.S_ISDIR(w.os.fstat(fd).st_mode):
+                    raise OSError('directory sync fault')
+                return real(fd)
+            with patch.object(w.os, 'fsync', fail_directory), self.assertRaisesRegex(OSError, 'directory sync fault'):
+                w.package(out)
+            with zipfile.ZipFile(out) as z:
+                self.assertIsNone(z.testzip())
+            self.assertEqual(list(Path(directory).iterdir()), [out])
+
+    def test_core_writer_links_resolve_inside_bundle(self):
+        import posixpath
+        files = w.bundle_files()
+        names = ['START_HERE.md', 'docs/thesis/WRITER_HANDOFF.md', 'docs/thesis/figures/INDEX.md']
+        names += ['docs/thesis/'+c for c in w.CHAPTERS]
+        for name in names:
+            for link in re.findall(r'\]\(([^)]+)\)', files[name].decode()):
+                if link.startswith(('https:', 'http:', '#')):
+                    continue
+                target = posixpath.normpath(posixpath.join(posixpath.dirname(name), link.split('#')[0]))
+                self.assertIn(target, files, (name, link))
+
     def test_real_check_cli(self):
         result = subprocess.run([sys.executable, '-B', str(ROOT/'scripts/build_writer_package.py'), '--check'],
                                 cwd=ROOT, capture_output=True, timeout=20, check=True)
