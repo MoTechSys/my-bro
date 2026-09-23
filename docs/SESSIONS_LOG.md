@@ -105,3 +105,5 @@
 | 2026-09-23 | AI | انتهتccdc4a2c وحُكمت البنود01..09 فيtests/README.6853581 يربطclockestimateعلىالمضيفالمشترك،414384d يضيفاختبارين؛800اختباركلي ناجح | لا تعادالمراجعة. محولاتدايمونات/Windows/controller وt4/t5 وISSUE-068 وبقيةالتحقيقمحليةباقية. لا نشر؛رأسالتسليم وCI فيPR28. |
 
 | 2026-09-23 | AI | متابعة502c346:محولprocfs e53052d وربط801eeb8؛38اختبارًا و838كليًاعلىc395a61.4مصادرLinuxمؤرشفة؛08768699انتهتوحُكمت؛الدليلودلالةbirth-not-ready والحالةمحدثة | التاليWindows/controller وt4/t5 وISSUE-068 والتكاملوبقيةالتدقيق؛Linuxnativeقبولباقٍ.لا نشرأوإعادةتشغيلأوتجاربأصلية؛PR28والتاريخمحفوظان. |
+
+| 2026-09-23 | AI | متابعة66c19de:Windowsservice producer/validator/import،34اختبارًا و872كليًاعلى6fe661c؛مراجعة9dbf6edeوذيلهاانتهياوحُكما؛PowerShellLinuxparser/coremocks فعلية.5مصادروhashparser مؤرشفة |التاليWindowscanary/مخزنه ثمcontroller،t4/t5 وISSUE-068 والتكاملوبقيةالتدقيق. لاWindowsnativeأونشر،والـsource فيtestbind محاكىصراحة.الرأسوCIوالتسليمفيPR28. |
