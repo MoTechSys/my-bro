@@ -30,6 +30,11 @@ function Utc-Milliseconds {
     return ([DateTimeOffset]::UtcNow).ToUnixTimeMilliseconds()
 }
 function Utc-Ticks([DateTime]$Date) {
+    Assert-Value ($Date.Kind -ne [DateTimeKind]::Unspecified)
+    if ($Date.Kind -eq [DateTimeKind]::Local) {
+        Assert-Value (-not [TimeZoneInfo]::Local.IsAmbiguousTime($Date) -and
+            -not [TimeZoneInfo]::Local.IsInvalidTime($Date))
+    }
     return $Date.ToUniversalTime().Ticks.ToString([Globalization.CultureInfo]::InvariantCulture)
 }
 function Protected-ImageHash {
@@ -68,8 +73,9 @@ function Service-Sample {
     $Digest = Protected-ImageHash
     Assert-Value ($Digest -ceq $ImageSha256)
     return [ordered]@{
-        service_name = 'WazuhSvc'; service_state = 'Running'; process_id = $ProcessIdValue
+        service_name = [string]$Service.Name; service_state = [string]$Service.State; process_id = $ProcessIdValue
         process_created_ticks = (Utc-Ticks $Process.CreationDate)
+        process_datetime_kind = [string]$Process.CreationDate.Kind
         executable_path = [string]$Process.ExecutablePath
         image_sha256 = $Digest; configured_image_matches = $true
     }
@@ -92,7 +98,7 @@ try {
         producer_sha256 = $ProducerDigest; plan_sha256 = $PlanSha256; run_id = $RunId; cycle_id = $CycleId
         clock_ref = $ClockRef; hostname = $HostNameValue; expected_image_path = $ImagePath
         expected_image_sha256 = $ImageSha256; status = 'failed'; samples = @(); boot_before_ticks = $null
-        boot_after_ticks = $null; start_ms = (Utc-Milliseconds); end_ms = $null
+        boot_after_ticks = $null; boot_before_kind = $null; boot_after_kind = $null; start_ms = (Utc-Milliseconds); end_ms = $null
         start_ticks = [Diagnostics.Stopwatch]::GetTimestamp(); end_ticks = $null
         tick_frequency = [Diagnostics.Stopwatch]::Frequency
         acceptance_approved = $false; authenticity_verified = $false; loaded_image_hash_verified = $false
@@ -101,11 +107,17 @@ try {
         $Boot = @(Get-CimInstance -ClassName Win32_OperatingSystem -OperationTimeoutSec 1)
         Assert-Value ($Boot.Count -eq 1)
         $Result.boot_before_ticks = Utc-Ticks $Boot[0].LastBootUpTime
+        $Result.boot_before_kind = [string]$Boot[0].LastBootUpTime.Kind
         $Result.samples += Service-Sample
         $Result.samples += Service-Sample
         $Boot = @(Get-CimInstance -ClassName Win32_OperatingSystem -OperationTimeoutSec 1)
         Assert-Value ($Boot.Count -eq 1)
         $Result.boot_after_ticks = Utc-Ticks $Boot[0].LastBootUpTime
+        $Result.boot_after_kind = [string]$Boot[0].LastBootUpTime.Kind
+        Assert-Value ($Result.boot_before_ticks -ceq $Result.boot_after_ticks -and
+            $Result.boot_before_kind -ceq $Result.boot_after_kind -and
+            $Result.samples[0].process_id -eq $Result.samples[1].process_id -and
+            $Result.samples[0].process_created_ticks -ceq $Result.samples[1].process_created_ticks)
         $Result.status = 'complete'
     } catch { $Result.status = 'failed' }
     finally {

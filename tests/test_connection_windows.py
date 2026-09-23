@@ -28,7 +28,7 @@ def windows_plan():
 def native(p=None, at=BASE-5000, born=BASE-60000, pid=100):
     p = windows_plan() if p is None else p
     sample = {'service_name': 'WazuhSvc', 'service_state': 'Running', 'process_id': pid,
-              'process_created_ticks': str(w.EPOCH_TICKS+born*10000), 'executable_path': IMAGE['path'],
+              'process_created_ticks': str(w.EPOCH_TICKS+born*10000), 'process_datetime_kind': 'Utc', 'executable_path': IMAGE['path'],
               'image_sha256': IMAGE['sha256'], 'configured_image_matches': True}
     return {'schema_version': 1, 'producer': 'soc-windows-service-v1', 'capture_id': 'a'*32,
             'producer_sha256': cc.r.digest(cc.WINDOWS_PRODUCER.read_bytes()), 'plan_sha256': cc.r.digest(cc.r.json_bytes(p)),
@@ -36,7 +36,7 @@ def native(p=None, at=BASE-5000, born=BASE-60000, pid=100):
             'hostname': p['identity']['agent_name'], 'expected_image_path': IMAGE['path'],
             'expected_image_sha256': IMAGE['sha256'], 'status': 'complete', 'samples': [sample, copy.deepcopy(sample)],
             'boot_before_ticks': str(w.EPOCH_TICKS+(BASE-3600000)*10000),
-            'boot_after_ticks': str(w.EPOCH_TICKS+(BASE-3600000)*10000),
+            'boot_after_ticks': str(w.EPOCH_TICKS+(BASE-3600000)*10000), 'boot_before_kind': 'Utc', 'boot_after_kind': 'Utc',
             'start_ms': at, 'end_ms': at+100, 'start_ticks': 100000000, 'end_ticks': 101000000,
             'tick_frequency': 10000000, 'acceptance_approved': False, 'authenticity_verified': False,
             'loaded_image_hash_verified': False}
@@ -53,6 +53,7 @@ class WindowsSchema(unittest.TestCase):
         value, query = validate(native())
         self.assertEqual(value['started_ms'], BASE-60000); self.assertEqual(value['precision_ms'], 1000)
         self.assertTrue(value['running']); self.assertFalse(value['loaded_image_hash_verified'])
+        self.assertTrue(value['producer_hash_attested']); self.assertFalse(value['producer_authenticity_verified'])
         self.assertEqual(query['end_monotonic_ms']-query['start_monotonic_ms'], 100)
         self.assertIn('not_service_readiness', value['start_semantics'])
 
@@ -74,6 +75,12 @@ class WindowsSchema(unittest.TestCase):
                            ('loaded_image_hash_verified', True), ('extra', None)]:
             obj = native(); obj[key] = value
             with self.subTest(key=key), self.assertRaises(ValueError): validate(obj)
+
+    def test_unspecified_datetime_kind_rejected(self):
+        obj = native(); obj['boot_before_kind'] = obj['boot_after_kind'] = 'Unspecified'
+        with self.assertRaisesRegex(ValueError, 'DATETIME_KIND'): validate(obj)
+        obj = native(); obj['samples'][0]['process_datetime_kind'] = 'Unspecified'
+        with self.assertRaisesRegex(ValueError, 'DATETIME_KIND'): validate(obj)
 
     def test_service_stopped_wrong_name_pid_or_config_rejected(self):
         for key, value in [('service_name', 'other'), ('service_state', 'Stopped'), ('process_id', 0),
@@ -266,6 +273,10 @@ class PowerShellProducer(unittest.TestCase):
         self.assertEqual(sample['process_created_ticks'], str(w.EPOCH_TICKS+(BASE+3000)*10000))
         bad = command.replace('ProcessId=100;ExecutablePath', 'ProcessId=101;ExecutablePath')
         out = self.run_ps(bad)
+        self.assertNotEqual(out.returncode, 0)
+        self.assertIn('WINDOWS_EVIDENCE_REJECTED', out.stderr)
+        unspecified = command.replace("[DateTime]'2026-09-23T01:00:03Z'", "[DateTime]::SpecifyKind([DateTime]'2026-09-23T01:00:03',[DateTimeKind]::Unspecified)")
+        out = self.run_ps(unspecified)
         self.assertNotEqual(out.returncode, 0)
         self.assertIn('WINDOWS_EVIDENCE_REJECTED', out.stderr)
 

@@ -50,7 +50,7 @@ def validate(obj, plan, cycle_id, plan_hash, producer_hash, expected_image):
     keys(expected_image, 'path sha256')
     expected_path = image_path(expected_image['path']); expected_hash = digest(expected_image['sha256'])
     keys(obj, 'schema_version producer capture_id producer_sha256 plan_sha256 run_id cycle_id clock_ref hostname '
-         'expected_image_path expected_image_sha256 status samples boot_before_ticks boot_after_ticks '
+         'expected_image_path expected_image_sha256 status samples boot_before_ticks boot_after_ticks boot_before_kind boot_after_kind '
          'start_ms end_ms start_ticks end_ticks tick_frequency acceptance_approved authenticity_verified loaded_image_hash_verified')
     require(type(obj['schema_version']) is int and obj['schema_version'] == 1 and
             obj['producer'] == 'soc-windows-service-v1', 'WINDOWS_VERSION')
@@ -64,6 +64,7 @@ def validate(obj, plan, cycle_id, plan_hash, producer_hash, expected_image):
     require(image_path(obj['expected_image_path']).casefold() == expected_path.casefold() and
             obj['expected_image_sha256'] == expected_hash, 'WINDOWS_IMAGE_BINDING')
     boot = ticks(obj['boot_before_ticks'])
+    require(obj['boot_before_kind'] in ('Utc', 'Local') and obj['boot_after_kind'] == obj['boot_before_kind'], 'WINDOWS_DATETIME_KIND')
     require(obj['boot_after_ticks'] == obj['boot_before_ticks'], 'WINDOWS_BOOT_CHANGED')
     for name in ('start_ms', 'end_ms'): integer(obj[name], 0, 253402300799999)
     for name in ('start_ticks', 'end_ticks'): integer(obj[name], 0, 2**63-1)
@@ -75,10 +76,11 @@ def validate(obj, plan, cycle_id, plan_hash, producer_hash, expected_image):
     require(isinstance(obj['samples'], list) and len(obj['samples']) == 2, 'WINDOWS_TWO_SAMPLES')
     identities = []
     for sample in obj['samples']:
-        keys(sample, 'service_name service_state process_id process_created_ticks executable_path image_sha256 configured_image_matches')
+        keys(sample, 'service_name service_state process_id process_created_ticks process_datetime_kind executable_path image_sha256 configured_image_matches')
         require(sample['service_name'] == 'WazuhSvc' and sample['service_state'] == 'Running' and
                 sample['configured_image_matches'] is True, 'WINDOWS_SERVICE_STATE')
         integer(sample['process_id'], 1, 2**32-1)
+        require(sample['process_datetime_kind'] in ('Utc', 'Local'), 'WINDOWS_DATETIME_KIND')
         born = ticks(sample['process_created_ticks'])
         require(boot <= born and image_path(sample['executable_path']).casefold() == expected_path.casefold() and
                 sample['image_sha256'] == expected_hash, 'WINDOWS_PROCESS_BINDING')
@@ -90,7 +92,8 @@ def validate(obj, plan, cycle_id, plan_hash, producer_hash, expected_image):
     value = {'instance': 'windows-service:'+hashlib.sha256(identity).hexdigest(), 'running': True,
              'started_ms': born_ms, 'precision_ms': 1000, 'boot_ref': obj['boot_before_ticks'],
              'image_path': expected_path, 'image_sha256': expected_hash,
-             'start_semantics': 'cim_process_creation_not_service_readiness', 'loaded_image_hash_verified': False}
+             'start_semantics': 'cim_process_creation_not_service_readiness', 'loaded_image_hash_verified': False,
+             'producer_hash_attested': True, 'producer_authenticity_verified': False}
     query = {'start_ms': obj['start_ms'], 'end_ms': obj['end_ms'],
              'start_monotonic_ms': obj['start_ticks']*1000//frequency,
              'end_monotonic_ms': obj['end_ticks']*1000//frequency,
