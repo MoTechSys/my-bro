@@ -825,3 +825,82 @@ python3 -B scripts/measure/connection_collect.py export \
 التقرير ذكر لاحقًا «No non-systemd adapter»، وهو غير صحيح لوصف هذهالإضافة: linuxproc لا يعتمدsystemd. غيرالمتحقق هوالقبولالأصلي؛ Windows وإعادةإنشاءالحاوية عبرnamespace جديد لايدعمهماهذاالمحول. المصدرالمستقلليسبديلًاعنفحصالكودالفعلية.
 
 أضيفت3 اختبارات تحكيم فيec3bdbf إلى35 السابقة؛ **38 اختبارproc و838 كليًا ناجحة علىc395a61**، مع31 ملفرسوم مشتقًا متطابقًا. لا تغييرات علىSVG أوالخادم، ولا نتائجتجاربأصلية.
+
+
+## UC-01 Windows service — منتج قراءة فقط واستيراد بايتات
+
+**تحديث 2026-09-23:** أضيف `connection_windows.ps1` و`connection_windows.py` و`import-windows` فيالجامع. هذهحزمة **لقطات الخدمة فقط**؛ لا تعني اكتمال UC-01 علىWindows. شاهدcanary أصلي لـWindows وتوقيتcontroller ما زالا برمجة محلية. اختبارbind هنا يحاكي مصدرcanary والمراقب، ولا يُسمى سلسلة أدلة Windows أصلية.
+
+### المنتج والحقول
+
+- يتطلبPowerShell5.1+ و`-Lab` وWindows. يستعلمCIM محليًا فقط: Win32_Service باسمWazuhSvc، ثمWin32_Process بالـPID الذي أعادتهالخدمة، وWin32_OperatingSystem.LastBootUpTime قبلالعينتين وبعدهما. لاstart/stop/restart/enrollment ولاحذفملفات.
+- الخدمةRunning ومعرفهاوPID العملية مطابقان. يقارنExecutablePath بالمسارالمتوقع، وPathName بصيغةمسارمطلق بلاوسائط؛ المسارذوالمسافات يلزمأنيكونمقتبسًا. لايدعمUNC أوSystemRoot أوصيغةcommand-line حرة. basename يجبأنيكونwazuh-agent.exe والقرصFixed؛ هذهحدودمحولمقصودة وليستمحللخدماتعامًا.
+- يرفضreparse points فيمسارملفالبرنامج وأسلافه قبلالفتح. يقرأملفًا≤32MiB بـFileShare.Read، ويحسبSHA256 مقابلبصمةمتوقعةمعتمدةمسبقًا. هذهبصمةالملفالقرصي **وليستبصمةصفحاتالعمليةالمحمّلة**؛ سباقاتتبديلالمساروملكيةNTFS/ACL وقوةالمصدرالمتوقع لمتُصادقعليها.
+- `hostname` يجبأنيطابقحرفيًاagent_name فيالخطة، بمافيذلكحالةالأحرف. تطابقWindows لمسارالبرنامجcase-insensitive لايغيّرعقدهويةالخطة. أسماءWazuhالمستعارة المختلفةعنhostname تحتاجعقدربطجديدًا، لا إعادةتسميةصامتة.
+- وقتإنشاءالعملية ووقتإقلاعCIM يُحوّلانإلىUTC DateTime ticks كنصعشري (100ns وحداتتمثيل، لادقةمدعاة). يقبلKind=Utc/Local، ويرفضUnspecified، ويرفضLocal إذاكانغامضًا أوغيرصالح فيتحويلDST. يسجلprocess_datetime_kind وboot_before_kind/boot_after_kind. يلزمقبولنوعCIM الفعلي علىWindows؛ لم يفترضأنالموحدغيرالموسوميحملUTC.
+- يجبثباتboot والعينتين (PID وcreation ticks) قبلstatus=complete. `started_ms` هوfloor((ticks−621355968000000000)/10000)، وprecision المصدرة1000ms كحدمحافظ مطلوببالخطة، لاجاهزيةالخدمة. الهويةبصمة(boot,PID,creation ticks)؛ ليستPIDفقط.
+- نافذةالالتقاطتحوي6استعلاماتCIM وقراءتيhash. لكلCIM OperationTimeoutSec=1، لكنحدقبولالنافذةكلها2ث بالـStopwatch الفعلي؛ يتأكدالمنتجمنالحدويخرجfailed عندتجاوزه، والمستورديفحصهحسابيًا مجددًا. ذلك **لايضمنقطعCIM أوI/O عالق بعد2ث** ولايعنيأنكلجهازWindows سينهياللقطةضمنالحد. لايوسعالحدبأثررجعي لتحسينالنتيجة.
+
+مفاتيحJSON الأصليةحصرية: schema_version=1،producer=soc-windows-service-v1،capture_id،producer_sha256،plan_sha256،run_id،cycle_id،clock_ref،hostname،expected_image_path/sha256،status،samples،boot_before/after_ticks وkind،start_ms/end_ms،start_ticks/end_ticks/tick_frequency،وثلاثةأعلامfalse:acceptance_approved،authenticity_verified،loaded_image_hash_verified. كلsample يحويservice_name/state وprocess_id وprocess_created_ticks وprocess_datetime_kind وexecutable_path وimage_sha256 وconfigured_image_matches. يستلزماثنتينمطابقتينللتصدير؛failed أوpartial لايُقبل.
+
+### التشغيل والخصوصية
+
+الأوامر الآتية إرشادية فقط؛ لم تنفذ على جهازSOC. ثبّتخطةWindowsوصورةالبرنامجوبصمتهامسبقًا، وراجعالسكريبتوسياسةتشغيله؛ لايتضمنالدليلتعطيلExecutionPolicy. المدخلاتالمتوقعةمثلPLAN_SHA256 placeholders وليستقيمًاصالحة:
+
+```powershell
+powershell.exe -NoLogo -NoProfile -NonInteractive -File connection_windows.ps1 -Lab `
+  -RunId RUN_ID -CycleId CYCLE_ID -PlanSha256 PLAN_SHA256 `
+  -ClockRef CLOCK_REF -ExpectedHost EXACT_HOSTNAME `
+  -ImagePath 'C:\Program Files (x86)\ossec-agent\wazuh-agent.exe' -ImageSha256 APPROVED_IMAGE_SHA256
+```
+
+**stdout خاص:** المنتجلاينشئمخزنWindows دائمًا ولايكتبintent علىالقرصقبلالاستعلام. جهّزوجهةNTFS جديدةوخاصةوتحققACL قبلالتشغيل؛ لاتطبعJSON فيجلسةمسجلةأوعامة. فشل/قتلPowerShell قد يتركملفًاجزئيًا يرفضهالمستورد. لاoverwrite أوإعادةتشغيلخفي للتجربة. المفقوديبقىفيالمقام.
+
+المنتجيضبطConsole.OutputEncoding إلىUTF-8 بدونBOM. إعادةتوجيهPowerShell5.1 أوOut-File قدتعيدترميزالنصإلىUTF-16؛ لا تستخدمها دونضبطومراجعةالترميز. احفظبايتاتstdout الأصلية عبروسيلةتُبقيهاUTF-8، ولا تعيدserialize JSON بعدحسابالبصمة. المستورد يرفضUTF-16/BOM والبايتاتالمختلفة. التحقق منالحفظوالإقفال وACL والـstdout علىWindows الأصلي مازال بوابةقبول، وليس منجزًاباختبارLinux.
+
+الرفضالأولي يخرجexit2 وstderrعامWINDOWS_EVIDENCE_REJECTED دونpayload؛ فشلداخلالالتقاطيخرجJSON status=failed وexit2. نجاحالمنتجexit0 يعنيانتهاءلقطةمطابقةلشروطه، **لا قبولالخدمة أوالتجربة**. عندتغليفهداخلPowerShell -Command، انقلالـLASTEXITCODE صراحةحتىلا يتحولرمزالفشلإلى1 فيالغلاف.
+
+### المستورد الخاص على Linux
+
+انقلpayload وبصمةبايتاتهالمتوقعةبطريقةمعتمدة وخاصة، لا عبرGit. صورةالمتوقعملفJSON0600 مستقل:
+
+```json
+{"path":"C:\\Program Files (x86)\\ossec-agent\\wazuh-agent.exe","sha256":"APPROVED_IMAGE_SHA256"}
+```
+
+```bash
+python3 -B scripts/measure/connection_collect.py import-windows \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --input PRIVATE_WINDOWS.json \
+  --sha256 EXPECTED_RAW_SHA256 --image PRIVATE_IMAGE.json --store PRIVATE_EMPTY_STORE
+python3 -B scripts/measure/connection_collect.py export \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --kind windowsservice \
+  --store PRIVATE_STORE --sha256 EXPECTED_IMPORT_INTENT_SHA256
+```
+
+المستورد يتحققمنالـSHA المتوقعقبلالكتابة، ثمschema/هويةالخطةوالدورةوالساعةوالبرنامج وبصمةنسخةالمنتجالحالية والتوقيت. الحد64KiB للـpayload وimage spec. المخزن0700 وملفاته0600، write-once/nofollow/fsync وقفلrunner؛ لاoverwrite. ترتيبالملفات:intent.json ثمplan.json ثمimage.json ثمwindows.json ثمterminal.json. الانقطاعيتركpartial مرفوضًا؛ لا إصلاح تلقائي أواختلاقاكتمال.
+
+export يتحققمنبصمةintent والخطةالحرفية وصورةالمتوقع وبايتاتWindows ونسخةالمصادر، ويعيدparse والتوقيت والهوية وقائمةالملفات. `stored_bytes_verified=true` لايصادقعلىWindows؛ `import_not_native_capture=true` و`authenticity_verified=false` ثابتتان. كذلكproducer_hash_attested=true وproducer_authenticity_verified=false: مطابقةhash تحرسنسخةالتصريح، ولا تثبتأنالكودنفذفعليًا. تبقىالمطابقةصارمة، ولا تُحذفلمجردأنهاغيرموقعة.
+
+لبefore/after في`--stores` استخدمkind=windowsservice؛manager كماهو. يلزمboot وصورةمتوقعةثابتان، وهويتاعمليةمختلفتان ولقطتان قبلrequest/بعدcommand_end معحدودالساعة. binder يجمعالسجل، والمحلليقررstate؛ اختباربدايةقديمة يثبتINVALID_TIMELINE وبسطصفر لا قبولًامزيفًا. مصدرcanaryWindows غيرمنفذ؛ لا تمررملفًامصنوعًا كأنهsource_observer export أصلي. الاختبارالذييحاكيهذاالحد يصرحبالـmock، وليس دليلًا أصليًا.
+
+### المصادر والاختبارات والمراجعة
+
+المصادرالخمسةفيresearch/inbox/2026-09-23_windows_sources.json معUTC/both hashes: Wazuhv4.14.1 win_service.c وWiX (WazuhSvc،ownProcess،wazuh-agent.exe)، وثائقMicrosoftWin32_Process/Service/OperatingSystem للحقولالمستخدمة. قرئتالأجزاءذاتالصلة، لاكلSDK أوصورالمعمل. إصدارالمصادرلايثبتالتثبيتالحالي.
+
+اختبارات34 في6fe661c؛ **872كليًامحليًا بلاskips على6fe661c**. أُخذPowerShell7.4.13 Linuxportable منالإصدارالرسمي بعدمطابقةSHA256؛ يوجدداخلbuildالمهمل، لافيالحزمة. الاختباراتتستخدمparser الحقيقي، وhelper/core الفعليين معCIM mocks، وفشلالـboot/count/PID/hash/المهلة، وقراءةhash وsymlink اصطناعيينعلىLinux. لايشملهذاWindowsPowerShell5.1 أوCIM/NTFS أصليين. إذا لميوجدpwsh محليًا تُسجل7اختباراتPowerShellكـskipped؛ يجبالإفصاحعنذلكفيالتحقق، لاعدّهااختباراتnativeناجحة.
+
+المراجعة9dbf6ede انتهت، لكنجزءهاالأولقُطعمنتصفالبند5؛ طُلبتكملتهفيالمشروعنفسهدونإعادةالمراجعة. original/tail والreceipt محفوظةفيresearch/inbox/2026-09-23_windows_review_*.json. **اكتملت وحُكمت؛ لاتعاد.** لمينفذالمراجعاختبارات، ولميُراجعالإصلاحاتاللاحقةاستقلاليًابأثررجعي.
+
+| البند | الحكم والإجراء |
+|---|---|
+|1| صُحح ادعاءfalse acceptance فيذيلالتقرير:bind بنيوي والمحلليمنعالبدءالقديم. اختبار6fe661c يثبتINVALID_TIMELINE وبسطصفر؛ لا تغييرللمقامات. |
+|2| مؤكد كاتساقstatus: أضيفت مقارنةboot وPID/creationقبلcomplete في7952f70؛ نواةالالتقاطالمستخرجةاختُبرتفيfe96c8d بأحوالboot/count/process/hash. |
+|3| عولجKindغيرالمحدد وغموضDST برفضصريح وتسجيلkinds. Utc/Local غيرغامضينيسمحانبتحويلمعلن؛القبولعلىCIM الأصليباقٍ. |
+|4/10| hash ليسمصادقة؛ أبقينامطابقةالنسخة وأضفناflags صريحة. اقتراححذفالمطابقةرُفضكيلايُقبلخلطنسخمختلفة. |
+|5| أُخرجName/State منالكائنالمقروء بعدassert بدلliterals؛ configured_image_matches يبقىنتيجةassert ناجح. اختبارالاسمغيرالصحيحيرفض؛ لاصحةأصليةتنتجمنتبديلطريقةكتابةالحقل. |
+|6|6استعلاماتقدتتجاوز2ث، فذلكرفضمحافظلامشكلةfalseaccept. المنتجيفشلإذاطالالمجموع واختبار6×400ms يثبته. لا نعتمداقتراح0.5ث كضمانلأنOperationTimeoutSec ليسdeadline كليًا؛ لا نوسعالبروتوكولبأثررجعي. |
+|7|caseexact للمضيفقيدهويةمعلن ومختبر؛ لاتطبيعهضمنيًا لأنهيساويagent_name فيالخطة. |
+|8| المحولمقصودللخدمةالمثبتةبالاسم/البرنامجالمحددين، بلاوسائطأوSystemRoot. لا نضيفparser لأوامرخدماتعامة كإصلاحغيرمصرح. المسارالمتوقعخاصومثبتقبلالتجربة. |
+|9| أضيفتtests للنواةالفعلية معmocks وللفشل والمهلة والـhash/symlink علىLinux. BOM يُفحصعلىمخرجاختبارPowerShellLinux؛ سلسلةحفظstdout وreparse/ACL علىWindows مازالتغيرمقبولةnative. |
+
+المتبقيالبرمجياللاحق: Windowscanary/مخزنه وتوقيتcontroller، ثمt4/t5 والسببية وISSUE-068 والتكامل وبقيةالتدقيقالأكاديمي. لا تحولنجاحهذهالحزمةإلىإغلاقUC-01 كاملًا.
