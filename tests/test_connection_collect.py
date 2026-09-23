@@ -364,6 +364,20 @@ class NativeParsing(unittest.TestCase):
         for raw in (b'x'*(cc.LIMIT+1), 'text'):
             with self.assertRaises(ValueError): cc.normalize('manager', raw, 'manager', None, plan())
 
+    def test_stock_active_exited_unit_is_not_daemon_liveness(self):
+        raw = service().replace(b'SubState=running', b'SubState=exited').replace(b'MainPID=123', b'MainPID=0')
+        self.assertFalse(cc.normalize('service', raw, 'endpoint', BOOT, plan())['running'])
+
+    def test_snapshot_future_start_rejected_but_overlapping_precision_allowed(self):
+        p = plan(); p['clocks']['endpoint']['precision_ms'] = 1000
+        for started, fails in [(BASE+5000, True), (BASE+1000, False), (BASE-1000, False)]:
+            value = {'started_ms': started}
+            if fails:
+                with self.assertRaisesRegex(ValueError, 'SERVICE_START_AFTER_SNAPSHOT'):
+                    cc.check_snapshot(value, {'end_ms': BASE}, 'service', p)
+            else:
+                cc.check_snapshot(value, {'end_ms': BASE}, 'service', p)
+
     def test_native_query_fixed_argv_and_deadline(self):
         result = {'reason': 'OK', 'returncode': 0, 'output': manager()}
         with patch.object(cc, 'trusted_binary'), patch.object(cc.socket, 'gethostname', return_value='manager'), patch.object(cc.r, 'bounded_process', return_value=result) as process:
