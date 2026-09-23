@@ -69,7 +69,7 @@ class ConnectionContract(unittest.TestCase):
         self.assertEqual(row['state'], 'FUNCTIONAL_EVIDENCE_WITHIN_WINDOW')
         self.assertEqual(row['connection_state'], 'TRANSITION_OBSERVED')
         self.assertEqual(row['transition_interval_s'], [4.996, 10.104])
-        self.assertEqual(row['functional_confirmation_interval_s'], [11.996, 12.004])
+        self.assertEqual(row['functional_confirmation_interval_s'], [15.096, 15.104])
         self.assertEqual(out['documented_functional_rate'], .2)
         self.assertFalse(out['acceptance_approved']); self.assertFalse(row['causality_authenticated'])
         self.assertNotIn('MTTD', out); self.assertIsNone(out['wilson_95'])
@@ -173,7 +173,7 @@ class ConnectionContract(unittest.TestCase):
         a['timestamp'] = c.m.iso_ms(BASE+12000+offsets['manager'])
         for key in ['start_ms', 'end_ms']:
             p['coverage'][key] += offsets['manager']
-        self.assertEqual(report(p=p, records=[r], alerts=[a])['cycles'][0]['functional_confirmation_interval_s'], [11.996, 12.004])
+        self.assertEqual(report(p=p, records=[r], alerts=[a])['cycles'][0]['functional_confirmation_interval_s'], [15.096, 15.104])
 
     def test_false_bool_and_float_timestamps_rejected(self):
         for value in [True, 1.5, -1, 'timestamp']:
@@ -220,6 +220,24 @@ class ConnectionContract(unittest.TestCase):
         r = record()
         for q in r['polls']: q['status'] = 'pending'
         self.assertEqual(state(r), 'NO_ACTIVE_OBSERVED')
+
+    def test_early_active_then_disconnected_cannot_confirm_later_canary(self):
+        r = record()
+        for q in r['polls']:
+            if q['start_ms'] > BASE+10000: q['status'] = 'disconnected'
+        row = report(records=[r])['cycles'][0]
+        self.assertEqual(row['state'], 'ACTIVE_NOT_CORROBORATED_AFTER_CANARY')
+        self.assertEqual(row['connection_state'], 'TRANSITION_OBSERVED')
+        self.assertIsNone(row['functional_confirmation_interval_s'])
+
+    def test_canary_after_last_poll_is_not_confirmation(self):
+        self.assertEqual(state(alerts=[alert(at=BASE+310000)]), 'ACTIVE_NOT_CORROBORATED_AFTER_CANARY')
+
+    def test_late_corroborating_active_is_not_within_window(self):
+        r = record()
+        for q in r['polls']:
+            if BASE+10000 < q['start_ms'] < BASE+305000: q['status'] = 'disconnected'
+        self.assertEqual(state(r), 'FUNCTIONAL_EVIDENCE_LATE')
 
     def test_poll_errors_are_not_negative_connection_observations(self):
         r = record(); r['polls'][2]['status'] = 'error'
@@ -329,9 +347,15 @@ class ConnectionContract(unittest.TestCase):
         self.assertEqual(state(alerts=[alert(at=BASE+8001)]), 'TIMING_UNCERTAIN')
 
     def test_deadline_uncertain_late_and_within(self):
-        for offset, expected in [(299990, 'FUNCTIONAL_EVIDENCE_WITHIN_WINDOW'),
-                                 (300000, 'TIMING_UNCERTAIN'), (300010, 'FUNCTIONAL_EVIDENCE_LATE')]:
-            self.assertEqual(state(alerts=[alert(at=BASE+offset)]), expected)
+        # The confirming positive poll, not merely event generation, must
+        # finish within the window. Set its recorded duration at the boundary.
+        for duration, expected in [(0, 'TIMING_UNCERTAIN'), (100, 'FUNCTIONAL_EVIDENCE_LATE')]:
+            r = record()
+            q = next(q for q in r['polls'] if q['start_ms'] == BASE+300000)
+            q['end_ms'] = q['start_ms']+duration
+            q['end_monotonic_ms'] = q['start_monotonic_ms']+duration
+            self.assertEqual(state(r, alerts=[alert(at=BASE+299990)]), expected)
+        self.assertEqual(state(alerts=[alert(at=BASE+290000)]), 'FUNCTIONAL_EVIDENCE_WITHIN_WINDOW')
 
     def test_same_alert_bytes_deduplicated_but_conflicts_fail(self):
         out = report(alerts=[alert(), alert()]); self.assertEqual(out['duplicate_alert_lines'], 1)

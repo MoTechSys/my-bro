@@ -249,7 +249,13 @@ def classify(p, c, r, alerts):
         return finish('PREEXISTING_CANARY_ALERT')
     if alert_at[0] < created[1]:
         return finish('TIMING_UNCERTAIN')
-    active_at = point(p, 'observer', active['end_ms'])
+    # Do not combine an early/stale active state with a later canary after
+    # disconnection. Require a positive sample wholly after the raw event.
+    corroboration = next((q for q in polls if q['status'] == 'active' and
+                          point(p, 'observer', q['start_ms'])[0] >= alert_at[1]), None)
+    if corroboration is None:
+        return finish('ACTIVE_NOT_CORROBORATED_AFTER_CANARY')
+    active_at = point(p, 'observer', corroboration['end_ms'])
     lower = max(alert_at[0], active_at[0], end[0], start[0]) - t0[1]
     upper = max(alert_at[1], active_at[1], end[1], start[1]) - t0[0]
     out['functional_confirmation_interval_s'] = [lower / 1000, upper / 1000]
