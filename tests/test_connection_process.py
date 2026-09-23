@@ -192,6 +192,32 @@ class ProcStores(unittest.TestCase):
         self.assertEqual(terminal['status'], 'failed')
         with self.assertRaises(ValueError): cc.export(desc['path'], desc['sha256'], self.raw, self.cid, 'linuxproc')
 
+    def test_service_pre_request_birth_binds_but_cannot_be_functional_success(self):
+        request, stores = f.Collector.binding(self)
+        replacement, _ = self.capture('service', start=BASE+8000,
+            payload=f.service('c'*32, 'Wed 2026-09-23 00:59:00 UTC'))
+        stores['after'] = replacement
+        record = cc.bind(self.raw, cc.r.json_bytes(request), **stores)
+        event = alert(at=BASE+17000); event['syscheck']['path'] = self.p['cycles'][0]['target_path']
+        result = cc.c.evaluate(self.p, [record], [(event, 'synthetic')])
+        self.assertEqual(result['cycles'][0]['state'], 'INVALID_TIMELINE')
+        self.assertEqual(result['documented_functional_count'], 0)
+
+    def test_duplicate_daemon_leaves_failed_store_not_silent_success(self):
+        obj = evidence(); obj['first'].append(copy.deepcopy(obj['first'][0]))
+        desc, terminal = self.capture('linuxproc', payload=cc.r.json_bytes(obj))
+        self.assertEqual(terminal['status'], 'failed')
+        self.assertTrue((Path(desc['path'])/'intent.json').is_file())
+        self.assertTrue((Path(desc['path'])/'terminal.json').is_file())
+        with self.assertRaisesRegex(ValueError, 'INCOMPLETE_CAPTURE'):
+            cc.export(desc['path'], desc['sha256'], self.raw, self.cid, 'linuxproc')
+
+    def test_proc_timestamp_definitely_after_snapshot_rejected(self):
+        desc, terminal = self.capture('linuxproc', start=BASE+8000,
+                                     payload=cc.r.json_bytes(evidence(9000, 200)))
+        self.assertEqual(terminal['status'], 'failed')
+        with self.assertRaises(ValueError): cc.export(desc['path'], desc['sha256'], self.raw, self.cid, 'linuxproc')
+
     def test_proc_native_path_never_executes_commands(self):
         with patch.object(cc.socket, 'gethostname', return_value='endpoint'), patch.object(p, 'collect', return_value=(b'bytes', BOOT)) as collect, patch.object(cc.r, 'bounded_process') as execute:
             self.assertEqual(cc.native_sample('linuxproc', self.p), (b'bytes', 'endpoint', BOOT))
