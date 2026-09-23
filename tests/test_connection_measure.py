@@ -35,7 +35,7 @@ def record(index=0):
     return {'schema_version': 1, 'run_id': 'synthetic-run', 'cycle_id': f'cycle-{index}',
             'exclusion_reason': None, 'reason': None,
             'restart': {'request_ms': base, 'command_end_ms': base+2000,
-                        'old_instance': f'old-{index}', 'new_instance': f'new-{index}',
+                        'old_instance': f'new-{index-1}' if index else 'old-0', 'new_instance': f'new-{index}',
                         'service_started_ms': base+1000, 'service_running': True,
                         'ref': f'synthetic service log:{index}'},
             'canary': {'created_ms': base+8000, 'path': f'/fixture/cycle-{index}.txt',
@@ -386,6 +386,58 @@ class ConnectionContract(unittest.TestCase):
         out = report(records=[a, b], alerts=[alert(0), alert(1)])
         self.assertEqual(out['cycles'][0]['state'], 'AMBIGUOUS_EVIDENCE')
         self.assertEqual(out['cycles'][1]['exclusion_reason'], 'INVALID')
+
+    def test_reused_old_instance_is_ambiguous(self):
+        a, b = record(0), record(1)
+        b['restart']['old_instance'] = a['restart']['old_instance']
+        out = report(records=[a, b], alerts=[alert(0), alert(1)])
+        self.assertTrue(all(row['state'] == 'AMBIGUOUS_EVIDENCE' for row in out['cycles'][:2]))
+
+    def test_cycle_chain_requires_previous_new_instance(self):
+        a, b = record(0), record(1); b['restart']['old_instance'] = 'unrelated'
+        out = report(records=[a, b], alerts=[alert(0), alert(1)])
+        self.assertEqual(out['cycles'][0]['state'], 'FUNCTIONAL_EVIDENCE_WITHIN_WINDOW')
+        self.assertEqual(out['cycles'][1]['state'], 'DISCONTINUOUS_SERVICE_CHAIN')
+        self.assertIsNone(out['cycles'][1]['functional_confirmation_interval_s'])
+
+    def test_missing_prior_cycle_does_not_invent_service_chain(self):
+        out = report(records=[record(1)], alerts=[alert(1)])
+        self.assertEqual(out['cycles'][0]['state'], 'MISSING_RECORD')
+        self.assertEqual(out['cycles'][1]['state'], 'SERVICE_CHAIN_UNVERIFIED')
+
+    def test_planned_order_must_match_actual_request_order(self):
+        p = plan(); p['cycles'][0], p['cycles'][1] = p['cycles'][1], p['cycles'][0]
+        out = report(p, [record(0), record(1)], [alert(0), alert(1)])
+        self.assertEqual(out['cycles'][1]['state'], 'CYCLE_ORDER_CONFLICT')
+
+    def test_fixed_clock_domains_and_nonverification_flags_are_exposed(self):
+        out = report()
+        self.assertEqual(out['clock_domains']['restart.request_ms'], 'controller')
+        self.assertEqual(out['clock_domains']['canary.created_ms'], 'endpoint')
+        self.assertFalse(out['configuration_applied_verified'])
+        self.assertFalse(out['protocol_predeclaration_verified'])
+
+    def test_config_and_reference_declarations_do_not_authenticate_observations(self):
+        p = plan(); p['identity']['config_sha256'] = 'b'*64
+        p['protocol_ref'] = 'different declaration'; p['coverage']['ref'] = 'different coverage reference'
+        self.assertEqual(report(p)['cycles'][0]['state'], report()['cycles'][0]['state'])
+        self.assertFalse(report(p)['configuration_applied_verified'])
+
+    def test_first_match_sorted_by_timestamp_not_file_order(self):
+        old = alert(at=BASE-1000); old['id'] = 'old'
+        self.assertEqual(state(alerts=[alert(), old]), 'PREEXISTING_CANARY_ALERT')
+
+    def test_missing_nested_path_is_nonmatch_not_invalid_alert_schema(self):
+        a = alert(); a.pop('syscheck')
+        self.assertEqual(state(alerts=[a]), 'CANARY_ALERT_NOT_OBSERVED')
+
+    def test_integrity_conflict_precedence_preserves_excluded_reason(self):
+        a, b = record(0), record(1); b.update(exclusion_reason='BLOCKED', reason='synthetic safety')
+        b['restart']['new_instance'] = a['restart']['new_instance']
+        row = report(records=[a, b], alerts=[alert(0), alert(1)])['cycles'][1]
+        self.assertEqual(row['state'], 'AMBIGUOUS_EVIDENCE')
+        self.assertEqual(row['state_before_integrity_check'], 'EXCLUDED')
+        self.assertEqual(row['exclusion_reason'], 'BLOCKED')
 
     def test_input_objects_not_mutated(self):
         p, r, a = plan(), [record()], [alert()]; before = copy.deepcopy((p, r, a))

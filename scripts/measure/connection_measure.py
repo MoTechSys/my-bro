@@ -280,6 +280,8 @@ def evaluate(plan, records, alert_rows):
             s = r['restart']
             if s['new_instance']:
                 refs[('instance', s['new_instance'])].add(cid)
+            if s['old_instance']:
+                refs[('old_instance', s['old_instance'])].add(cid)
             refs[('restart', s['ref'])].add(cid)
             low, high = point(plan, 'controller', s['request_ms'])
             spans.append((low, high + WINDOW_MS, cid))
@@ -291,14 +293,29 @@ def evaluate(plan, records, alert_rows):
         for x, y, other in spans[i+1:]:
             if max(a, x) < min(b, y):
                 overlap.update((cid, other))
+    chain_conflicts = {}
+    for before, current in zip(plan['cycles'], plan['cycles'][1:]):
+        r = by_id.get(current['cycle_id'])
+        if r is None or r['restart'] is None:
+            continue
+        prior = by_id.get(before['cycle_id'])
+        if prior is None or prior['restart'] is None or not prior['restart']['new_instance']:
+            chain_conflicts[current['cycle_id']] = 'SERVICE_CHAIN_UNVERIFIED'
+        elif point(plan, 'controller', r['restart']['request_ms'])[0] <= point(plan, 'controller', prior['restart']['request_ms'])[1]:
+            chain_conflicts[current['cycle_id']] = 'CYCLE_ORDER_CONFLICT'
+        elif r['restart']['old_instance'] != prior['restart']['new_instance']:
+            chain_conflicts[current['cycle_id']] = 'DISCONTINUOUS_SERVICE_CHAIN'
     alerts, duplicates = m.normalize_alerts(alert_rows)
     rows = [classify(plan, c, by_id.get(c['cycle_id']), alerts) for c in plan['cycles']]
     for row in rows:
         cid = row['cycle_id']
         row['integrity_conflicts'] = (['REUSED_EVIDENCE'] if cid in ambiguous else []) + (['OVERLAPPING_CYCLE'] if cid in overlap else [])
+        if cid in chain_conflicts:
+            row['integrity_conflicts'].append(chain_conflicts[cid])
         if row['integrity_conflicts']:
             row['state_before_integrity_check'] = row['state']
-            row['state'] = 'AMBIGUOUS_EVIDENCE' if cid in ambiguous else 'OVERLAPPING_CYCLE'
+            row['state'] = ('AMBIGUOUS_EVIDENCE' if cid in ambiguous else 'OVERLAPPING_CYCLE' if cid in overlap
+                            else chain_conflicts[cid])
             row['transition_interval_s'] = row['functional_confirmation_interval_s'] = None
     count = sum(r['state'] == 'FUNCTIONAL_EVIDENCE_WITHIN_WINDOW' for r in rows)
     return {'schema_version': 1, 'scope': 'UC01_DECLARED_EVIDENCE_ONLY', 'run_id': plan['run_id'],
@@ -307,6 +324,10 @@ def evaluate(plan, records, alert_rows):
             'documented_functional_count': count, 'documented_functional_rate': count / len(rows),
             'duplicate_alert_lines': duplicates, 'wilson_95': None, 'independence_verified': False,
             'causality_authenticated': False, 'acceptance_approved': False,
+            'clock_domains': {'restart.request_ms': 'controller', 'restart.command_end_ms': 'controller',
+                              'restart.service_started_ms': 'endpoint', 'canary.created_ms': 'endpoint',
+                              'polls.wall_ms': 'observer', 'coverage': 'manager', 'alert.timestamp': 'manager'},
+            'configuration_applied_verified': False, 'protocol_predeclaration_verified': False,
             'notice': 'Not MTTD or an attack detection rate. Missing planned cycles stay in denominator. '
                       'Service, canary, clock and coverage evidence are declarations; raw alert matching is not authenticity. '
                       'Native collectors, binding and acceptance remain required. No independence confidence interval.'}
