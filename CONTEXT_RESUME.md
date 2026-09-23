@@ -1,5 +1,16 @@
 # CONTEXT_RESUME — ذاكرة المشروع الكاملة لأي وكيل جديد
 
+> **تحديث محول عمليات Linux — 2026-09-23:** أضيف `connection_process.py` وربطه بالجامع عبر `--kind linuxproc`؛ لا يعتمد systemd ولا ينفذ أوامر خدمة. يتحقق من الدايمونات الخمسة وهويةPID/start_ticks/boot/namespace والملف التنفيذي، ويشترط تبدلها جميعًا. **38 اختبارًا جديدًا و838 كليًا ناجحة علىc395a61**. المراجعة08768699 انتهت وحُكمت فيtests/README. التوقيت ولادة عمليات مشتقة، لا جاهزية أو قبول أصلي. Windows وcontroller وt4/t5 وISSUE-068 وبقية التدقيق باقية محليًا؛ السجلات التالية تاريخية.
+
+## الاستئناف الأحدث — محول procfs، 2026-09-23
+
+- البداية502c346؛ التنفيذe53052d والربط801eeb8، الاختبارات5db9ea6/aeba473/ec3bdbf والتشخيصc395a61.838 اختبارًا كليًا علىc395a61؛ رأس التسليم وCI يُثبتان فيPR28. لا تغييرات للمشروع الأب أوالسحابة.
+- `connection_process.py`: مسحانprocfs محدودان؛ five fixed daemons،R/S فقط كشرطأهلية لا تعريف الحياة،exe path/inode مقابلملفمحمي،PID+startticks+boot+namespace. يبدأالوقتمنbtime+ticks/CLK_TCK بحد1000+ceil(1000/HZ)ms. لاcmdline/environ/keys أوأوامر خدمة. الدليلtests/README.
+- `connection_collect.py`:kind=linuxproc؛before/after لهماkind اختياري ومتطابق. يشترطsame PID/time namespaces، وتبدلالدايموناتالخمسة كلّها، وearliest birth بعدrequest معمجالاتالخطأ. الناتجservice_started_ms هوlatest required birth، لا readiness. لا تعديلschemaالمحلل أوالمقامات. صفv1 وحده لايحملbackend؛ راجعintent/exports بالبصمات.
+- مراجعة08768699-f804-53c4-8b50-fd7f5743a664 **انتهت وحُكمت؛ لا تعاد**. الأصلresearch/inbox/2026-09-23_proc_review_result.json؛ المصادرالأربعةproc_sources.json. أُبقيتبواباتR/S/no retry/sharedclock ولمتُخفف؛ صُحح diagnostic D وأضيفت3 اختباراتتثبتالفشللاالنجاح. المراجعةساكنة وليستاختباراتnative.
+- التالي البرمجي:Windows adapter وتوقيتcontroller الأصلي، ثمt4/t5 والسببية،ISSUE-068،التكامل وبقيةالتدقيق. محولLinuxموجود؛ لا تعاودبناءه أوتصفكلnon-systemdبأنهغيرمنفذ. إعادةإنشاءالحاويةعبرnamespaceجديد خارجربطدورةالخدمة، والقبولالأصليلمجرِ.
+- Git:الفرعالمشتركfast-forward فقط؛pushبالاعتمادالمؤقت `-c credential.helper= -c "credential.helper=!gh auth git-credential"`. لا أسرارفيGit، لا خدمةأعيدتشغيلها،execution_authority=none.
+
 > **خاتمة هذه الدفعة — 2026-09-23:** انتهت مراجعةcollector ccdc4a2c وحُكمت بنودها التسعة فيtests/README؛ لا تعاد. أضيف اتساق ساعةmanager/observer في6853581 واختباراه في414384d؛ **48 اختبارcollector و800 كليًا ناجحة على414384d**. ذكرrunning أو46/798 أدناه لقطة سابقة. محولات الدايمونات/Windows/controller وt4/t5 وISSUE-068 وبقية التدقيق ما زالت أعمالًا محلية؛ لا نشر أو قبول أصلي. رأس التسليم وCI النهائي فيPR28.
 
 ## الاستئناف الحاكم — جامع UC-01 محدود وتدقيق جزئي، 2026-09-23 [AI]
