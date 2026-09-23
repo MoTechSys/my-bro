@@ -261,6 +261,11 @@ def bundle_files():
     for s in catalog():
         paths.extend(s['sources'])
     files = {p: source_file(p).read_bytes() for p in sorted(set(paths))}
+    draft = ('# مسودة الكاتب المجمعة — ليست نتائج أو قبولاً نهائياً\n\n'
+             'اقرأ [دليل الكاتب](WRITER_HANDOFF.md) و[فهرس الأشكال](figures/INDEX.md) أولاً.\n\n')
+    for name in CHAPTERS:
+        draft += files['docs/thesis/'+name].decode('utf-8').rstrip() + '\n\n'
+    files['docs/thesis/thesis_writer_draft.md'] = draft.encode('utf-8')
     receipt = {'schema_version': 1, 'kind': 'markdown_svg_writer_handoff',
                'acceptance_approved': False, 'native_results_included': False,
                'files': {p: {'bytes': len(b), 'sha256': digest(b)} for p, b in files.items()}}
