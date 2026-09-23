@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] — 2026-09-23 — [AI] UC-01 offline connection evidence evaluator
+
+- Added a standalone private-input evaluator for predeclared connection cycles; keeps missing/excluded planned cycles in the denominator and never exports MTTD or Wilson.
+- Separates observed status transitions from functional evidence; requires service incarnation continuity, a new matched FIM creation canary and a subsequent active sample. Rejects shared evidence, overlapping cycles, clock jumps, invalid timing and identity changes.
+- Bounded JSONL parsing before object creation; private regular single-link inputs, no-follow final paths, generic nonleaking CLI errors and input/source hashes.
+- Adjudicated independent static review6f1083f8, fixed old-instance/chain validation, and exposed clock-domain and nonverification flags.72 new tests;752 total locally on614f9d3. Final-head CI checked separately inPR28.
+- Native collection, byte binding and acceptance remain unimplemented; no service restart, deployment, original experiment data or vector diagram changes.
+
 ## [Unreleased] — 2026-09-23 — [AI] completion audit and declared AR evidence outcomes
 
 - Reverified 15 passive vector SVGs and all generated derivatives; no embedded raster or new Word/PDF.

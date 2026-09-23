@@ -311,3 +311,10 @@ ISSUE-091 — FIXED-IN-REPO/NEEDS-NATIVE: مراجعةd21f2fcc انتهت ساك
 **FIXED-IN-REPO** for F3/F6 and diagnostics; not native acceptance. Review46bbb5ff (snapshot5bd2feb) was static only. Reproduced UC-07 accepting VT as FIM and v1 silently ignoring ar_policies; fixed in fb4100a. Added exclusion_details without reassigning ambiguous raw ownership, an explicit conditional-trigger denominator scope, and per-attempt clock source/differences. Added12 regressions,39 AR tests total. Full adjudication (F1–F9) is in tests/README. Fresh-checkout fixture corrected in83ebff9.
 
 **OPEN** for the full academic/reference audit: ch2 Rev.2 supersession, YARA versus containment, and unsupported product/performance/novelty claims were qualified; TEST_PLAN AI status and ch5/WRITER_HANDOFF implementation state were refreshed. This does not validate all papers, licensing, figures or original claims. t4/t5/causality, UC-01, ISSUE-068 and native/human/data requirements remain open; see TAKEOVER_AUDIT §9.
+
+
+## ISSUE-104 — UC-01 evidence semantics and review (2026-09-23)
+
+**FIXED-IN-REPO, not native acceptance.** Added connection_measure.py and72 synthetic tests. Reproduced: scheduler jitter tolerating a wall-clock jump beyond declared error; whitespace-only provenance; arbitrary canary rule semantics; combining early active with a later event without corroboration; repeated old service instance and missing cycle continuity. Fixes: df1616b,2d66b6d,ce1b057,cf0be3f,614f9d3. Independent static review6f1083f8 is complete; full adjudication and limitations in tests/README.
+
+**OPEN local implementation:** native read-only collector, service/clock/canary evidence byte binding, controlled evidence store and acceptance integration. Configuration hashes and fixed clock-domain metadata do not authenticate declarations. Five original cycles per eligible OS, reviewed clocks and native/human acceptance are still absent. Do not close T-11 from752 local tests.
