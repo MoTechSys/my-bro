@@ -195,7 +195,8 @@ def recover(journal, manifest, store, pins, *, operator_stopped=False, allow_leg
         return {'status': terminal['status'], 'intent_sha256': terminal['intent_sha256'], 'acceptance_approved': False}
 
 
-def export(store, expected, *, summary=False):
+def export(store, expected, *, summary=False, output_path=None):
+    require(not (summary and output_path is not None), 'CHOOSE_SUMMARY_OR_OUTPUT')
     r.e.sha256(expected)
     with r.store_lock(store) as fd:
         raw = r.read_at(fd, 'intent.json')
@@ -223,6 +224,24 @@ def export(store, expected, *, summary=False):
         require(all(r.digest(data[name]) == intent['pins'][name] for name in INPUTS), 'INPUT_HASH_MISMATCH')
         output, result = plan(data, intent['allow_legacy'])
         require(result == terminal['result'] and output == r.read_at(fd, 'attempts.jsonl'), 'RECOVERY_OUTPUT_MISMATCH')
+        if output_path is not None:
+            destination = Path(os.path.abspath(output_path))
+            sealed = os.path.abspath(store)
+            require(os.path.commonpath([sealed, str(destination)]) != sealed, 'OUTPUT_INSIDE_RECOVERY_STORE')
+            forbidden = {os.path.abspath(intent['journal_path']), os.path.abspath(intent['manifest_path']),
+                         os.path.abspath(intent['journal_path'] + '.pending')}
+            require(str(destination) not in forbidden, 'OUTPUT_ALIASES_ORIGINAL')
+            parent = r.directory(destination.parent)
+            try:
+                name = r.filename(destination.name)
+                try: os.stat(name + '.pending', dir_fd=parent, follow_symlinks=False)
+                except FileNotFoundError: pass
+                else: raise ValueError('DESTINATION_PENDING_EXISTS')
+                r.write_once(parent, name, output)
+            finally:
+                os.close(parent)
+            return {'status': 'completed', 'intent_sha256': expected, 'output_sha256': result['output_sha256'],
+                    'row_count': result['row_count'], 'acceptance_approved': False}
         if summary:
             return {'status': 'completed', 'intent_sha256': expected, 'result': result,
                     'artifacts_verified': True, 'process_cleanup_verified': False, 'acceptance_approved': False}
@@ -238,7 +257,10 @@ def main(argv=None):
     run.add_argument('--operator-stopped', action='store_true', required=True)
     run.add_argument('--allow-legacy-unbound', action='store_true')
     out = commands.add_parser('export'); out.add_argument('--store', required=True)
-    out.add_argument('--intent-sha256', required=True); out.add_argument('--summary', action='store_true')
+    out.add_argument('--intent-sha256', required=True)
+    destination = out.add_mutually_exclusive_group()
+    destination.add_argument('--summary', action='store_true')
+    destination.add_argument('--output', help='new private continuation journal; never overwrite originals or store')
     args = parser.parse_args(argv)
     try:
         if args.action == 'recover':
@@ -246,7 +268,7 @@ def main(argv=None):
                 dict(zip(INPUTS, (args.journal_sha256, args.pending_sha256, args.manifest_sha256))),
                 operator_stopped=args.operator_stopped, allow_legacy=args.allow_legacy_unbound)
         else:
-            result = export(args.store, args.intent_sha256, summary=args.summary)
+            result = export(args.store, args.intent_sha256, summary=args.summary, output_path=args.output)
         if isinstance(result, bytes): sys.stdout.buffer.write(result); return 0
         print(r.json_bytes(result).decode('ascii'), end='')
         return 0 if result['status'] == 'completed' else 2
