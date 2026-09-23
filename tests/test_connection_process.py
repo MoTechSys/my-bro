@@ -77,7 +77,7 @@ class ProcParser(unittest.TestCase):
     def test_dead_stopped_or_blocked_process_rejected(self):
         for state in ['Z', 'T', 't', 'D', 'X']:
             obj = evidence(); obj['first'][0]['stat'] = proc_stat(100, p.DAEMONS[0], state=state)
-            with self.subTest(state=state), self.assertRaisesRegex(ValueError, 'NOT_LIVE'): p.normalize(obj, BOOT)
+            with self.subTest(state=state), self.assertRaisesRegex(ValueError, 'STATE_REJECTED'): p.normalize(obj, BOOT)
 
     def test_regular_scheduling_change_is_not_identity_change(self):
         obj = evidence(); obj['second'][0]['stat'] = proc_stat(100, p.DAEMONS[0], state='R')

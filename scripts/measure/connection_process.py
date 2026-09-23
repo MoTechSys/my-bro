@@ -85,7 +85,7 @@ def normalize(obj, boot):
             require(isinstance(name, str) and name in DAEMONS and name not in found, 'PROC_DAEMON_DUPLICATE')
             value = process_stat(row['stat'])
             require(value['name'] == name[:15] and value['pid'] not in pids, 'PROC_DAEMON_IDENTITY')
-            require(value['state'] in {'R', 'S'}, 'PROC_DAEMON_NOT_LIVE')
+            require(value['state'] in {'R', 'S'}, 'PROC_DAEMON_STATE_REJECTED')
             require(row['exe_link'] == '/var/ossec/bin/'+name, 'PROC_EXE_PATH')
             check_metadata(row['exe_stat']); check_metadata(row['binary_stat'])
             require(row['exe_stat'] == row['binary_stat'], 'PROC_EXE_INODE')
