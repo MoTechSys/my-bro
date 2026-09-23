@@ -310,6 +310,16 @@ class Collector(unittest.TestCase):
 
 
 class NativeParsing(unittest.TestCase):
+    def test_shared_host_clock_estimates_must_agree(self):
+        for key, value in [('offset_ms', 10), ('uncertainty_ms', 9), ('ref', 'different source')]:
+            p = plan(); p['clocks']['observer'][key] = value
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, 'SHARED_MANAGER_OBSERVER_CLOCK'):
+                cc.native_plan(cc.r.json_bytes(p))
+
+    def test_shared_host_allows_distinct_timestamp_precision(self):
+        p = plan(); p['clocks']['manager']['precision_ms'] = 50
+        self.assertEqual(cc.native_plan(cc.r.json_bytes(p)), p)
+
     def test_fixed_commands(self):
         self.assertEqual(cc.command('manager', plan()), ['/var/ossec/bin/agent_control', '-i', '001', '-j'])
         self.assertEqual(cc.command('service', plan())[:4], ['/usr/bin/systemctl', 'show', 'wazuh-agent.service', '--no-pager'])
