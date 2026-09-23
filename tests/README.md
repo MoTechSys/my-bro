@@ -737,3 +737,74 @@ CLI لا ينشئ ملفexport تلقائيًا. عند حفظstdout استخد�
 |09: precision الدنيا | رفضفرض1850علىكلخططالمحلل؛ الخدمةتفرض≥1000 والمصدرالفعلييفرضbracketهالمقاسعندbind.1100فيfixture تصريححديعلو1051وليسرقمًا أصليًا. القيدموثق واختباراتSERVICE_PRECISION/SOURCE_PRECISION تغطيه. |
 
 **التحقق بعدالتحكيم:**48اختبارcollector و800اختباركلي ناجح على414384d. حدfuture-start/snapshot في523359a وفحصstock active/exited إضافتانمحليتان. لاادعاءnative أوحل لمحولاتالدايمونات/Windows/controller أوt4/t5/config.
+
+## UC-01 Linux procfs — محول الدايمونات دون systemd
+
+**تحديث 2026-09-23:** `connection_process.py` مع تكامل `connection_collect.py --kind linuxproc` منفذان محليًا. يضيفان بديلًا محدودًا لمحول systemd، لا تخفيفًا لشرط `active/running`. الاختبارات35 فيaeba473، والفاحص الكامل835 اختبارًا ناجحًا على الرأس نفسه. المراجعة الجديدة08768699 قيد التنفيذ عند كتابة هذا القسم؛ المراجعة السابقةccdc4a2c مكتملة ولا تعاد.
+
+### ما يُقرأ وما لا يُنفذ
+
+الدايمونات المطلوبة ثابتة: `wazuh-execd` و`wazuh-agentd` و`wazuh-syscheckd` و`wazuh-logcollector` و`wazuh-modulesd`. يجب أن تظهر كل واحدة مرة واحدة في كلتا جولتي المسح، بحالةR أوS. حالاتZ/T/t/D/X ليست نجاحًا. لا ينفذ المحول shell أوsystemctl أوwazuh-control، ولا يقرأcmdline أوenviron أوclient.keys أوossec.conf، ولا ينشئcanary.
+
+يقرأ منprocfs داخل فضاء عمليات الوكيل:
+
+- `/proc/self/stat` لتطابقPID معos.getpid؛ يرفضprocfs المركب من فضاءPID غير مطابق.
+- `/proc/self/ns/pid` و`/proc/self/ns/time` قبل المسحين وبعدهما؛ يجب ثبات الهويتين. غيابtime namespace في نواة قديمة يرفض، ولا يتجاهل بصمت.
+- `/proc/sys/kernel/random/boot_id` قبل المسحين وبعدهما.
+- سطر`btime` الوحيد من`/proc/stat` قبل المسحين وبعدهما؛ يحتفظ بالسطر المختار، لا بكل عداداتCPU.
+- لكلPID رقمي: `/proc/PID/stat`. لا يحتفظ بسجلات العمليات غير المطابقة لأسماء الدايمونات؛ رفض القراءة أوالتحليل لا يتحول إلى مسح جزئي ناجح. اختفاء عملية غير مطابقة أثناء قراءةstat يُتجاوز، لكن غياب دايمون مطلوب يمنع النجاح.
+- للدايمونات فقط: `/proc/PID/exe` وبياناتinode/dev/uid/mode، مع مقارنتها بالملف الثابت `/var/ossec/bin/NAME`. اسمcomm المقتطع إلى15 حرفًا ليس هوية كافية؛ يجب تطابقمسارexe وinode مع الملف المحمي root-owned وغير القابل لكتابة المجموعة والآخرين ومساراته. ترقية ملف تنفيذي أثناء الرصد أوعلامة`(deleted)` تُرفض.
+
+المسح الأول والثاني يجب أن يتفقا فيPID وstart_ticks وبيانات الملف التنفيذي لكل دايمون؛ تغيرR إلىS مسموح لأنه جدولة، وليس إعادة تشغيل. حد4096 عملية لكلمسح و64KiB لكلقراءة وناتج، مع فحوص deadline=1.5ث؛ الجامع يفرض أيضًا حدقبول العينة2ث. **ليست المهلة ضمانًا لمقاطعةsyscall عالق**. مخزن العينات والقفل والnonce وraw_sha256 وsource hashes وإعادةالتصدير هي العقد نفسه فيالقسم السابق؛ ملفالمحول الجديد داخلsource hashes.
+
+### معنى الهوية والوقت
+
+هوية كل دايمون: `boot_id:PID:start_ticks`؛ وهويةالمجموعة بصمةJSON مرتبة لهوياتالدايمونات وفضاءيPID/time. لا تدخلbtime فيهويةالمجموعة كيلا تتحولإعادةتقديرساعةالإقلاع إلىإعادةتشغيل وهمية. الاسم أوPID وحده لا يكفيان. البصمة ليستتوقيعًا ولا تثبتخلوالنظام منroot مخترق أوتزوير مترابط للمخزن.
+
+الأوقات مشتقة منحقولالنواة:
+
+```text
+birth_ms = btime_seconds × 1000 + floor(start_ticks × 1000 / CLK_TCK)
+precision_ms = 1000 + ceil(1000 / CLK_TCK)
+```
+
+يُقرأCLK_TCK منsysconf، لا يُفترض100 لجميعالأنظمة. حدالدقة محافظ يجمع تقطيعbtime إلىثانية وتقطيعstarttime إلىtick؛ مثلًا1010ms عندCLK_TCK=100. هذا ليس ادعاءدقةالساعة أوتوقيتexec الأصلي. `started_ms` أكبرbirth للدايموناتالخمس، و`earliest_started_ms` أصغرها، و`start_semantics=latest_required_daemon_birth_not_service_readiness`. بعدالمطابقة يُستخدمالأكبر كـservice_started_ms فيسجلالدورة، بمعنىاكتمالولادةمجموعةالعمليات المطلوبة، **لا جاهزيةالخدمة**؛ التأكيدالوظيفي اللاحق ما زال يتطلبcanary وتنبيهًا وعينةactive.
+
+مصدرLinuxv6.12 يطرحإزاحةtime namespace منbtime ويضيفهاإلىstart_boottime قبلتحويلهإلىticks. روجعتالأسطرالمعنية، لاكاملنظامالوقت فيالنواة. المصادرالأربعة وبصماتها وUTC في`research/inbox/2026-09-23_proc_sources.json`: `fs/proc/stat.c` و`fs/proc/array.c` وproc_stat/proc_pid_stat man pages. هذهعقودمرجعية، لا إثبات لإصدارالنواةالمثبتة. أيclock step أوتغيرbtime أثناءالمسح يرفض؛ ضبطالساعات وحدودخطئها يظلانمطلوبين.
+
+### الدمج مع مخازن UC-01
+
+يلزم التصريح بالمحول فيبروتوكولالتجربة قبلالتنفيذ؛ intent يسجلkind قبلالمسح لكنprotocol_ref وحده لايثبتالتسجيلالمسبق.
+
+```bash
+python3 -B scripts/measure/connection_collect.py capture --lab \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --kind linuxproc --store PRIVATE_BEFORE_STORE
+python3 -B scripts/measure/connection_collect.py export \
+  --plan PRIVATE_PLAN.json --cycle CYCLE_ID --kind linuxproc \
+  --store PRIVATE_BEFORE_STORE --sha256 EXPECTED_INTENT_SHA256
+```
+
+هذه أوامر إرشادية لتشغيل مصرح مستقبلًا؛ لم تنفذ علىSOC فيهذهالجولة. تُجمع before وafter فيمخزنين مختلفين حولأمرإعادةالتشغيل المصرح الذي لا ينفذهالجامع. `--stores` للـbind يحتفظبالعقدالسابق معحقلkind اختياري **فيbefore/after فقط**:
+
+```json
+{
+  "manager": {"path": "PRIVATE_MANAGER_STORE", "sha256": "EXPECTED_MANAGER_INTENT"},
+  "before": {"path": "PRIVATE_BEFORE_STORE", "sha256": "EXPECTED_BEFORE_INTENT", "kind": "linuxproc"},
+  "after": {"path": "PRIVATE_AFTER_STORE", "sha256": "EXPECTED_AFTER_INTENT", "kind": "linuxproc"},
+  "source": {"path": "PRIVATE_SOURCE_STORE", "sha256": "EXPECTED_SOURCE_INTENT"}
+}
+```
+
+قيمالمثالplaceholders وليستبصماتصالحة. عندغيابkind يبقىالمحول`service` القديم؛ الخلط بينservice وlinuxproc مرفوض. يلزم:
+
+1. مطابقةالمخازن للخطة والدورة وhashes وإعادةتحليلraw.
+2. before وafter فيفضاءيPID/time نفسيهما؛ **إعادةإنشاءالحاوية أوإعادةإقلاعالمضيف ليست دورةخدمة مدعومةبهذاالربط**.
+3. تبدلجميع هوياتالدايمونات، لا تبدلagentd وحده؛ إعادةتشغيلجزئية تعطيPARTIAL_DAEMON_RESTART.
+4. مجالولادةأقدمدايمونجديد يأتي بالكامل بعدمجالrequest؛ الغموض لا يُحوّلإلىنجاح. plan.endpoint.precision_ms يغطيالدقةالمشتقة وحدشاهدالمصدر؛ بدءدايمونبسرعةمقارنةبعدماليقين قديرفضالربط، ولايُخفضprecision بأثررجعي.
+5. بقيةشروطالخدمةقبل/بعد والمصدر والتغطية وactiveبعدcanary كماهي. أوقاتcontroller مازالتإقرارات، والإعدادالفعلينفسهغيرمتحقق.
+
+### حدود الاختبار والقبول
+
+الاختبارات المحلية تستخدمprocfs اصطناعيًا ومخازنحقيقيةخاصة داخلworkspace، وتختبرالربط حتىFUNCTIONAL_EVIDENCE_WITHIN_WINDOW لدورة واحدة وأربعMISSING_RECORD؛ ليستنتائجاتصالأصلية. تشملPID reuse، تعدد/غيابالدايمونات،exe path/inode/permissions، تبدلnamespace، btime وticks، حالاتالعمليات، فشلI/O وإغلاقfd وحدودالمسح والبايتات. لا يُستنتجمنلقطتين اتصالمستمر أوعدموجودعملياتعابرةبينالمسحين أوتشغيلالإعدادالصحيح.
+
+المتبقي لهذاالمحول: المراجعةالمستقلة والتحكيم، ثمقبولnative علىإصداراتLinux/Wazuh/procfs وقيودhidepid وuser/time namespaces وACL الفعلية. Windows وcontroller الأصلي وt4/t5 وISSUE-068 أعمالبرمجيةمنفصلة لمتُنجزبهذهالإضافة.
