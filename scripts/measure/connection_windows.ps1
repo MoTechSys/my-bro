@@ -82,6 +82,7 @@ function Service-Sample {
 }
 
 function Complete-ServiceEvidence($Result) {
+    $Result.tick_frequency = [Diagnostics.Stopwatch]::Frequency
     $Result.start_ms = Utc-Milliseconds
     $Result.start_ticks = [Diagnostics.Stopwatch]::GetTimestamp()
     try {

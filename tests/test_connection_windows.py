@@ -248,6 +248,70 @@ class PowerShellProducer(unittest.TestCase):
             return subprocess.run([PWSH, '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', command],
                                   cwd=f.ROOT, env=env, capture_output=True, text=True, timeout=20)
 
+    def functions(self):
+        return ("Set-StrictMode -Version Latest;$ErrorActionPreference='Stop';$t=$null;$e=$null;"
+                "$a=[System.Management.Automation.Language.Parser]::ParseFile('"+str(cc.WINDOWS_PRODUCER)+"',[ref]$t,[ref]$e);"
+                "$a.FindAll({param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst]},$true) | "
+                "ForEach-Object { . ([scriptblock]::Create($_.Extent.Text)) }; ")
+
+    def core(self, mode):
+        obj = native(); obj['samples'] = []
+        setup = "$Result = ConvertFrom-Json -AsHashtable -InputObject '"+json.dumps(obj)+"';"
+        setup += "$Mode='"+mode+"';$script:Services=0;$ImagePath='C:\\SOC\\wazuh-agent.exe';$ImageSha256='"+'b'*64+"';"
+        setup += """
+function Protected-ImageHash { if($Mode -eq 'hash'){return ('c'*64)}; return $ImageSha256 }
+function Get-CimInstance {
+    param($ClassName,$Filter,$OperationTimeoutSec)
+    if($Mode -eq 'slow'){Start-Sleep -Milliseconds 400}
+    if($ClassName -eq 'Win32_OperatingSystem') {
+        $b=[pscustomobject]@{LastBootUpTime=[DateTime]::SpecifyKind([DateTime]'2026-09-23T00:00:00',[DateTimeKind]::Utc)}
+        if($Mode -eq 'boot') {return @($b,$b)}; return $b
+    }
+    if($ClassName -eq 'Win32_Service') {
+        $script:Services += 1
+        $pidValue=100; if($Mode -eq 'changed'){$pidValue += $script:Services}
+        return [pscustomobject]@{Name='WazuhSvc';State='Running';ProcessId=$pidValue;PathName=('"'+$ImagePath+'"')}
+    }
+    if($ClassName -eq 'Win32_Process') {
+        return [pscustomobject]@{ProcessId=[uint32]($Filter.Split('=')[1]);ExecutablePath=$ImagePath;
+            CreationDate=[DateTime]::SpecifyKind([DateTime]'2026-09-23T01:00:03',[DateTimeKind]::Utc)}
+    }
+    throw 'Unexpected query class'
+}
+$Result=Complete-ServiceEvidence $Result
+[Console]::Out.WriteLine((ConvertTo-Json -InputObject $Result -Depth 5 -Compress))
+if($Result.status -ne 'complete'){exit 2}
+"""
+        return self.run_ps(self.functions()+setup)
+
+    def test_actual_capture_core_success_and_json_encoding(self):
+        out = self.core('good'); self.assertEqual(out.returncode, 0, out.stderr+out.stdout)
+        self.assertFalse(out.stdout.startswith('\ufeff'))
+        obj = json.loads(out.stdout); self.assertEqual(obj['status'], 'complete'); self.assertEqual(len(obj['samples']), 2)
+        self.assertEqual(obj['boot_before_kind'], 'Utc')
+
+    def test_actual_capture_core_failures_preserve_failed_payload(self):
+        for mode in ('boot', 'changed', 'hash'):
+            with self.subTest(mode=mode):
+                out = self.core(mode); self.assertEqual(out.returncode, 2, out.stderr+out.stdout)
+                obj = json.loads(out.stdout); self.assertEqual(obj['status'], 'failed')
+                self.assertGreaterEqual(obj['end_ticks'], obj['start_ticks'])
+
+    def test_actual_capture_core_slow_queries_cannot_be_complete(self):
+        out = self.core('slow'); self.assertEqual(out.returncode, 2, out.stderr+out.stdout)
+        obj = json.loads(out.stdout); self.assertEqual(obj['status'], 'failed')
+        self.assertGreater(obj['end_ticks']-obj['start_ticks'], 2*obj['tick_frequency'])
+
+    def test_real_image_hash_helper_and_symlink_rejection_on_linux(self):
+        with tempfile.TemporaryDirectory(dir=f.ROOT, prefix='.win-image-tests-') as tmp:
+            path=Path(tmp)/'wazuh-agent.exe'; path.write_bytes(b'SYNTHETIC IMAGE')
+            command=self.functions()+"$ImagePath='"+str(path)+"'; Protected-ImageHash"
+            out=self.run_ps(command); self.assertEqual(out.returncode, 0, out.stderr)
+            self.assertEqual(out.stdout.strip(), cc.r.digest(path.read_bytes()))
+            target=Path(tmp)/'target'; path.rename(target); path.symlink_to(target)
+            out=self.run_ps(command); self.assertNotEqual(out.returncode, 0)
+            self.assertIn('WINDOWS_EVIDENCE_REJECTED', out.stderr)
+
     def test_real_parser_and_read_only_command_structure(self):
         path = str(cc.WINDOWS_PRODUCER)
         command = "$tokens=$null;$errors=$null;$ast=[System.Management.Automation.Language.Parser]::ParseFile('"+path+"',[ref]$tokens,[ref]$errors); if($errors.Count){$errors;exit 1}; $ast.FindAll({param($n) $n -is [System.Management.Automation.Language.CommandAst]},$true) | ForEach-Object {$_.GetCommandName()} | ConvertTo-Json -Compress"
