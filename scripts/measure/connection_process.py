@@ -41,7 +41,7 @@ def process_stat(text):
     require(len(fields) >= 20 and len(fields[0]) == 1 and
             re.fullmatch(r'[0-9]+', fields[19]), 'PROC_STAT')
     pid, ticks = int(match[1]), int(fields[19])
-    integer(pid, 1, 2**31-1); integer(ticks, 1, 2**63-1)
+    integer(pid, 1, 2**31-1); integer(ticks, 0, 2**63-1)
     return {'pid': pid, 'name': match[2], 'state': fields[0], 'ticks': ticks}
 
 
