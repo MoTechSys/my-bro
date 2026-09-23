@@ -298,6 +298,29 @@ class ConnectionContract(unittest.TestCase):
             a = alert(); a[obj][key] = value
             self.assertEqual(state(alerts=[a]), 'CANARY_ALERT_NOT_OBSERVED')
 
+    def test_canary_rule_semantics_cannot_be_replaced_by_vt_or_deletion(self):
+        for rid, levels in [('87105', [12]), ('553', [7]), ('550', [7]), ('554', [7])]:
+            p = plan(); p['cycles'][0].update(rule_ids=[rid], levels=levels)
+            with self.subTest(rule=rid), self.assertRaisesRegex(c.m.InputError, 'CANARY_CREATION_RULES'):
+                report(p=p)
+
+    def test_mixed_rule_levels_do_not_form_cross_product_matches(self):
+        p = plan(); p['cycles'][0].update(rule_ids=['554', '100301'], levels=[5, 7])
+        a = alert(); a['rule']['level'] = 7
+        self.assertEqual(state(p=p, alerts=[a]), 'CANARY_ALERT_NOT_OBSERVED')
+        a['rule']['id'] = '100301'
+        self.assertEqual(state(p=p, alerts=[a]), 'FUNCTIONAL_EVIDENCE_WITHIN_WINDOW')
+
+    def test_windows_canary_plan_and_record_are_separate_from_linux(self):
+        p = plan(); p['identity']['os'] = 'windows'
+        for i, cycle in enumerate(p['cycles']):
+            cycle.update(target_path=f'C:\\fixture\\cycle-{i}.txt', rule_ids=['100304'], levels=[7])
+        r, a = record(), alert(); r['canary']['path'] = p['cycles'][0]['target_path']
+        a['syscheck']['path'] = r['canary']['path']; a['rule'] = {'id': '100304', 'level': 7}
+        self.assertEqual(state(r, p, [a]), 'FUNCTIONAL_EVIDENCE_WITHIN_WINDOW')
+        p['cycles'][0]['rule_ids'] = ['100301']
+        with self.assertRaises(c.m.InputError): report(p=p)
+
     def test_preexisting_matching_alert_not_skipped_for_later_good_one(self):
         old = alert(at=BASE-1000); old['id'] = 'old'
         self.assertEqual(state(alerts=[old, alert()]), 'PREEXISTING_CANARY_ALERT')

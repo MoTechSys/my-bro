@@ -28,6 +28,9 @@ REQUEST_MS = 2000
 STATES = {'active', 'disconnected', 'pending', 'never_connected', 'error'}
 EXCLUDED = {'BLOCKED', 'INVALID', 'INTERFERED', 'AMBIGUOUS'}
 CLOCKS = {'controller', 'endpoint', 'manager', 'observer'}
+# File-creation canaries from the existing UC-02 contract, not arbitrary alerts.
+CANARY_RULES = {'linux': {'554': 5, '100201': 7, '100301': 7},
+                'windows': {'554': 5, '100304': 7}}
 
 
 def keys(value, expected, code):
@@ -90,6 +93,9 @@ def check_plan(p):
         require(isinstance(c['levels'], list) and c['levels'] and len(c['levels']) <= 16 and
                 all(type(x) is int and 0 <= x <= 16 for x in c['levels']) and
                 len(set(c['levels'])) == len(c['levels']), 'LEVELS')
+        supported = CANARY_RULES[p['identity']['os']]
+        require(set(c['rule_ids']) <= set(supported) and
+                set(c['levels']) == {supported[x] for x in c['rule_ids']}, 'CANARY_CREATION_RULES')
     return p
 
 
@@ -229,7 +235,8 @@ def classify(p, c, r, alerts):
     matches = [a for a in alerts if
                all(a['raw'][obj][key] == p['identity'][label] for obj, key, label in
                    [('manager', 'name', 'manager_name'), ('agent', 'id', 'agent_id'), ('agent', 'name', 'agent_name')]) and
-               a['raw']['rule']['id'] in c['rule_ids'] and a['raw']['rule']['level'] in c['levels'] and
+               a['raw']['rule']['id'] in c['rule_ids'] and
+               a['raw']['rule']['level'] == CANARY_RULES[p['identity']['os']][a['raw']['rule']['id']] and
                m.field(a['raw'], 'syscheck.path') == c['target_path'] and
                coverage['start_ms'] <= m.to_ms(a['raw']['timestamp']) <= coverage['end_ms']]
     if not matches:
