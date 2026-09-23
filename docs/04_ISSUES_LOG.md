@@ -318,3 +318,14 @@ ISSUE-091 — FIXED-IN-REPO/NEEDS-NATIVE: مراجعةd21f2fcc انتهت ساك
 **FIXED-IN-REPO, not native acceptance.** Added connection_measure.py and72 synthetic tests. Reproduced: scheduler jitter tolerating a wall-clock jump beyond declared error; whitespace-only provenance; arbitrary canary rule semantics; combining early active with a later event without corroboration; repeated old service instance and missing cycle continuity. Fixes: df1616b,2d66b6d,ce1b057,cf0be3f,614f9d3. Independent static review6f1083f8 is complete; full adjudication and limitations in tests/README.
 
 **OPEN local implementation:** native read-only collector, service/clock/canary evidence byte binding, controlled evidence store and acceptance integration. Configuration hashes and fixed clock-domain metadata do not authenticate declarations. Five original cycles per eligible OS, reviewed clocks and native/human acceptance are still absent. Do not close T-11 from752 local tests.
+
+
+## ISSUE-105 — UC-01 collector validation and service compatibility (2026-09-23)
+
+**PARTIAL / LOCAL_PENDING.** Implemented bounded read-only collection, private byte replay and source/service/manager binding (a5fca55).46 regressions (c7acf13,df53b47,0d6742f); fixed bool/int equality, missing source, canonical service timestamp (9429515), and definite future start relative to snapshot (523359a). Full798 tests pass on4b85b6f. Reviewccdc4a2c targets c7acf13 and remains pending at this entry.
+
+Versioned Wazuh service source shows Type=forking, RemainAfterExit=yes and no PIDFile. The strict active/running/MainPID adapter does not cover every stock deployment; active/exited must not be relabeled as daemon liveness. Multi-daemon/container/Windows adapter and original controller timing remain programming work; native acceptance, clocks/config/authenticity are also unverified. No weakening of guards.
+
+## ISSUE-106 — Introduction/implementation chapter drift (2026-09-23)
+
+**PARTIAL FIXED-IN-REPO.** Chapters1/4 aligned with ADR014 and existing tools/vector figures; removed OVA-from-prompt reasoning from operative claims, qualified unmeasured economics/time benefits and current-version assumptions, separated YARA from containment and conditional network scope from exclusion. Historical author change log retained and labeled. Full image/reference audit and current-cloud diagram remain open; no new experiment or human academic approval.
