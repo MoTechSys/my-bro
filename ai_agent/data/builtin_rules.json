@@ -1,0 +1,253 @@
+{
+ "502": {
+  "meaning": "Wazuh server started.",
+  "level": 3,
+  "mitre": [],
+  "uc": "-",
+  "source": "0015-ossec_rules.xml"
+ },
+ "503": {
+  "meaning": "Wazuh agent started.",
+  "level": 3,
+  "mitre": [],
+  "uc": "UC-01",
+  "source": "0015-ossec_rules.xml"
+ },
+ "504": {
+  "meaning": "Wazuh agent disconnected.",
+  "level": 3,
+  "mitre": [
+   "T1562.001"
+  ],
+  "uc": "UC-01",
+  "source": "0015-ossec_rules.xml"
+ },
+ "506": {
+  "meaning": "Wazuh agent stopped.",
+  "level": 3,
+  "mitre": [
+   "T1562.001"
+  ],
+  "uc": "UC-01",
+  "source": "0015-ossec_rules.xml"
+ },
+ "510": {
+  "meaning": "Host-based anomaly detection event (rootcheck).",
+  "level": 7,
+  "mitre": [],
+  "uc": "-",
+  "source": "0015-ossec_rules.xml"
+ },
+ "530": {
+  "meaning": "Wazuh process monitoring rules.",
+  "level": 0,
+  "mitre": [],
+  "uc": "UC-08",
+  "source": "0015-ossec_rules.xml"
+ },
+ "533": {
+  "meaning": "Listened ports status (netstat) changed (new port opened or closed).",
+  "level": 7,
+  "mitre": [],
+  "uc": "-",
+  "source": "0015-ossec_rules.xml"
+ },
+ "550": {
+  "meaning": "Integrity checksum changed.",
+  "level": 7,
+  "mitre": [
+   "T1565.001"
+  ],
+  "uc": "UC-02",
+  "source": "0015-ossec_rules.xml"
+ },
+ "553": {
+  "meaning": "File deleted.",
+  "level": 7,
+  "mitre": [
+   "T1070.004",
+   "T1485"
+  ],
+  "uc": "UC-02",
+  "source": "0015-ossec_rules.xml"
+ },
+ "554": {
+  "meaning": "File added to the system.",
+  "level": 5,
+  "mitre": [],
+  "uc": "UC-02",
+  "source": "0015-ossec_rules.xml"
+ },
+ "651": {
+  "meaning": "Host Blocked by firewall-drop Active Response",
+  "level": 3,
+  "mitre": [],
+  "uc": "UC-11",
+  "source": "0015-ossec_rules.xml"
+ },
+ "652": {
+  "meaning": "Host Unblocked by firewall-drop Active Response",
+  "level": 3,
+  "mitre": [],
+  "uc": "UC-11",
+  "source": "0015-ossec_rules.xml"
+ },
+ "657": {
+  "meaning": "Active response: $(parameters.program) - $(command)",
+  "level": 3,
+  "mitre": [],
+  "uc": "UC-03",
+  "source": "0015-ossec_rules.xml"
+ },
+ "2501": {
+  "meaning": "syslog: User authentication failure.",
+  "level": 5,
+  "mitre": [],
+  "uc": "-",
+  "source": "0020-syslog_rules.xml"
+ },
+ "2902": {
+  "meaning": "New dpkg (Debian Package) installed.",
+  "level": 7,
+  "mitre": [],
+  "uc": "-",
+  "source": "0020-syslog_rules.xml"
+ },
+ "5402": {
+  "meaning": "Successful sudo to ROOT executed.",
+  "level": 3,
+  "mitre": [
+   "T1548.003"
+  ],
+  "uc": "-",
+  "source": "0020-syslog_rules.xml"
+ },
+ "5501": {
+  "meaning": "PAM: Login session opened.",
+  "level": 3,
+  "mitre": [
+   "T1078"
+  ],
+  "uc": "-",
+  "source": "0085-pam_rules.xml"
+ },
+ "5502": {
+  "meaning": "PAM: Login session closed.",
+  "level": 3,
+  "mitre": [],
+  "uc": "-",
+  "source": "0085-pam_rules.xml"
+ },
+ "5503": {
+  "meaning": "PAM: User login failed.",
+  "level": 5,
+  "mitre": [
+   "T1110.001"
+  ],
+  "uc": "-",
+  "source": "0085-pam_rules.xml"
+ },
+ "5710": {
+  "meaning": "sshd: Attempt to login using a non-existent user",
+  "level": 5,
+  "mitre": [
+   "T1110.001",
+   "T1021.004"
+  ],
+  "uc": "UC-11",
+  "source": "0095-sshd_rules.xml"
+ },
+ "5712": {
+  "meaning": "sshd: brute force trying to get access to the system. Non existent user.",
+  "level": 10,
+  "mitre": [
+   "T1110"
+  ],
+  "uc": "UC-11",
+  "source": "0095-sshd_rules.xml"
+ },
+ "5760": {
+  "meaning": "sshd: authentication failed.",
+  "level": 5,
+  "mitre": [
+   "T1110.001",
+   "T1021.004"
+  ],
+  "uc": "UC-11",
+  "source": "0095-sshd_rules.xml"
+ },
+ "5763": {
+  "meaning": "sshd: brute force trying to get access to the system. Authentication failed.",
+  "level": 10,
+  "mitre": [
+   "T1110"
+  ],
+  "uc": "UC-11",
+  "source": "0095-sshd_rules.xml"
+ },
+ "5901": {
+  "meaning": "New group added to the system.",
+  "level": 8,
+  "mitre": [],
+  "uc": "-",
+  "source": "0020-syslog_rules.xml"
+ },
+ "19007": {
+  "meaning": "$(sca.policy): $(sca.check.title)",
+  "level": 7,
+  "mitre": [],
+  "uc": "-",
+  "source": "0570-sca_rules.xml"
+ },
+ "31103": {
+  "meaning": "SQL injection attempt.",
+  "level": 7,
+  "mitre": [
+   "T1190"
+  ],
+  "uc": "UC-09",
+  "source": "0245-web_rules.xml"
+ },
+ "31106": {
+  "meaning": "A web attack returned code 200 (success).",
+  "level": 6,
+  "mitre": [
+   "T1190"
+  ],
+  "uc": "UC-09",
+  "source": "0245-web_rules.xml"
+ },
+ "31168": {
+  "meaning": "Shellshock attack detected",
+  "level": 15,
+  "mitre": [
+   "T1068",
+   "T1190"
+  ],
+  "uc": "UC-06",
+  "source": "0245-web_rules.xml"
+ },
+ "80792": {
+  "meaning": "Audit: Command: $(audit.exe).",
+  "level": 3,
+  "mitre": [],
+  "uc": "UC-05",
+  "source": "0365-auditd_rules.xml"
+ },
+ "86601": {
+  "meaning": "Suricata: Alert - $(alert.signature)",
+  "level": 3,
+  "mitre": [],
+  "uc": "UC-04",
+  "source": "0475-suricata_rules.xml"
+ },
+ "87105": {
+  "meaning": "VirusTotal: Alert - $(virustotal.source.file) - $(virustotal.positives) engines detected this file",
+  "level": 12,
+  "mitre": [
+   "T1203"
+  ],
+  "uc": "UC-03",
+  "source": "0490-virustotal_rules.xml"
+ }
+}
