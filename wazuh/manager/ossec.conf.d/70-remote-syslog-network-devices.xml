@@ -1,0 +1,19 @@
+<!--
+  UC-12/13  Receive syslog from network devices directly on the manager (UDP 514).
+  Only the router IP may send (allowed-ips); anything else is dropped by remoted.
+  RouterOS side (v6/v7):
+    /system logging action add name=wazuh target=remote remote=<MANAGER_IP> remote-port=514 bsd-syslog=yes
+    /system logging add topics=system action=wazuh
+    /system logging add topics=dhcp   action=wazuh
+    /system logging add topics=firewall action=wazuh     (and log=yes on the filter rules to watch)
+  Verified 2026-09-28 on wazuh-manager 4.14.7: UDP datagrams -> remoted -> 100401..100422.
+-->
+<ossec_config>
+  <remote>
+    <connection>syslog</connection>
+    <port>514</port>
+    <protocol>udp</protocol>
+    <allowed-ips>192.168.88.1/32</allowed-ips>
+    <local_ip>0.0.0.0</local_ip>
+  </remote>
+</ossec_config>
