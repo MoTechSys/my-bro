@@ -1,0 +1,18 @@
+<!--
+  UC-10  Telegram notification for alerts with level >= 12 (manager ossec.conf).
+  Deploy: sudo install -o root -g wazuh -m 750 wazuh/manager/integrations/custom-telegram* /var/ossec/integrations/
+  Secrets: replace the two placeholders ONLY on the server; never commit real values.
+    api_key  = bot token from @BotFather
+    hook_url = numeric chat id (send /start to the bot, then getUpdates)
+  Verified 2026-09-28 on wazuh-manager 4.14.7: integratord launches the script for
+  L>=12 alerts (tests/test_telegram.py uses a local mock of api.telegram.org).
+-->
+<ossec_config>
+  <integration>
+    <name>custom-telegram</name>
+    <api_key>YOUR_TELEGRAM_BOT_TOKEN</api_key>
+    <hook_url>YOUR_TELEGRAM_CHAT_ID</hook_url>
+    <level>12</level>
+    <alert_format>json</alert_format>
+  </integration>
+</ossec_config>

@@ -77,18 +77,21 @@
 
 <!-- ============================================================ -->
 <!-- UC-07  FIM on Windows Downloads -> AR yara_windows            -->
-<!--        Replace <USER_NAME> with the real Windows user.        -->
+<!--        Fix (2026-09-28, verified on wazuh-logtest 4.14.7): the  -->
+<!--        old literal user placeholder was invalid XML and stopped -->
+<!--        wazuh-analysisd. Case-insensitive regex covers any user; -->
+<!--        Windows FIM reports lower-case paths.                    -->
 <!-- ============================================================ -->
 <group name="syscheck,">
   <rule id="100303" level="7">
     <if_sid>550</if_sid>
-    <field name="file">C:\\Users\\<USER_NAME>\\Downloads</field>
-    <description>File modified in C:\Users\<USER_NAME>\Downloads directory.</description>
+    <field name="file" type="pcre2">(?i)^c:\\users\\[^\\]+\\downloads\\</field>
+    <description>File modified in a Windows user Downloads directory.</description>
   </rule>
   <rule id="100304" level="7">
     <if_sid>554</if_sid>
-    <field name="file">C:\\Users\\<USER_NAME>\\Downloads</field>
-    <description>File added to C:\Users\<USER_NAME>\Downloads directory.</description>
+    <field name="file" type="pcre2">(?i)^c:\\users\\[^\\]+\\downloads\\</field>
+    <description>File added to a Windows user Downloads directory.</description>
   </rule>
 </group>
 
@@ -120,9 +123,12 @@
     <description>List of running processes.</description>
     <group>process_monitor,</group>
   </rule>
+  <!-- Fix (2026-09-28): literal "nc -l" missed "nc -vlp", "ncat -l",
+       "netcat (long listen flag)". pcre2 matches nc/ncat/netcat with any short
+       flag cluster containing l, on a single ps line only. -->
   <rule id="100051" level="7" ignore="900">
     <if_sid>100050</if_sid>
-    <match>nc -l</match>
+    <regex type="pcre2">(?m)(?:^|[\s/])(?:nc|ncat|netcat|nc\.openbsd|nc\.traditional)(?:[^\S\n]+\S+)*?[^\S\n]+(?:-[A-Za-z]*l[A-Za-z0-9]*|--listen)(?:[^\S\n]|$)</regex>
     <description>netcat listening for incoming connections.</description>
     <group>process_monitor,</group>
     <mitre>
