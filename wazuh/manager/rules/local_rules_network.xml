@@ -1,0 +1,104 @@
+<!--
+  UC-12 network devices (MikroTik RouterOS) + UC-13 device visibility (M0).
+  Target: /var/ossec/etc/rules/local_rules_network.xml   IDs 100400-100499 (reserved namespace).
+  Verified with wazuh-logtest 4.14.7 (tests/test_wazuh_engine.py::Network*).
+  UC-13 is NETWORK visibility of phones/new devices (DHCP lease), not on-device monitoring.
+-->
+<group name="mikrotik,network_device,">
+
+  <rule id="100400" level="0">
+    <decoded_as>mikrotik</decoded_as>
+    <description>MikroTik RouterOS messages grouped.</description>
+  </rule>
+
+  <rule id="100401" level="5">
+    <if_sid>100400</if_sid>
+    <match>login failure for user</match>
+    <description>MikroTik: login failure for user $(dstuser) from $(srcip) via $(protocol).</description>
+    <mitre><id>T1110</id></mitre>
+    <group>authentication_failed,pci_dss_10.2.4,</group>
+  </rule>
+
+  <rule id="100402" level="10" frequency="5" timeframe="120" ignore="60">
+    <if_matched_sid>100401</if_matched_sid>
+    <same_source_ip/>
+    <description>MikroTik: brute force against router management from $(srcip) (5 failures / 120 s).</description>
+    <mitre><id>T1110.001</id></mitre>
+    <group>authentication_failures,attack,</group>
+  </rule>
+
+  <rule id="100403" level="3">
+    <if_sid>100400</if_sid>
+    <match>logged in from</match>
+    <description>MikroTik: user $(dstuser) logged in from $(srcip) via $(protocol).</description>
+    <group>authentication_success,</group>
+  </rule>
+
+  <rule id="100404" level="12">
+    <if_sid>100403</if_sid>
+    <if_matched_sid>100402</if_matched_sid>
+    <same_source_ip/>
+    <description>MikroTik: successful login from $(srcip) right after brute force - possible compromise.</description>
+    <mitre><id>T1078</id></mitre>
+    <group>attack,</group>
+  </rule>
+
+  <rule id="100405" level="8">
+    <if_sid>100400</if_sid>
+    <action type="pcre2">^(?:added|removed|changed|disabled|enabled|moved)$</action>
+    <description>MikroTik: configuration change "$(mikrotik.object)" $(action) by $(dstuser).</description>
+    <mitre><id>T1562.004</id></mitre>
+    <group>config_changed,pci_dss_10.2.7,</group>
+  </rule>
+
+  <rule id="100406" level="12">
+    <if_sid>100405</if_sid>
+    <field name="mikrotik.object" type="pcre2">(?i)^(?:user\b|filter rule|nat rule|ip service|firewall)</field>
+    <description>MikroTik: security-relevant change "$(mikrotik.object)" $(action) by $(dstuser).</description>
+    <mitre><id>T1562.004</id><id>T1136</id></mitre>
+    <group>config_changed,attack,</group>
+  </rule>
+
+  <rule id="100410" level="4">
+    <if_sid>100400</if_sid>
+    <field name="mikrotik.chain">input|forward</field>
+    <description>MikroTik firewall log: $(protocol) $(srcip):$(srcport) -> $(dstip):$(dstport) on $(mikrotik.in_interface).</description>
+    <group>firewall_drop,</group>
+  </rule>
+
+  <rule id="100411" level="10" frequency="15" timeframe="60" ignore="120">
+    <if_matched_sid>100410</if_matched_sid>
+    <same_source_ip/>
+    <different_dstport/>
+    <description>MikroTik: port scan from $(srcip) (15 distinct ports / 60 s at the router).</description>
+    <mitre><id>T1046</id></mitre>
+    <group>recon,attack,</group>
+  </rule>
+
+  <!-- UC-13  M0: device (e.g. phone) visibility from the network -->
+  <rule id="100420" level="3">
+    <if_sid>100400</if_sid>
+    <action>assigned</action>
+    <description>Network visibility: DHCP lease $(dhcp.ip) -> $(dhcp.mac) $(dhcp.hostname).</description>
+    <group>dhcp,device_visibility,</group>
+  </rule>
+
+  <rule id="100422" level="8">
+    <if_sid>100420</if_sid>
+    <list field="dhcp.mac" lookup="not_match_key">etc/lists/known-devices</list>
+    <description>Network visibility: UNKNOWN device $(dhcp.mac) $(dhcp.hostname) joined the network ($(dhcp.ip)).</description>
+    <mitre><id>T1200</id></mitre>
+    <group>dhcp,device_visibility,rogue_device,</group>
+  </rule>
+
+  <!-- Unknown + locally administered MAC (2nd hex digit 2/6/A/E) = randomized MAC
+       used by Android 10+/iOS 14+ privacy mode -> most likely a phone/tablet. -->
+  <rule id="100421" level="9">
+    <if_sid>100422</if_sid>
+    <field name="dhcp.mac" type="pcre2">^[0-9A-Fa-f][26AEae]:</field>
+    <description>Network visibility: UNKNOWN mobile-like device (randomized MAC $(dhcp.mac)) $(dhcp.hostname) got $(dhcp.ip).</description>
+    <mitre><id>T1200</id></mitre>
+    <group>dhcp,device_visibility,mobile,rogue_device,</group>
+  </rule>
+
+</group>

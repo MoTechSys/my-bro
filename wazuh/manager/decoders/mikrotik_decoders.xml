@@ -1,0 +1,52 @@
+<!--
+  UC-12 / UC-13  MikroTik RouterOS syslog decoders (contribution C3).
+  Target: /var/ossec/etc/decoders/mikrotik_decoders.xml   (Wazuh 4.14.x)
+  Why: verified 2026-09-28 on wazuh-manager 4.14.7 that stock ruleset does not
+       decode RouterOS lines (only generic 2501 or nothing).
+  RouterOS remote logging sends "<topics> <message>" with no program_name,
+  e.g. "system,error,critical login failure for user admin from 1.2.3.4 via ssh".
+  Input path: router  -> UDP 514 -> Wazuh manager <remote><connection>syslog</connection>
+              (allowed-ips = router only)  or rsyslog file + <localfile>.
+  Topics: system (login/config), dhcp (leases -> UC-13 device visibility), firewall (log=yes rules).
+  Note: all children share name "mikrotik-fields" - Wazuh only tries sibling
+  regexes that share the first child name (verified, 4.14.7).
+  Formats covered: RouterOS v6 "assigned IP to MAC" and v7 "assigned IP for MAC [host]".
+-->
+<decoder name="mikrotik">
+  <prematch type="pcre2">^(?:system|dhcp|firewall|account|interface|wireless|script)(?:,\w+)*\s</prematch>
+</decoder>
+
+<!-- login failure for user admin from 192.168.88.50 via winbox -->
+<decoder name="mikrotik-fields">
+  <parent>mikrotik</parent>
+  <regex type="pcre2">login failure for user (\S+) from (\S+) via (\S+)</regex>
+  <order>dstuser, srcip, protocol</order>
+</decoder>
+
+<!-- user admin logged in from 192.168.88.10 via winbox -->
+<decoder name="mikrotik-fields">
+  <parent>mikrotik</parent>
+  <regex type="pcre2">user (\S+) logged in from (\S+) via (\S+)</regex>
+  <order>dstuser, srcip, protocol</order>
+</decoder>
+
+<!-- "user bob added by admin", "filter rule removed by admin", "ip service changed by admin" -->
+<decoder name="mikrotik-fields">
+  <parent>mikrotik</parent>
+  <regex type="pcre2">^\S+\s(.+?) (added|removed|changed|moved|disabled|enabled) by (\S+)</regex>
+  <order>mikrotik.object, action, dstuser</order>
+</decoder>
+
+<!-- dhcp1 assigned 192.168.88.254 to 5A:3B:11:22:33:44   |  defconf assigned 192.168.88.254 for 5A:3B:11:22:33:44 Galaxy-S23 -->
+<decoder name="mikrotik-fields">
+  <parent>mikrotik</parent>
+  <regex type="pcre2">(\S+) (assigned|deassigned) (\d+\.\d+\.\d+\.\d+) (?:to|for|from) ([0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})(?: (\S+))?</regex>
+  <order>mikrotik.dhcp_server, action, dhcp.ip, dhcp.mac, dhcp.hostname</order>
+</decoder>
+
+<!-- firewall,info input: in:ether1 out:(unknown 0), src-mac 00:0c:29:aa:bb:cc, proto TCP (SYN), 192.168.88.50:51000->192.168.88.1:22, len 60 -->
+<decoder name="mikrotik-fields">
+  <parent>mikrotik</parent>
+  <regex type="pcre2">(\S+): in:(\S+) out:.*?proto (\w+)[^,]*, (\d+\.\d+\.\d+\.\d+):(\d+)->(\d+\.\d+\.\d+\.\d+):(\d+)</regex>
+  <order>mikrotik.chain, mikrotik.in_interface, protocol, srcip, srcport, dstip, dstport</order>
+</decoder>

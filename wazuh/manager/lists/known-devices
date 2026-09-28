@@ -1,0 +1,7 @@
+# UC-13 known-device inventory (Wazuh CDB). Keys containing ':' MUST be double-quoted.
+# key = MAC exactly as RouterOS logs it (upper case); value = device name.
+# Anything not listed triggers rule 100422 (unknown device joined the network).
+# Target: /var/ossec/etc/lists/known-devices  + <list>etc/lists/known-devices</list> in <ruleset>.
+"00:0C:29:AA:BB:01":kali1
+"00:0C:29:AA:BB:02":win1
+"00:0C:29:AA:BB:03":wazuh-server

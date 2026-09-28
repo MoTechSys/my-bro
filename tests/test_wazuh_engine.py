@@ -188,5 +188,78 @@ class EngineRules(unittest.TestCase):
         ids = {x.strip() for x in tree.findtext('active-response/rules_id').split(',')}
         self.assertTrue({'5712', '5763'} <= ids, ids)
 
+MT = 'Sep 28 10:00:01 MikroTik '
+
+
+@unittest.skipUnless(lt.available(), 'Wazuh logtest socket not available (needs wazuh-manager + root)')
+class NetworkDevices(unittest.TestCase):
+    """UC-12 MikroTik + UC-13 device visibility (stock 4.14.7 decodes none of these)."""
+
+    def rule(self, body, token=None):
+        rid, out, token = lt.rule_id(MT + body, 'syslog', '192.168.88.1', token)
+        return rid, out, token
+
+    def test_login_failure_fields(self):
+        rid, out, _ = self.rule('system,error,critical login failure for user admin from 192.168.88.50 via winbox')
+        self.assertEqual(rid, '100401')
+        self.assertEqual(out['data'], {'dstuser': 'admin', 'srcip': '192.168.88.50', 'protocol': 'winbox'})
+
+    def test_bruteforce_then_success_is_compromise(self):
+        token, fired = None, []
+        for _ in range(5):
+            rid, _, token = self.rule('system,error,critical login failure for user admin from 192.168.88.66 via ssh', token)
+            fired.append(rid)
+        rid, out, token = self.rule('system,info,account user admin logged in from 192.168.88.66 via ssh', token)
+        self.assertEqual(fired, ['100401'] * 4 + ['100402'])
+        self.assertEqual(rid, '100404')
+        self.assertEqual(out['rule']['level'], 12)
+
+    def test_normal_login_low(self):
+        rid, out, _ = self.rule('system,info,account user admin logged in from 192.168.88.10 via winbox')
+        self.assertEqual((rid, out['rule']['level']), ('100403', 3))
+
+    def test_config_changes(self):
+        cases = {'system,info,account user backdoor added by admin': '100406',
+                 'system,info filter rule removed by admin': '100406',
+                 'system,info ip service changed by admin': '100406',
+                 'system,info ntp client changed by admin': '100405'}
+        for body, expected in cases.items():
+            with self.subTest(body=body):
+                rid, out, _ = self.rule(body)
+                self.assertEqual(rid, expected)
+                self.assertEqual(out['data']['dstuser'], 'admin')
+
+    def test_port_scan_correlation(self):
+        token, fired = None, []
+        for port in range(100, 115):
+            rid, _, token = self.rule('firewall,info input: in:ether1 out:(unknown 0), src-mac 00:0c:29:aa:bb:cc, '
+                                      f'proto TCP (SYN), 192.168.88.77:40000->192.168.88.1:{port}, len 60', token)
+            fired.append(rid)
+        self.assertEqual(fired[:-1], ['100410'] * 14)
+        self.assertEqual(fired[-1], '100411')
+
+    def test_dhcp_known_device_no_escalation(self):
+        rid, out, _ = self.rule('dhcp,info defconf assigned 192.168.88.253 for 00:0C:29:AA:BB:01 kali1')
+        self.assertEqual(rid, '100420')
+        self.assertEqual(out['data']['dhcp']['hostname'], 'kali1')
+
+    def test_dhcp_unknown_device(self):
+        rid, out, _ = self.rule('dhcp,info defconf assigned 192.168.88.252 for 3C:22:FB:10:20:30 Galaxy-S23')
+        self.assertEqual((rid, out['rule']['level']), ('100422', 8))
+
+    def test_dhcp_unknown_randomized_mac_is_mobile(self):
+        for body in ('dhcp,info dhcp1 assigned 192.168.88.254 to 5A:3B:11:22:33:44',       # RouterOS v6
+                     'dhcp,info defconf assigned 192.168.88.251 for DE:AD:BE:EF:00:01 iPhone'):  # v7
+            with self.subTest(body=body):
+                rid, out, _ = self.rule(body)
+                self.assertEqual((rid, out['rule']['level']), ('100421', 9))
+                self.assertIn('mobile', out['rule']['groups'])
+
+    def test_unrelated_syslog_not_mikrotik(self):
+        rid, _, _ = lt.rule_id('Sep 28 10:00:01 host cron[1]: (root) CMD (run-parts /etc/cron.hourly)',
+                               'syslog', '/var/log/syslog')
+        self.assertFalse(str(rid).startswith('1004'))
+
+
 if __name__ == '__main__':
     unittest.main()

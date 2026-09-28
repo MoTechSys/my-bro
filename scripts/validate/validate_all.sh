@@ -37,11 +37,29 @@ PY
 then fail=1; fi
 
 echo; echo "== 5. CDB lists format (key:value, no dup keys) =="
-for f in wazuh/manager/lists/*; do
-  dups=$(grep -v '^#' "$f" | grep -v '^\s*$' | cut -d: -f1 | sort | uniq -d)
-  bad=$(grep -v '^#' "$f" | grep -v '^\s*$' | grep -vE '^[^:]+:[^:]+$' || true)
-  if [ -z "$dups" ] && [ -z "$bad" ]; then echo "ok   $f"; else echo "FAIL $f dups=[$dups] bad=[$bad]"; fail=1; fi
-done
+python3 - <<'PY' || fail=1
+import re, sys
+from pathlib import Path
+# Wazuh CDB syntax: key:value or "key:with:colons":value (quoted keys); no duplicate keys.
+ok = True
+for f in sorted(Path('wazuh/manager/lists').iterdir()):
+    keys, bad = [], []
+    for line in f.read_text(encoding='utf-8').splitlines():
+        if not line.strip() or line.startswith('#'):
+            continue
+        m = re.fullmatch(r'"([^"]+)":([^:]*)|([^:"]+):([^:]*)', line)
+        if not m:
+            bad.append(line)
+        else:
+            keys.append(m.group(1) or m.group(3))
+    dups = sorted({k for k in keys if keys.count(k) > 1})
+    if dups or bad:
+        ok = False
+        print(f'FAIL {f} dups={dups} bad={bad}')
+    else:
+        print(f'ok   {f}')
+sys.exit(0 if ok else 1)
+PY
 
 echo; echo "== 6. Required handoff docs exist =="
 for f in AI_AGENT_START_HERE.md README.md CHANGELOG.md docs/00_PROJECT_STATE.md docs/01_SOURCE_ANALYSIS.md docs/02_ARCHITECTURE.md docs/03_ROADMAP.md docs/04_ISSUES_LOG.md docs/DECISIONS.md; do
