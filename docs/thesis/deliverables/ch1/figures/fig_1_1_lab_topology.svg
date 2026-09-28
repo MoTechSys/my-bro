@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="760" viewBox="0 0 1300 760" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial">
+<title>Lab topology</title>
+<defs>
+  <marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker>
+  <marker id="arr_red" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/></marker>
+  <marker id="arr_blue" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8"/></marker>
+  <marker id="arr_grey" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#9ca3af"/></marker>
+</defs>
+<rect width="1300" height="760" fill="#ffffff"/>
+<text x="650.0" y="40" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="20" fill="#1f2937" text-anchor="middle" font-weight="bold" >الشكل (1.1): طوبولوجيا بيئة المعمل الافتراضية — VMware Workstation، الشبكة 192.168.100.0/24</text>
+<rect x="40" y="70" width="1220" height="620" rx="16" fill="#fafafa" stroke="#6b7280" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="1240" y="95" font-family="DejaVu Sans, Arial, Helvetica" font-size="14" fill="#6b7280" text-anchor="end" font-weight="normal" >VMware Workstation — Host-only / NAT 192.168.100.0/24</text>
+<rect x="70" y="130" width="420" height="250" rx="14" fill="#dbeafe" stroke="#1d4ed8" stroke-width="3"/>
+<text x="280.0" y="162" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="18" fill="#1d4ed8" text-anchor="middle" font-weight="bold" >wazuh-server — خادم SOC المركزي</text>
+<text x="280.0" y="188" font-family="DejaVu Sans, Arial, Helvetica" font-size="14" fill="#1f2937" text-anchor="middle" font-weight="normal" >Wazuh OVA 4.14 (All-in-one) — 192.168.100.105</text>
+<text x="90" y="225" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  Wazuh Manager (analysisd, integratord, AR orchestration)</text>
+<text x="90" y="253" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  Wazuh Indexer (OpenSearch-based) — wazuh-alerts-4.x-*</text>
+<text x="90" y="281" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  Wazuh Dashboard :443 — Threat Hunting / FIM / MITRE ATT&amp;CK</text>
+<text x="90" y="309" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  Filebeat (internal) — alerts → indexer</text>
+<text x="90" y="337" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  cluster node: node01   user: wazuh-user</text>
+<rect x="790" y="130" width="440" height="250" rx="14" fill="#d1fae5" stroke="#047857" stroke-width="3"/>
+<text x="1010.0" y="162" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="18" fill="#047857" text-anchor="middle" font-weight="bold" >kali1 — نقطة نهاية Linux + خادم ويب ضحية</text>
+<text x="1010.0" y="188" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="normal" >Kali GNU/Linux 2025.4 — 192.168.100.108 — Agent ID 002 (active)</text>
+<text x="810" y="225" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  wazuh-agent 4.14.7 (syscheck realtime, logcollector, command)</text>
+<text x="810" y="253" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  Suricata 8.0.6 (af-packet, eth0) → eve.json</text>
+<text x="810" y="281" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  auditd (execve rules) → /var/log/audit/audit.log</text>
+<text x="810" y="309" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  Apache 2.4.68 (victim) → access.log</text>
+<text x="810" y="337" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  YARA 4.5.5 + Active Response (remove-threat.sh, yara.sh)</text>
+<rect x="70" y="450" width="420" height="200" rx="14" fill="#ede9fe" stroke="#7c3aed" stroke-width="3"/>
+<text x="280.0" y="482" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="18" fill="#7c3aed" text-anchor="middle" font-weight="bold" >win1 — نقطة نهاية Windows</text>
+<text x="280.0" y="508" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="normal" >Windows 10 Education 10.0.19045.2006</text>
+<text x="280.0" y="528" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="normal" >192.168.100.106 — Agent ID 001</text>
+<text x="90" y="562" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  wazuh-agent 4.14.7 (FIM: Desktop\abdul, Downloads)</text>
+<text x="90" y="590" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  Active Response: remove-threat.exe (VirusTotal), yara.bat</text>
+<text x="90" y="618" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="start" font-weight="normal" >•  Windows Event Log channels (Security, System)</text>
+<rect x="790" y="450" width="440" height="200" rx="14" fill="#fee2e2" stroke="#b91c1c" stroke-width="3"/>
+<text x="1010.0" y="482" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="18" fill="#b91c1c" text-anchor="middle" font-weight="bold" >المهاجم — محاكاة الهجمات (داخل المعمل فقط)</text>
+<text x="1010.0" y="508" font-family="DejaVu Sans, Arial, Helvetica" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="normal" >kali1 نفسها أو جهاز Kali ثانٍ (curl / nmap / nc / EICAR)</text>
+<text x="810" y="542" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="start" font-weight="normal" >•  nmap SYN scan → Suricata 86601</text>
+<text x="810" y="566" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="start" font-weight="normal" >•  curl User-Agent «() { :; };» → Shellshock 31168 (L15)</text>
+<text x="810" y="590" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="start" font-weight="normal" >•  nc -l → process monitor 100051 (L7)</text>
+<text x="810" y="614" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1f2937" text-anchor="start" font-weight="normal" >•  EICAR / red-list command → VT 87105 / audit 100210 (L12)</text>
+<line x1="790" y1="360" x2="494" y2="360" stroke="#1d4ed8" stroke-width="3" marker-end="url(#arr_blue)"/>
+<text x="640.0" y="350" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1d4ed8" text-anchor="middle" font-weight="normal" >TCP 1514 events / 1515 enrollment (TLS)</text>
+<line x1="280.0" y1="450" x2="280.0" y2="384" stroke="#1d4ed8" stroke-width="3" marker-end="url(#arr_blue)"/>
+<text x="360.0" y="420" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#1d4ed8" text-anchor="middle" font-weight="normal" >TCP 1514 / 1515</text>
+<line x1="1010.0" y1="450" x2="1010.0" y2="384" stroke="#b91c1c" stroke-width="3" marker-end="url(#arr_red)"/>
+<text x="1085.0" y="420" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#b91c1c" text-anchor="middle" font-weight="normal" >TCP 80 / scans</text>
+<rect x="540" y="540" width="220" height="80" rx="12" fill="#f9fafb" stroke="#6b7280" stroke-width="2"/>
+<text x="650" y="570" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="15" fill="#1f2937" text-anchor="middle" font-weight="bold" >محلل الأمن</text>
+<text x="650" y="595" font-family="DejaVu Sans, Arial, Helvetica" font-size="12" fill="#6b7280" text-anchor="middle" font-weight="normal" >HTTPS 443 → Dashboard</text>
+<path d="M 600 540 C 600 460, 500 440, 450 382" fill="none" stroke="#6b7280" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arr_grey)"/>
+<rect x="540" y="130" width="220" height="60" rx="12" fill="#f3f4f6" stroke="#9ca3af" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="650" y="155" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="13" fill="#6b7280" text-anchor="middle" font-weight="normal" >أجهزة الشبكة / الهواتف</text>
+<text x="650" y="176" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="11" fill="#6b7280" text-anchor="middle" font-weight="normal" >Syslog 514 — توسعة مستقبلية</text>
+<line x1="560" y1="190" x2="450" y2="128" stroke="#9ca3af" stroke-width="2" marker-end="url(#arr_grey)" stroke-dasharray="6 4"/>
+<text x="650.0" y="725" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#6b7280" text-anchor="middle" font-weight="normal" >المصدر: docs/02_ARCHITECTURE.md §1–§2، §7 — كل قيمة مؤكدة بلقطة شاشة (p01_0, p04_0, p30_0, img13, img20)</text>
+</svg>

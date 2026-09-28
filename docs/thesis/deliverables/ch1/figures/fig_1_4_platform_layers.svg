@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial">
+<title>Platform layers</title>
+<defs>
+  <marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker>
+  <marker id="arr_red" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/></marker>
+  <marker id="arr_blue" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8"/></marker>
+  <marker id="arr_grey" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#9ca3af"/></marker>
+</defs>
+<rect width="1200" height="620" fill="#ffffff"/>
+<text x="600.0" y="40" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="20" fill="#1f2937" text-anchor="middle" font-weight="bold" >الشكل (1.4): الطبقات الست للمنصة والمكوّنات الفعلية المُثبَتة في كل طبقة</text>
+<rect x="120" y="80" width="960" height="68" rx="12" fill="#cffafe" stroke="#0e7490" stroke-width="2.5"/>
+<circle cx="160" cy="114.0" r="20" fill="#0e7490"/>
+<text x="160" y="121.0" font-family="DejaVu Sans, Arial, Helvetica" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold" >6</text>
+<text x="1060" y="108" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="17" fill="#0e7490" text-anchor="end" font-weight="bold" >الإخراج والعرض</text>
+<text x="1060" y="134" font-family="DejaVu Sans, Arial, Helvetica" font-size="12.5" fill="#1f2937" text-anchor="end" font-weight="normal" >Wazuh Dashboard 4.14 (Threat Hunting · FIM · MITRE ATT&amp;CK) — AI advisor (استشاري)</text>
+<rect x="120" y="158" width="960" height="68" rx="12" fill="#fee2e2" stroke="#b91c1c" stroke-width="2.5"/>
+<circle cx="160" cy="192.0" r="20" fill="#b91c1c"/>
+<text x="160" y="199.0" font-family="DejaVu Sans, Arial, Helvetica" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold" >5</text>
+<text x="1060" y="186" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="17" fill="#b91c1c" text-anchor="end" font-weight="bold" >الاستجابة والتخزين</text>
+<text x="1060" y="212" font-family="DejaVu Sans, Arial, Helvetica" font-size="12.5" fill="#1f2937" text-anchor="end" font-weight="normal" >Active Response (remove-threat / yara / soc_ar.py) · integratord→VirusTotal · Filebeat→Wazuh Indexer</text>
+<rect x="120" y="236" width="960" height="68" rx="12" fill="#ede9fe" stroke="#7c3aed" stroke-width="2.5"/>
+<circle cx="160" cy="270.0" r="20" fill="#7c3aed"/>
+<text x="160" y="277.0" font-family="DejaVu Sans, Arial, Helvetica" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold" >4</text>
+<text x="1060" y="264" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="17" fill="#7c3aed" text-anchor="end" font-weight="bold" >القرار</text>
+<text x="1060" y="290" font-family="DejaVu Sans, Arial, Helvetica" font-size="12.5" fill="#1f2937" text-anchor="end" font-weight="normal" >rule level ≥3 → alert · قواعد مخصصة L7 / L12 / L15 · CDB red-list · ignore=900</text>
+<rect x="120" y="314" width="960" height="68" rx="12" fill="#fef3c7" stroke="#b45309" stroke-width="2.5"/>
+<circle cx="160" cy="348.0" r="20" fill="#b45309"/>
+<text x="160" y="355.0" font-family="DejaVu Sans, Arial, Helvetica" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold" >3</text>
+<text x="1060" y="342" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="17" fill="#b45309" text-anchor="end" font-weight="bold" >المعالجة والربط</text>
+<text x="1060" y="368" font-family="DejaVu Sans, Arial, Helvetica" font-size="12.5" fill="#1f2937" text-anchor="end" font-weight="normal" >wazuh-analysisd: decoders → rules (built-in + local_rules.xml) → MITRE tags</text>
+<rect x="120" y="392" width="960" height="68" rx="12" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2.5"/>
+<circle cx="160" cy="426.0" r="20" fill="#1d4ed8"/>
+<text x="160" y="433.0" font-family="DejaVu Sans, Arial, Helvetica" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold" >2</text>
+<text x="1060" y="420" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="17" fill="#1d4ed8" text-anchor="end" font-weight="bold" >الجمع</text>
+<text x="1060" y="446" font-family="DejaVu Sans, Arial, Helvetica" font-size="12.5" fill="#1f2937" text-anchor="end" font-weight="normal" >Wazuh Agent 4.14.7 (syscheck · logcollector · command) · Suricata 8.0.6 eve.json</text>
+<rect x="120" y="470" width="960" height="68" rx="12" fill="#d1fae5" stroke="#047857" stroke-width="2.5"/>
+<circle cx="160" cy="504.0" r="20" fill="#047857"/>
+<text x="160" y="511.0" font-family="DejaVu Sans, Arial, Helvetica" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold" >1</text>
+<text x="1060" y="498" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="17" fill="#047857" text-anchor="end" font-weight="bold" >مصادر البيانات</text>
+<text x="1060" y="524" font-family="DejaVu Sans, Arial, Helvetica" font-size="12.5" fill="#1f2937" text-anchor="end" font-weight="normal" >win1 (Windows 10) · kali1 (Kali 2025.4) · Apache 2.4.68 access.log · auditd · process list · network traffic</text>
+<line x1="80" y1="540" x2="80" y2="90" stroke="#6b7280" stroke-width="2" marker-end="url(#arr_grey)" stroke-dasharray="6 4"/>
+<text x="60" y="320" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#6b7280" text-anchor="middle" font-weight="normal" transform="rotate(-90 60 320)">تدفق البيانات</text>
+<text x="600.0" y="600" font-family="Noto Naskh Arabic, Noto Sans Arabic, Arial" font-size="12" fill="#6b7280" text-anchor="middle" font-weight="normal" >المصدر: docs/02_ARCHITECTURE.md §8 (النسخة المطابقة للواقع للطبقات الست من S4 §3.6.1) — Zeek/Kibana/Elasticsearch غير موجودة في أي طبقة</text>
+</svg>
