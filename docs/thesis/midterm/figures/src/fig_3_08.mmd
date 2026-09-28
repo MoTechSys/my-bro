@@ -1,0 +1,26 @@
+sequenceDiagram
+    autonumber
+    participant ATK as المهاجم (IP خارجي)
+    participant SSH as sshd على kali1
+    participant AG as وكيل Wazuh
+    participant MG as المدير
+    participant EX as execd
+    participant FW as iptables
+    loop 8 محاولات خلال 120 ث
+        ATK->>SSH: كلمة مرور خاطئة
+        SSH->>AG: سطر في auth.log
+        AG->>MG: القاعدة 5710 لمستخدم غير موجود أو 5760 لمستخدم موجود
+    end
+    MG->>MG: بلوغ عتبة التكرار: 5712 أو 5763 بالمستوى 10  [t2]
+    MG->>MG: هل srcip ضمن white_list؟
+    alt العنوان محمي (الإدارة / المدير)
+        MG-->>MG: لا حظر، يبقى التنبيه فقط
+    else العنوان غير محمي
+        MG->>EX: firewall-drop add srcip (timeout = 300)
+        EX->>FW: iptables -I INPUT -s srcip -j DROP  [t4، t5]
+        EX->>AG: active-responses.log
+        AG->>MG: 651 "Host Blocked by firewall-drop"  [t6]
+        Note over EX,FW: بعد 300 ث
+        EX->>FW: حذف القاعدة (delete)
+        AG->>MG: 652 "Host Unblocked"
+    end

@@ -1,0 +1,104 @@
+erDiagram
+    AGENT ||--o{ ALERT : "يولّد"
+    RULE ||--o{ ALERT : "تُطلق"
+    RULE ||--o{ RULE : "أمّ لـ (if_sid)"
+    RULE }o--o{ MITRE_TECHNIQUE : "موسومة بـ"
+    RULE }o--o{ CDB_ENTRY : "تبحث في"
+    ALERT ||--o| AR_EXECUTION : "تحفّز"
+    AR_EXECUTION ||--o| ALERT : "تؤكَّد بـ (100092/651)"
+    ALERT }o--o| INCIDENT : "تُجمَّع في"
+    INCIDENT ||--o{ AI_PROPOSAL : "يُقترح لها"
+    AI_PROPOSAL ||--o| AUDIT_RECORD : "تُوثَّق في"
+    AUDIT_RECORD }o--|| AGENT : "تستهدف"
+    SESSION ||--|{ TRIAL : "تضم"
+    TRIAL }o--o| ALERT : "تُطابَق مع (t2)"
+    TRIAL }o--o| AR_EXECUTION : "تقيس (t4/t5)"
+
+    AGENT {
+        string agent_id PK "مثل 001"
+        string name
+        string ip
+        string os
+        string version
+    }
+    RULE {
+        int rule_id PK "100000-109999 للمخصص"
+        int level "0-15"
+        int parent_sid FK
+        string description
+        string groups
+    }
+    ALERT {
+        string alert_id PK "id في alerts.json"
+        datetime timestamp "t2"
+        int rule_id FK
+        string agent_id FK
+        string srcip
+        string dstuser
+        string file_path
+        string sha256
+        string full_log
+    }
+    MITRE_TECHNIQUE {
+        string technique_id PK "مثل T1110.001"
+        string name
+        string tactic
+        boolean revoked
+        string replaced_by
+    }
+    CDB_ENTRY {
+        string list_name PK
+        string key PK "برنامج أو MAC"
+        string value
+    }
+    AR_EXECUTION {
+        string ar_id PK
+        string trigger_alert_id FK
+        string command "remove-threat, firewall-drop, yara"
+        string target
+        datetime started "t4"
+        datetime completed "t5"
+        string result "success أو error"
+    }
+    INCIDENT {
+        string incident_id PK
+        string correlation_key "srcip / agent / user / file"
+        int max_level
+        datetime first_seen
+        datetime last_seen
+    }
+    AI_PROPOSAL {
+        string proposal_hash PK "SHA-256 أول 16 رمزاً"
+        string incident_id FK
+        string action "من القائمة المسموحة"
+        string params
+        string citations
+    }
+    AUDIT_RECORD {
+        datetime ts PK
+        string proposal_hash FK
+        string approver
+        string agent_id FK
+        int affected_items
+        string outcome
+    }
+    SESSION {
+        string session_id PK
+        string manifest_sha256
+        string clock_refs
+    }
+    TRIAL {
+        string trial_id PK
+        string session_id FK
+        string uc
+        string variant
+        long t0
+        long t1
+        long t2
+        long t2_prime
+        long t3
+        long t4
+        long t5
+        long t6
+        string exclusion_reason
+    }

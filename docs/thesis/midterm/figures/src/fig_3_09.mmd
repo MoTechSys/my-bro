@@ -1,0 +1,23 @@
+sequenceDiagram
+    autonumber
+    participant AN as محلل الأمن
+    participant AI as soc_ai.py
+    participant KB as قاعدة المعرفة (BM25)
+    participant LLM as النموذج اللغوي
+    participant RS as responder.py
+    participant API as Wazuh API :55000
+    participant AU as audit.jsonl
+    AN->>AI: analyze --alerts alerts.json
+    AI->>AI: ترابط التنبيهات في حوادث (srcip / agent / user / file ضمن نافذة زمنية)
+    AI->>KB: استرجاع: معاني القواعد + تقنيات ATT&CK + أدلة التشغيل
+    KB-->>AI: مقاطع مرقّمة [K1..Kn]
+    AI->>LLM: التنبيهات + المقاطع + تعليمات صارمة
+    LLM-->>AI: شرح + اقتراح
+    AI->>AI: حارس الاختلاق: كل ادعاء له استشهاد، وكل رقم قاعدة وتقنية موجود فعلاً
+    AI->>AI: اقتراحات من القائمة المسموحة فقط، ومعاملاتها من الحادثة نفسها
+    AI-->>AN: تقرير + اقتراح + بصمة الاقتراح (SHA-256)
+    AN->>RS: approve --hash H
+    RS->>RS: تحقق: الإجراء مسموح، الهدف غير محمي، البصمة مطابقة
+    RS->>API: PUT /active-response (!firewall-drop …)
+    API-->>RS: total_affected_items ≥ 1
+    RS->>AU: سجل: من، ماذا، متى، البصمة، النتيجة

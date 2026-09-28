@@ -1,0 +1,20 @@
+flowchart LR
+    subgraph EP[نقاط النهاية]
+      A1[Wazuh Agent<br/>Windows]
+      A2[Wazuh Agent<br/>Linux]
+    end
+    NW[أجهزة الشبكة<br/>Syslog 514]
+    subgraph SRV[Wazuh Server]
+      R[remoted] --> AN[analysisd<br/>decoders + rules]
+      AN --> EX[execd<br/>Active Response]
+      AN --> IN[integratord<br/>VirusTotal · Telegram]
+      API[Wazuh API 55000]
+    end
+    IDX[(Wazuh Indexer)]
+    DB[Wazuh Dashboard]
+    A1 -- 1514/TCP --> R
+    A2 -- 1514/TCP --> R
+    NW -- 514/UDP --> R
+    AN -- alerts --> IDX --> DB
+    EX -. أوامر الاستجابة .-> A1
+    EX -. أوامر الاستجابة .-> A2

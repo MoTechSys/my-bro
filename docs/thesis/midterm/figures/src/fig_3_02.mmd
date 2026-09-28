@@ -1,0 +1,43 @@
+flowchart TB
+    subgraph S1["1 · الاستشعار SENSE"]
+        E1["نقاط النهاية<br/>Windows / Linux"]
+        E2["حركة الشبكة"]
+        E3["أجهزة الشبكة<br/>MikroTik"]
+    end
+    subgraph S2["2 · الجمع COLLECT"]
+        C1["Wazuh Agent<br/>syscheck · logcollector · command"]
+        C2["Suricata<br/>eve.json"]
+        C3["remoted<br/>Syslog UDP 514"]
+    end
+    subgraph S3["3 · الكشف DETECT"]
+        D1["Decoders"]
+        D2["Rules + CDB"]
+        D3["وسوم MITRE"]
+    end
+    subgraph S4["4 · القرار DECIDE"]
+        Q1["مستوى القاعدة 0–15"]
+        Q2["Integrator<br/>VirusTotal"]
+    end
+    subgraph S5["5 · الاستجابة RESPOND"]
+        R1["Active Response<br/>حذف مُحصَّن · YARA · حظر مؤقت"]
+        R2["إشعار Telegram"]
+        R3["محلل AI<br/>اقتراح + موافقة بشرية"]
+    end
+    subgraph S6["6 · العرض PRESENT"]
+        P1["Wazuh Indexer"]
+        P2["Wazuh Dashboard"]
+        P3["تقرير الحوادث"]
+    end
+    E1 --> C1
+    E2 --> C2 --> C1
+    E3 --> C3
+    C1 --> D1
+    C3 --> D1
+    D1 --> D2 --> D3 --> Q1
+    Q1 <--> Q2
+    Q1 -->|"rules_id"| R1
+    Q1 -->|"level ≥ 12"| R2
+    Q1 --> P1 --> P2
+    P1 --> R3 --> P3
+    R3 -->|"بعد الموافقة عبر API"| R1
+    R1 -->|"active-responses.log"| C1
