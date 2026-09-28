@@ -3,7 +3,8 @@
   <syscheck>
     <!-- UC-02 FIM (S2 p.10) -->
     <directories check_all="yes" report_changes="yes" realtime="yes">C:\Users\Lenovo\Desktop\abdul</directories>
-    <!-- UC-03 / UC-07 VirusTotal + YARA dir (S2 pp.19, 52) - replace <USER_NAME> -->
-    <directories realtime="yes">C:\Users\<USER_NAME>\Downloads</directories>
+    <!-- UC-03 / UC-07 VirusTotal + YARA dir (S2 pp.19, 52). User "Lenovo" per S2 p.10; change to the real user.
+         Manager rules 100303/100304 match any C:\\Users\\*\\Downloads path. -->
+    <directories realtime="yes">C:\Users\Lenovo\Downloads</directories>
   </syscheck>
 </ossec_config>

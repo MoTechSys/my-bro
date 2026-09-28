@@ -1,0 +1,14 @@
+#!/bin/sh
+# Wazuh integratord launcher for custom-telegram.py (same pattern as built-in slack/virustotal).
+# Deploy both files to /var/ossec/integrations/, owner root:wazuh, mode 0750.
+WPYTHON_BIN="framework/python/bin/python3"
+SCRIPT_PATH_NAME="$0"
+DIR_NAME="$(cd "$(dirname "${SCRIPT_PATH_NAME}")"; pwd -P)"
+SCRIPT_NAME="$(basename "${SCRIPT_PATH_NAME}")"
+case ${DIR_NAME} in
+    */active-response/bin | */wodles*) WAZUH_PATH="$(cd "${DIR_NAME}/../.."; pwd)" ;;
+    */bin | */integrations) WAZUH_PATH="$(cd "${DIR_NAME}/.."; pwd)" ;;
+    *) WAZUH_PATH="/var/ossec" ;;
+esac
+PYTHON_SCRIPT="${DIR_NAME}/${SCRIPT_NAME}.py"
+exec "${WAZUH_PATH}/${WPYTHON_BIN}" "${PYTHON_SCRIPT}" "$@"

@@ -2,6 +2,16 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## 2026-09-28 — [CLAUDE] تحقق على محرك Wazuh 4.14.7 حقيقي + UC-09/10/11
+
+- تثبيت wazuh-manager 4.14.7 في sandbox؛ كل القواعد اختُبرت على المحرك الفعلي لا XML فقط.
+- **4 أخطاء حرجة أُصلحت** (ISSUE-063..066): المدير لا يقلع بسبب `<USER_NAME>`؛ 100092/100093 لا تُطلق مع soc_ar.py؛ 100051 يفوّت صيغ netcat؛ UC-11 على 5763 وحده لا يحظر invalid users.
+- `tests/test_wazuh_engine.py` (+`wazuh_logtest_client.py`): 19 اختباراً على logtest socket (تُتخطّى تلقائياً بدون Wazuh).
+- UC-11: `50-active-response-firewall-drop.xml` + `scripts/attack-emulation/ssh_bruteforce_test.sh` — E2E حقيقي (iptables DROP ثم فك بعد 300 ث، white_list محترم).
+- UC-09: `sqli_test.sh` + `log_format apache` — E2E حقيقي → 31103.
+- UC-10: `wazuh/manager/integrations/custom-telegram{,.py}` + `60-integration-telegram.xml` — stdlib، تنقيح أسرار، dedup 60 ث، 3 محاولات + 429؛ 11 اختباراً؛ E2E عبر integratord إلى mock Telegram (87105 و100092 وصلتا).
+- الفاحص `check_rule_ids.py` صارم (لا masking للـplaceholders).
+
 ## [0.1.0] — 2026-09-09 — Session 01: Repository foundation
 
 ### Added

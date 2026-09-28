@@ -41,10 +41,12 @@ errors, warnings = [], []
 
 def parse_fragment(path: pathlib.Path):
     text = path.read_text(encoding="utf-8")
-    # Wazuh rule descriptions may contain raw '<USER_NAME>' placeholders inside <description>; escape for parsing only
-    safe = re.sub(r"<USER_NAME>", "USER_NAME_PLACEHOLDER", text)
+    # Strict: parse exactly what wazuh-analysisd will read. The former
+    # <USER_NAME> masking hid an XML error that stops Wazuh 4.14.7 (1226/1220).
+    if re.search(r"<[A-Z_]{3,}>", re.sub(r"<!--.*?-->", "", text, flags=re.S)):
+        errors.append(f"{path.relative_to(ROOT)}: raw <PLACEHOLDER> tag outside comments breaks wazuh-analysisd")
     try:
-        return ET.fromstring(f"<root>{safe}</root>")
+        return ET.fromstring(f"<root>{text}</root>")
     except ET.ParseError as e:
         errors.append(f"{path.relative_to(ROOT)}: XML parse error: {e}")
         return None

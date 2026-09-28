@@ -22,6 +22,11 @@ YARA_RULES = '/var/ossec/etc/yara/rules/yara_rules.yar'
 MAX_FILE = 100 * 1024 * 1024
 MAX_INPUT = 65536
 LOG_FILE = Path(__file__).resolve().parents[2] / 'logs/active-responses.log'
+# Wazuh built-in decoder ar_log_json (0010-active-response_decoders.xml) only
+# matches "YYYY/MM/DD HH:MM:SS active-response/bin/<name>: <json>". Any other
+# prefix leaves the line undecoded, so rules 657 -> 100092/100093 never fire.
+# Verified with wazuh-logtest 4.14.7 on 2026-09-28.
+AR_LOG_PREFIX = 'active-response/bin/remove-threat.exe'
 
 
 def read_message(stream):
@@ -121,7 +126,7 @@ def write_log(text):
 def log_remove(message, result):
     stamp = time.strftime('%Y/%m/%d %H:%M:%S')
     # JSON escaping prevents event data from injecting extra log records.
-    write_log(f'{stamp} remove-threat: {json.dumps(message, ensure_ascii=True)} {result}')
+    write_log(f'{stamp} {AR_LOG_PREFIX}: {json.dumps(message, ensure_ascii=True)} {result}')
 
 
 def scan_file(path):

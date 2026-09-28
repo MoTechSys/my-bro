@@ -1,0 +1,27 @@
+<!--
+  UC-11  SSH brute force -> automatic IP block (Wazuh built-in firewall-drop)
+  Target: manager /var/ossec/etc/ossec.conf  (paste the <active-response> block;
+          the <command> firewall-drop already exists in the default 4.14 ossec.conf)
+  Verified 2026-09-28 on wazuh-manager 4.14.7 (tests/test_wazuh_engine.py):
+    - 8 failures, INVALID user  -> 5710 x7 then 5712  (typical hydra wordlist)
+    - 8 failures, VALID user    -> 5760 x7 then 5763
+    Binding to 5763 only (earlier plan) never blocks the invalid-user case, so
+    BOTH IDs are listed (ISSUE-067).
+  Safety (MASTER_PLAN G3):
+    - timeout 300 s -> execd runs the "delete" command and unblocks automatically.
+    - management / SOC IPs MUST be in <global><white_list> (e.g. manager, admin
+      workstation). firewall-drop never blocks a white-listed srcip.
+    - location local: only the agent that saw the attack blocks the source IP.
+-->
+<ossec_config>
+  <!-- Add inside the existing <global> block (one line per protected IP):
+  <white_list>192.168.100.10</white_list>
+  -->
+  <active-response>
+    <disabled>no</disabled>
+    <command>firewall-drop</command>
+    <location>local</location>
+    <rules_id>5712,5763</rules_id>
+    <timeout>300</timeout>
+  </active-response>
+</ossec_config>

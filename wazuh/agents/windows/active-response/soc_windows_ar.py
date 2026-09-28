@@ -69,6 +69,10 @@ def snapshot(path):
     return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
 
 
+# Must match Wazuh decoder ar_log_json: "active-response/bin/<name>: <json>".
+AR_LOG_PREFIX = 'active-response/bin/remove-threat.exe'
+
+
 def log_line(text):
     with LOG_FILE.open('a', encoding='utf-8') as log:
         log.write(text + '\n')
@@ -116,7 +120,7 @@ def main(mode):
             # requires controlled-directory ACLs and native review, see report.
             os.remove(path)
             stamp = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-            log_line(f'{stamp} remove-threat: {json.dumps(message)} Successfully removed threat')
+            log_line(f'{stamp} {AR_LOG_PREFIX}: {json.dumps(message, ensure_ascii=True)} Successfully removed threat')
         elif mode == 'yara':
             if str(alert['rule']['id']) not in ('100303', '100304'):
                 raise ValueError('unexpected YARA rule')
@@ -144,7 +148,7 @@ def main(mode):
         try:
             if mode == 'remove':
                 stamp = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-                log_line(f'{stamp} remove-threat: {json.dumps(message)} Error removing threat: {json.dumps(str(exc))}')
+                log_line(f'{stamp} {AR_LOG_PREFIX}: {json.dumps(message, ensure_ascii=True)} Error removing threat: {json.dumps(str(exc))}')
             else:
                 log_line(prefix + ' ' + json.dumps({'error': str(exc), 'alert': message}))
         except OSError:
