@@ -1,0 +1,14 @@
+flowchart TB
+    subgraph R1[" "]
+        direction LR
+        A["1. تحديد المشكلة<br/>والدافع"] --> B["2. أهداف الحل<br/>والمتطلبات"] --> C["3. التصميم<br/>المعمارية وتدفق البيانات"]
+    end
+    subgraph R2[" "]
+        direction LR
+        D["4. البناء<br/>المعمل وحالات الاستخدام"] --> E["5. العرض والتقييم<br/>قياس كمي"] --> F["6. التواصل<br/>الرسالة والمستودع"]
+    end
+    C --> D
+    D -. "خطأ أو فجوة" .-> C
+    E -. "نتيجة غير مقبولة" .-> D
+    style R1 fill:#ffffff,stroke:#ffffff
+    style R2 fill:#ffffff,stroke:#ffffff

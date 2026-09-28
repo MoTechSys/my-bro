@@ -1,0 +1,27 @@
+flowchart TB
+    NET((الإنترنت))
+    subgraph EDGE["حافة الشبكة"]
+        R["راوتر MikroTik RouterOS<br/>192.168.88.1<br/>DHCP · Firewall · Syslog"]
+    end
+    subgraph LAB["الشبكة المعزولة 192.168.100.0/24"]
+        S["wazuh-server — 192.168.100.105<br/>Manager · Indexer · Dashboard<br/>Telegram · المحلل الذكي"]
+        K["kali1 — 192.168.100.108<br/>Agent 4.14.7 · Suricata · auditd<br/>Apache · YARA · sshd"]
+        W["win1 — 192.168.100.106<br/>Agent 4.14.7 · FIM · AR"]
+        A["محطة المهاجم<br/>سكربتات محاكاة معملية"]
+    end
+    PH["هواتف وأجهزة الضيوف<br/>(دون وكيل)"]
+    AN["متصفح المحلل"]
+    TG["Telegram API"]
+    VT["VirusTotal API"]
+    LLM["نموذج لغوي (اختياري)"]
+    NET --- R
+    R --- LAB
+    PH -. "Wi-Fi / DHCP" .-> R
+    K -- "1514/1515 TCP" --> S
+    W -- "1514/1515 TCP" --> S
+    R -- "Syslog UDP 514" --> S
+    A -- "SSH 22 · HTTP 80 · مسح" --> K
+    AN -- "HTTPS 443" --> S
+    S -- "HTTPS" --> VT
+    S -- "HTTPS" --> TG
+    S -- "HTTPS" --> LLM

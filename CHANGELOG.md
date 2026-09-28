@@ -174,3 +174,4 @@ All notable changes to this repository. Format: [Keep a Changelog](https://keepa
 - Added unique validated EICAR filenames and runner --eicar-dir with deterministic session/run/trial identity and exact source/FIM/VT selectors, durable pre-launch path/argv, exclusive/no-follow creation.
 - Added read-only --inspect-alert-timestamps and made native precision review the first G2 step before PILOT; serialized decimals are not native accuracy proof.
 - Updated TEST_PLAN, README, runbook/demo/security interfaces, TASKBOARD and session handoff. 145 local tests (123 measurement/runner +22 security); no real EICAR creation, SOC attack, native acceptance or PILOT. T-11 stays IN-PROGRESS.
+- 2026-09-28: حزمة تسليم منتصف الفصل (الفصول 1–3) في docs/thesis/midterm/ — 15 شكلاً PNG، 25 جدولاً، ERD وقاموس بيانات، مراجع مُتحقَّقة.

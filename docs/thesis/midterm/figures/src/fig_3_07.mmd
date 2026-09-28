@@ -1,0 +1,29 @@
+sequenceDiagram
+    autonumber
+    participant ATK as المهاجم
+    participant AG as وكيل Wazuh (kali1)
+    participant MG as المدير (analysisd)
+    participant IN as integratord
+    participant VT as VirusTotal
+    participant EX as execd على الوكيل
+    participant AR as soc_ar.py
+    ATK->>AG: وضع ملف في /home/kali/SOCfile  [t0]
+    AG->>MG: حدث syscheck (added)  [t1]
+    MG->>MG: القاعدة 554 ثم 100201 بالمستوى 7  [t2]
+    MG->>IN: التنبيه يطابق مجموعة التكامل
+    IN->>VT: GET /files/{sha256}
+    VT-->>IN: positives > 0
+    IN->>MG: حدث virustotal يطلق 87105  [t2′]
+    MG->>EX: remove-threat (location = local)
+    EX->>AR: JSON على stdin  [t4]
+    AR->>AR: 1) command = add  2) المسار ضمن القائمة المسموحة
+    AR->>AR: 3) ملف عادي، ليس رابطاً رمزياً، ارتباط واحد
+    AR->>AR: 4) بصمة MD5 الحالية = بصمة التنبيه  5) ثبات inode أثناء الحساب
+    alt كل الفحوص ناجحة
+        AR->>AR: حذف الملف  [t5]
+        AR->>AG: active-responses.log: "removed threat"
+        AG->>MG: سطر السجل: 657 ثم 100092 بالمستوى 12  [t6]
+    else أي فحص فاشل
+        AR->>AG: active-responses.log: "Error removing threat"
+        AG->>MG: 657 ثم 100093 بالمستوى 12
+    end
