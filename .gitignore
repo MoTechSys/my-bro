@@ -20,3 +20,4 @@ dist/
 *BOOTSTRAP*PRIVATE*
 *.pem
 *cloudlab*
+ai_agent/audit.jsonl

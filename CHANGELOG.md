@@ -2,6 +2,13 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## 2026-09-28 (2) — [CLAUDE] UC-12/13 + AI Agent T-70 + وكيل حي
+
+- UC-12/13 (PR #30): decoders MikroTik v6/v7 + قواعد 100400–100422 + استقبال UDP 514 + محاكي RouterOS؛ 9 اختبارات محرك.
+- T-70 `ai_agent/`: L1 شرح، L2 ترابط حوادث + kill chain + risk، L3 اقتراح من allowlist + موافقة بشرية بالـhash + تنفيذ عبر Wazuh API + audit؛ RAG (BM25) على قواعدنا + قواعد Wazuh المدمجة + MITRE ATT&CK v19.2 الرسمي؛ حارس هلوسة؛ fallback حتمي؛ 22 اختباراً.
+- بيئة المعمل: wazuh-agent 4.14.7 (kali1, 001) **active** داخل mount namespace؛ كلمة مرور API الافتراضية غُيِّرت (خارج Git).
+- ISSUE-067/068 مُغلقة.
+
 ## 2026-09-28 — [CLAUDE] تحقق على محرك Wazuh 4.14.7 حقيقي + UC-09/10/11
 
 - تثبيت wazuh-manager 4.14.7 في sandbox؛ كل القواعد اختُبرت على المحرك الفعلي لا XML فقط.

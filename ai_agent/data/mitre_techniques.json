@@ -1,0 +1,136 @@
+{
+ "T1021.004": {
+  "name": "SSH",
+  "tactic": "lateral-movement",
+  "summary": "Adversaries may use [Valid Accounts](https://attack.mitre.org/techniques/T1078) to log into remote machines using Secure Shell (SSH). The adversary may then perform actions as the logged-on user.",
+  "mitigation": "Disable or Remove Feature or Program; Multi-factor Authentication; User Account Management"
+ },
+ "T1046": {
+  "name": "Network Service Discovery",
+  "tactic": "discovery",
+  "summary": "Adversaries may attempt to get a listing of services running on remote hosts and local network infrastructure devices, including those that may be vulnerable to remote software exploitation. Common methods to acquire this information include port, vulnerability, and/or wordlist scans using tools that are brought onto a system.",
+  "mitigation": "Disable or Remove Feature or Program; Network Intrusion Prevention; Network Segmentation"
+ },
+ "T1059": {
+  "name": "Command and Scripting Interpreter",
+  "tactic": "execution",
+  "summary": "Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries. These interfaces and languages provide ways of interacting with computer systems and are a common feature across many different platforms. Most systems come with some built-in command-line interface and scripting capabilities, for example, macOS and Linux distributions include some flavor of [Unix Shell](https://attack.mi",
+  "mitigation": "Antivirus/Antimalware; Audit; Behavior Prevention on Endpoint; Code Signing; Disable or Remove Feature or Program"
+ },
+ "T1059.004": {
+  "name": "Unix Shell",
+  "tactic": "execution",
+  "summary": "Adversaries may abuse Unix shell commands and scripts for execution. Unix shells are the primary command prompt on Linux, macOS, and ESXi systems, though many variations of the Unix shell exist (e.g. sh, ash, bash, zsh, etc.) depending on the specific OS or distribution. Unix shells can control every aspect of a system, with certain commands requiring elevated privileges.",
+  "mitigation": "Execution Prevention"
+ },
+ "T1068": {
+  "name": "Exploitation for Privilege Escalation",
+  "tactic": "privilege-escalation",
+  "summary": "Adversaries may exploit software vulnerabilities in an attempt to elevate privileges. Exploitation of a software vulnerability occurs when an adversary takes advantage of a programming error in a program, service, or within the operating system software or kernel itself to execute adversary-controlled code. Security constructs such as permission levels will often hinder access to information and use of certain techni",
+  "mitigation": "Application Isolation and Sandboxing; Execution Prevention; Exploit Protection; Threat Intelligence Program; Update Software"
+ },
+ "T1070.004": {
+  "name": "File Deletion",
+  "tactic": "stealth",
+  "summary": "Adversaries may delete files left behind by the actions of their intrusion activity. Malware, tools, or other non-native files dropped or created on a system by an adversary (ex: [Ingress Tool Transfer](https://attack.mitre.org/techniques/T1105)) may leave traces to indicate to what was done within a network and how. Removal of these files can occur during an intrusion, or as part of a post-intrusion process to minim",
+  "mitigation": ""
+ },
+ "T1078": {
+  "name": "Valid Accounts",
+  "tactic": "stealth, persistence, privilege-escalation, initial-access",
+  "summary": "Adversaries may obtain and abuse credentials of existing accounts as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion. Compromised credentials may be used to bypass access controls placed on various resources on systems within the network and may even be used for persistent access to remote systems and externally available services, such as VPNs, Outlook Web Access, network dev",
+  "mitigation": "Account Use Policies; Active Directory Configuration; Application Developer Guidance; Multi-factor Authentication; Password Policies"
+ },
+ "T1110": {
+  "name": "Brute Force",
+  "tactic": "credential-access",
+  "summary": "Adversaries may use brute force techniques to gain access to accounts when passwords are unknown or when password hashes are obtained. Without knowledge of the password for an account or set of accounts, an adversary may systematically guess the password using a repetitive or iterative mechanism. Brute forcing passwords can take place via interaction with a service that will check the validity of those credentials or",
+  "mitigation": "Account Use Policies; Multi-factor Authentication; Password Policies; User Account Management"
+ },
+ "T1110.001": {
+  "name": "Password Guessing",
+  "tactic": "credential-access",
+  "summary": "Adversaries with no prior knowledge of legitimate credentials within the system or environment may guess passwords to attempt access to accounts. Without knowledge of the password for an account, an adversary may opt to systematically guess the password using a repetitive or iterative mechanism. An adversary may guess login credentials without prior knowledge of system or environment passwords during an operation by",
+  "mitigation": "Account Use Policies; Multi-factor Authentication; Password Policies; Update Software"
+ },
+ "T1136": {
+  "name": "Create Account",
+  "tactic": "persistence",
+  "summary": "Adversaries may create an account to maintain access to victim systems. With a sufficient level of access, creating such accounts may be used to establish secondary credentialed access that do not require persistent remote access tools to be deployed on the system.",
+  "mitigation": "Multi-factor Authentication; Network Segmentation; Operating System Configuration; Privileged Account Management"
+ },
+ "T1190": {
+  "name": "Exploit Public-Facing Application",
+  "tactic": "initial-access",
+  "summary": "Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.",
+  "mitigation": "Application Isolation and Sandboxing; Exploit Protection; Filter Network Traffic; Limit Access to Resource Over Network; Network Segmentation"
+ },
+ "T1200": {
+  "name": "Hardware Additions",
+  "tactic": "initial-access",
+  "summary": "Adversaries may physically introduce computer accessories, networking hardware, or other computing devices into a system or network that can be used as a vector to gain access. Rather than just connecting and distributing payloads via removable storage (i.e. [Replication Through Removable Media](https://attack.mitre.org/techniques/T1091)), more robust hardware additions can be used to introduce new functionalities an",
+  "mitigation": "Limit Access to Resource Over Network; Limit Hardware Installation"
+ },
+ "T1203": {
+  "name": "Exploitation for Client Execution",
+  "tactic": "execution",
+  "summary": "Adversaries may exploit software vulnerabilities in client applications to execute code. Vulnerabilities can exist in software due to unsecure coding practices that can lead to unanticipated behavior. Adversaries can take advantage of certain vulnerabilities through targeted exploitation for the purpose of arbitrary code execution. Oftentimes the most valuable exploits to an offensive toolkit are those that can be us",
+  "mitigation": "Application Isolation and Sandboxing; Exploit Protection; Update Software"
+ },
+ "T1204.002": {
+  "name": "Malicious File",
+  "tactic": "execution",
+  "summary": "An adversary may rely upon a user opening a malicious file in order to gain execution. Users may be subjected to social engineering to get them to open a file that will lead to code execution. This user action will typically be observed as follow-on behavior from [Spearphishing Attachment](https://attack.mitre.org/techniques/T1566/001). Adversaries may use several types of files that require a user to execute them, i",
+  "mitigation": "Behavior Prevention on Endpoint; Execution Prevention; User Training"
+ },
+ "T1485": {
+  "name": "Data Destruction",
+  "tactic": "impact",
+  "summary": "Adversaries may destroy data and files on specific systems or in large numbers on a network to interrupt availability to systems, services, and network resources. Data destruction is likely to render stored data irrecoverable by forensic techniques through overwriting files or data on local and remote drives. Common operating system file deletion commands such as <code>del</code> and <code>rm</code> often only remove",
+  "mitigation": "Data Backup; Multi-factor Authentication; User Account Management"
+ },
+ "T1548.003": {
+  "name": "Sudo and Sudo Caching",
+  "tactic": "privilege-escalation",
+  "summary": "Adversaries may perform sudo caching and/or use the sudoers file to elevate privileges. Adversaries may do this to execute commands as other users or spawn processes with higher privileges.",
+  "mitigation": "Operating System Configuration; Privileged Account Management; Restrict File and Directory Permissions"
+ },
+ "T1562.001": {
+  "name": "Disable or Modify Tools (revoked in ATT&CK v19 -> T1685)",
+  "tactic": "defense-impairment",
+  "summary": "Adversaries may disable, degrade, or tamper with security tools or applications (e.g., endpoint detection and response (EDR) tools, intrusion detection systems (IDS), antivirus, logging agents, sensors, etc.) to impair or reduce visibility of defensive capabilities. This may include stopping specific services, killing processes, modifying or deleting tool configuration files and Registry keys, or preventing tools fro",
+  "mitigation": "Audit; Disable or Remove Feature or Program; Execution Prevention; Restrict File and Directory Permissions; Restrict Registry Permissions",
+  "revoked_by": "T1685"
+ },
+ "T1562.004": {
+  "name": "Disable or Modify System Firewall (revoked in ATT&CK v19 -> T1686)",
+  "tactic": "defense-impairment",
+  "summary": "Adversaries may disable or modify host-based or network firewalls to impair defensive mechanisms and enable further action. Once an adversary has gathered sufficient privileges, they can tamper with firewall services, policies, or rule sets to remove restrictions on inbound or outbound traffic. For example, this may include turning off firewall profiles, altering existing rules to permit previously blocked ports or p",
+  "mitigation": "Audit; Restrict File and Directory Permissions; Restrict Registry Permissions; User Account Management",
+  "revoked_by": "T1686"
+ },
+ "T1565.001": {
+  "name": "Stored Data Manipulation",
+  "tactic": "impact",
+  "summary": "Adversaries may insert, delete, or manipulate data at rest in order to influence external outcomes or hide activity, thus threatening the integrity of the data. By manipulating stored data, adversaries may attempt to affect a business process, organizational understanding, and decision making.",
+  "mitigation": "Encrypt Sensitive Information; Remote Data Storage; Restrict File and Directory Permissions"
+ },
+ "T1571": {
+  "name": "Non-Standard Port",
+  "tactic": "command-and-control",
+  "summary": "Adversaries may communicate using a protocol and port pairing that are typically not associated. For example, HTTPS over port 8088 or port 587 as opposed to the traditional port 443. Adversaries may make changes to the standard port used by a protocol to bypass filtering or muddle analysis/parsing of network data.",
+  "mitigation": "Network Intrusion Prevention; Network Segmentation"
+ },
+ "T1685": {
+  "name": "Disable or Modify Tools",
+  "tactic": "defense-impairment",
+  "summary": "Adversaries may disable, degrade, or tamper with security tools or applications (e.g., endpoint detection and response (EDR) tools, intrusion detection systems (IDS), antivirus, logging agents, sensors, etc.) to impair or reduce visibility of defensive capabilities. This may include stopping specific services, killing processes, modifying or deleting tool configuration files and Registry keys, or preventing tools fro",
+  "mitigation": "Audit; Disable or Remove Feature or Program; Execution Prevention; Restrict File and Directory Permissions; Restrict Registry Permissions"
+ },
+ "T1686": {
+  "name": "Disable or Modify System Firewall",
+  "tactic": "defense-impairment",
+  "summary": "Adversaries may disable or modify host-based or network firewalls to impair defensive mechanisms and enable further action. Once an adversary has gathered sufficient privileges, they can tamper with firewall services, policies, or rule sets to remove restrictions on inbound or outbound traffic. For example, this may include turning off firewall profiles, altering existing rules to permit previously blocked ports or p",
+  "mitigation": "Audit; Restrict File and Directory Permissions; Restrict Registry Permissions; User Account Management"
+ }
+}
