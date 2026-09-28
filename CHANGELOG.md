@@ -2,6 +2,13 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## 2026-09-28 (3) — [CLAUDE] توثيق شامل
+
+- runbooks جديدة: `docs/lab/UC-09_sql_injection.md`, `UC-10_telegram.md`, `UC-11_ssh_bruteforce_ar.md`, `UC-12_mikrotik_network_devices.md`, `UC-13_mobile_network_visibility.md`, `UC-14_ai_analyst.md`.
+- `docs/lab/COVERAGE_MATRIX.md` (T-51): ما يُرى/لا يُرى لكل مصدر مع مستوى الدليل.
+- `docs/lab/README.md`: جدول UC-01..14 بعمود "آخر تحقق حي"؛ `README.md`: جدول الحالات والتحقق.
+- `docs/00_PROJECT_STATE.md` §0/§0.1، `TASKBOARD` (T-51/T-70 ✅)، `CONTEXT_RESUME` تحديث 2026-09-28.
+
 ## 2026-09-28 (2) — [CLAUDE] UC-12/13 + AI Agent T-70 + وكيل حي
 
 - UC-12/13 (PR #30): decoders MikroTik v6/v7 + قواعد 100400–100422 + استقبال UDP 514 + محاكي RouterOS؛ 9 اختبارات محرك.

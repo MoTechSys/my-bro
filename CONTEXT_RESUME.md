@@ -6,6 +6,17 @@
 
 ---
 
+## 🟢 تحديث 2026-09-28 — [CLAUDE] (يلغي ما يخالفه أدناه)
+- **البيئة السحابية Azure لم تعد متاحة.** المعمل الحي = الـsandbox: wazuh-manager **4.14.7** + wazuh-agent `kali1` (001) active + sshd + Apache + استقبال syslog UDP 514 + mock Telegram + LLM عبر بوابة OpenAI-compatible. التفاصيل وإعادة البناء: `docs/lab/SANDBOX_LAB.md`.
+- **مدموج:** PR #28 (4 أخطاء حرجة + UC-09/10/11)، #30 (UC-12/13 MikroTik + رؤية الهواتف)، #31 (T-70 AI L1/L2/L3)، #32 (توثيق المعمل).
+- **حالات الاستخدام:** UC-01..14 منفذة؛ مستوى التحقق لكل واحدة في `docs/lab/README.md` و`docs/lab/COVERAGE_MATRIX.md`.
+- **الاختبارات:** 178 وحدة + 28 على محرك Wazuh الحقيقي (`sudo python3 -m pytest tests/test_wazuh_engine.py`).
+- **كلمة مرور Wazuh API** غُيّرت عن الافتراضية؛ في `~/.soc_lab_api.env` خارج Git.
+- **التالي:** T-11 القياسات على kali1 → الفصل 4 → الفصل 5 → DOCX. D1–D5 عملياً محسومة بالتنفيذ (طبقة تكامل، MikroTik، M0، Dashboard، AI).
+- **دروس جديدة:** (10) لا تثق بفحص XML — شغّل wazuh-logtest؛ (11) Wazuh يرفض `<field name="action">` (حقل ثابت) → استخدم `<action>`؛ (12) أبناء decoder يجب أن يتشاركوا الاسم؛ (13) مفاتيح CDB بها `:` تُقتبس؛ (14) API: `!firewall-drop` و`total_affected_items≥1`؛ (15) لا تستخدم `pkill -f "sleep infinity"` في الـsandbox (يقتل جلسة الأداة).
+
+---
+
 ## 0. في 60 ثانية — إذا لم تقرأ غير هذا
 
 - **المشروع:** رسالة تخرّج (4 طلاب، جامعة، اللغة عربية) — **منصة SOC مفتوحة المصدر على Wazuh 4.14 + Suricata مع استجابة آلية للتهديدات**. صاحب الفكرة **أخو المستخدم**؛ المستخدم هو من يتحدّث معنا.

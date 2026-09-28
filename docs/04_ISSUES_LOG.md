@@ -140,3 +140,4 @@ ISSUE-063 — OPEN منهجياً: v3.1 plan_math يستعمل Wilson–Hilferty
 | ISSUE-059 | — | (تحديث) | `log_format apache` مطبَّق؛ E2E: Apache حقيقي + `sqli_test.sh` → 3× 31103 (L7, T1190)؛ Shellshock 31168 ما زال يعمل | — | **CLOSED 2026-09-28** |
 | ISSUE-067 | 🟠 | Wazuh API `PUT /active-response` | اسم أمر بلا `!` يُرفض بخطأ 1652 إلا إن عُرِّف في ossec.conf؛ و`error:0` مع `total_affected_items:0` ليس نجاحاً (agent 000) | responder يستخدم `!firewall-drop` ويشترط ≥1 affected | **CLOSED 2026-09-28** — E2E على agent 001 حي |
 | ISSUE-068 | 🔴 | ai_agent L3 (قبل الدمج) | الاقتراح أخذ `srcip` من تنبيه قديم غير مرتبط بالحادث → كاد يقترح حظر IP خاطئ | المعاملات من أعضاء الحادث فقط + اختبار انحدار | **CLOSED 2026-09-28** |
+| ISSUE-069 | 🟠 | معمل sandbox | Vulnerability Detection نزّل ~18 GB إلى queue/vd → القرص 100% → 48 اختباراً فشلت بـENOSPC | تعطيل vulnerability-detection/indexer (غير لازمين للنطاق) وحذف queue/vd* | **CLOSED 2026-09-28** — SANDBOX_LAB §حادثة القرص |

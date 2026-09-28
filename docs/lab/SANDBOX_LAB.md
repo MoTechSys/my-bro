@@ -30,6 +30,16 @@ python3 -m pytest tests -q                       # 178 + 28 تُتخطّى بد�
 sudo python3 -m pytest tests/test_wazuh_engine.py -q   # 28 على المحرك الحقيقي
 ```
 
+## ⚠️ حادثة القرص (2026-09-28) — لازم قبل أي إعادة بناء
+وحدة Vulnerability Detection في wazuh-manager 4.14.7 تنزّل feed ضخماً إلى `queue/vd` و`queue/vd_updater` (**~18 GB** خلال ساعتين) فامتلأ القرص 29 GB وفشلت الاختبارات بـ`No space left on device` (ليست أخطاء كود).
+الحل المطبَّق (غير لازم لنطاق المشروع؛ لا indexer هنا):
+```bash
+sudo sed -i '0,/<vulnerability-detection>/{n;s#<enabled>yes#<enabled>no#}' /var/ossec/etc/ossec.conf
+sudo sed -i '0,/<indexer>/{n;s#<enabled>yes#<enabled>no#}' /var/ossec/etc/ossec.conf
+sudo bash -c 'cd /var/ossec/queue && rm -rf vd/* vd_updater/* indexer/*'
+```
+النتيجة: 14 GB محررة، القرص 53% مستقر، kali1 active، 178 + 28 اختباراً ناجحة. في معمل الفريق الحقيقي (مع Indexer) يمكن إبقاؤها مفعلة مع قرص ≥ 50 GB.
+
 ## ما تم إثباته حياً (end-to-end)
 | UC | المسار المُثبَت | الدليل |
 |---|---|---|
