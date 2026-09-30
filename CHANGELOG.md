@@ -2,6 +2,12 @@
 
 All notable changes to this repository. Format: [Keep a Changelog](https://keepachangelog.com/). Dates are ISO-8601.
 
+## 2026-09-30 — [OPENAI] دليل توثيق الفصول وتقييم المعايير
+
+- إضافة `docs/thesis/CHAPTERS_1_3_DOCUMENTATION_GUIDE.md` بطلب المستخدم: معايير كل فصل، مستويات الإثبات، مصفوفة التطبيق، فجوات GUIDE-01..06، وقائمة قبول.
+- ربط الدليل من README الرسالة وحزمة منتصف الفصل، وتصحيح وصف الحزمة بأنها نهائية دون تدقيق.
+- أساس المراجعة `347eed5`: 178 اختباراً و73 اختباراً فرعياً ناجحة، 28 متخطاة لغياب Wazuh؛ فاحص المستودع ناجح. لا إصلاح كود، ولا تعديل نصوص الفصول أو الأصول، ولا نتائج معملية جديدة أو تحقق شامل للمراجع.
+
 ## 2026-09-28 (3) — [CLAUDE] توثيق شامل
 
 - runbooks جديدة: `docs/lab/UC-09_sql_injection.md`, `UC-10_telegram.md`, `UC-11_ssh_bruteforce_ar.md`, `UC-12_mikrotik_network_devices.md`, `UC-13_mobile_network_visibility.md`, `UC-14_ai_analyst.md`.
